@@ -17,4 +17,10 @@ target/main.sh: src/main.sh
 target/dummy.sh: src/dummy.sh
 	cp src/dummy.sh target/dummy.sh
 
+gobuild: godeps
+	go build
 
+godeps:
+	go vet ./...
+	go get -u github.com/spf13/cobra
+	
