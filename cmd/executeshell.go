@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"os/exec"
 
 	"github.com/yomon8/xsvutils/shellcmd"
@@ -14,17 +13,9 @@ func executeShell(shelltext string, args []string) error {
 	if err != nil {
 		return err
 	}
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	fmt.Println(wd)
+	args = append([]string{shellfile}, args...)
 	cmd := exec.Command(fmt.Sprint(
-		"/bin/bash",
-		" ",
-		shellfile,
-		" "),
-		args...)
+		"/bin/bash"), args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println(err)
@@ -40,7 +31,6 @@ func executeShell(shelltext string, args []string) error {
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
-		fmt.Println()
 	}
 
 	cmd.Wait()

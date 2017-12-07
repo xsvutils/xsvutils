@@ -1,34 +1,23 @@
 package shellcmd
 
 import (
-	"bufio"
 	"crypto/sha1"
 	"fmt"
+	"io/ioutil"
 	"os"
 )
 
 func GetShellFile(shell string) (string, error) {
 	shellbytes := []byte(shell)
-	hash := fmt.Sprintf("%x", sha1.Sum(shellbytes))
-	wd, err := os.Getwd()
+	tmpfile, err := ioutil.TempFile("", fmt.Sprintf("%x", sha1.Sum(shellbytes)))
 	if err != nil {
 		return "", err
 	}
-	tmpfile := wd + "/" + hash
-	wf, err := os.OpenFile(tmpfile, os.O_RDWR|os.O_CREATE, 0666)
-	defer wf.Close()
-	if err != nil {
-		return "", err
-	}
-	wr := bufio.NewWriter(wf)
-	_, err = wr.Write([]byte(shell))
-	if err != nil {
-		return "", err
-	}
-	err = wr.Flush()
+	defer tmpfile.Close()
+	err = ioutil.WriteFile(tmpfile.Name(), shellbytes, os.ModePerm)
 	if err != nil {
 		return "", err
 	}
 
-	return wf.Name(), nil
+	return tmpfile.Name(), nil
 }
