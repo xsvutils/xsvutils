@@ -1,7 +1,12 @@
 package cmd
 
 import (
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
+
+	"github.com/yomon8/xsvutils/shellcmd"
 )
 
 func init() {
@@ -13,6 +18,10 @@ var dummyshCmd = &cobra.Command{
 	Short: "dummy bash cmd",
 	Long:  "dummy bash cmd",
 	Run: func(cmd *cobra.Command, args []string) {
-		executeShell("dummy.sh", []string{})
+		err := executeShell(shellcmd.DummyCmd, []string{})
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
 	},
 }
