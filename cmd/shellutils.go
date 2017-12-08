@@ -15,8 +15,13 @@ func getShellFile(shell string) (string, error) {
 	}
 	tmpfile := tmpdir + "/xsvutils-" + fmt.Sprintf("%x", sha1.Sum(shellbytes))
 	_, err := os.Stat(tmpfile)
-	if err != nil {
-		err = ioutil.WriteFile(tmpfile, shellbytes, 0666)
+	if err != nil { // if not exists tmpfile
+		tmpfile2 := tmpfile + ".tmp"
+		err = ioutil.WriteFile(tmpfile2, shellbytes, 0666)
+		if err != nil {
+			return "", err
+		}
+		err = os.Rename(tmpfile2, tmpfile)
 		if err != nil {
 			return "", err
 		}
