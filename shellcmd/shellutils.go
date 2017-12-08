@@ -9,15 +9,18 @@ import (
 
 func GetShellFile(shell string) (string, error) {
 	shellbytes := []byte(shell)
-	tmpfile, err := ioutil.TempFile("", fmt.Sprintf("%x", sha1.Sum(shellbytes)))
-	if err != nil {
-		return "", err
+	tmpdir := os.Getenv("TMPDIR");
+	if len(tmpdir) == 0 {
+		tmpdir = "/tmp";
 	}
-	defer tmpfile.Close()
-	err = ioutil.WriteFile(tmpfile.Name(), shellbytes, os.ModePerm)
+	tmpfile := tmpdir + "/xsvutils-" + fmt.Sprintf("%x", sha1.Sum(shellbytes));
+	_, err := os.Stat(tmpfile)
 	if err != nil {
-		return "", err
+		err = ioutil.WriteFile(tmpfile, shellbytes, 0666)
+		if err != nil {
+			return "", err
+		}
 	}
 
-	return tmpfile.Name(), nil
+	return tmpfile, nil
 }
