@@ -28,6 +28,6 @@ if [ ! -e $TOOL_DIR ]; then
     exit 1;
 fi
 
-exec bash $TOOL_DIR/main.sh "$@"
+exec perl $TOOL_DIR/main.pl "$@"
 
 #SOURCE_IMAGE
