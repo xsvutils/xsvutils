@@ -85,6 +85,8 @@ if ($isOutputTty) {
     # 出力が端末の場合
     # TODO オプションで出力フォーマットが指定されていない場合に限定
     $option_output_format = "tty";
+} else {
+    $option_output_format = "";
 }
 
 if ($subcommand eq "cat") {
@@ -96,11 +98,12 @@ if ($subcommand eq "cat") {
     }
 } elsif ($subcommand eq "hello") {
     #exec("$TOOL_DIR/golang.bin", "hello");
+    my @options = ();
     if ($option_output_format eq "tty") {
-        exec("bash", "$TOOL_DIR/less-wrapper.sh", "/tmp/xsvutils-golang.bin", "hello");
-    } else {
-        exec("/tmp/xsvutils-golang.bin", "hello");
+        push(@options, "--pager");
     }
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "/tmp/xsvutils-golang.bin", "hello");
+    exec(@command);
 } elsif ($subcommand eq "dummy") {
     exec("bash", "$TOOL_DIR/dummy.sh");
 } elsif ($subcommand eq "csv2tsv") {
