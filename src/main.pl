@@ -19,6 +19,8 @@ while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--help") {
         $option_help = 1;
+    } elsif ($a eq "hello") {
+        $subcommand = $a;
     } elsif ($a eq "dummy") {
         $subcommand = $a;
     } elsif ($a eq "-i") {
@@ -78,6 +80,9 @@ if ($subcommand eq "cat") {
     } else {
         exec("cat", $option_input);
     }
+} elsif ($subcommand eq "hello") {
+    #exec("$TOOL_DIR/golang.bin", "hello");
+    exec("/tmp/xsvutils-golang.bin", "hello");
 } elsif ($subcommand eq "dummy") {
     exec("bash", "$TOOL_DIR/dummy.sh");
 }

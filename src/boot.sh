@@ -28,6 +28,10 @@ if [ ! -e $TOOL_DIR ]; then
     exit 1;
 fi
 
+# $TOOL_DIR では実行バイナリを置けない場合があるので、
+# 暫定としていったん /tmp にコピー
+cp $TOOL_DIR/golang.bin /tmp/xsvutils-golang.bin
+
 exec perl $TOOL_DIR/main.pl "$@"
 
 #SOURCE_IMAGE

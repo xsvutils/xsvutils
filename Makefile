@@ -1,14 +1,14 @@
 
 build: xsvutils
 
-xsvutils: src/boot.sh var/VERSION_HASH target/main.pl target/help.txt target/dummy.sh
+xsvutils: src/boot.sh var/VERSION_HASH
 	cat src/boot.sh | sed "s/XXXX_VERSION_HASH_XXXX/$$(cat var/VERSION_HASH.txt)/g" > var/xsvutils
 	(cd target; tar cz *) >> var/xsvutils
 	chmod 755 var/xsvutils
 	mv var/xsvutils xsvutils
 
-var/VERSION_HASH:
-	cat $$(find src -type f | LC_ALL=C sort) | shasum | cut -b1-40 > var/VERSION_HASH.txt.tmp
+var/VERSION_HASH: target/main.pl target/help.txt target/golang.bin target/dummy.sh
+	cat $$(find target -type f | LC_ALL=C sort) | shasum | cut -b1-40 > var/VERSION_HASH.txt.tmp
 	mv var/VERSION_HASH.txt.tmp var/VERSION_HASH.txt
 
 target/main.pl: src/main.pl
@@ -19,6 +19,10 @@ target/help.txt: src/help.txt
 
 target/dummy.sh: src/dummy.sh
 	cp src/dummy.sh target/dummy.sh
+
+target/golang.bin: gobuild
+	cp golang/golang target/golang.bin
+	chmod 777 target/golang.bin
 
 gobuild: godeps
 	cd golang; go run ./generator/generator.go && go build
