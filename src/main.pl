@@ -7,11 +7,17 @@ my $isInputTty = undef;
 if (-t STDIN) {
     $isInputTty = 1;
 }
+my $isOutputTty = undef;
+if (-t STDOUT) {
+    $isOutputTty = 1;
+}
 
 my $subcommand = undef;
 my $option_help = undef;
 my $option_input = undef;
 my $option_output = undef;
+
+my $option_output_format = undef;
 
 my $subcommand_args = [];
 
@@ -73,6 +79,12 @@ if ($help_stdout || $help_stderr) {
     }
 }
 
+if ($isOutputTty) {
+    # 出力が端末の場合
+    # TODO オプションで出力フォーマットが指定されていない場合に限定
+    $option_output_format = "tty";
+}
+
 if ($subcommand eq "cat") {
     # TODO
     if ($option_input eq "") {
@@ -82,7 +94,11 @@ if ($subcommand eq "cat") {
     }
 } elsif ($subcommand eq "hello") {
     #exec("$TOOL_DIR/golang.bin", "hello");
-    exec("/tmp/xsvutils-golang.bin", "hello");
+    if ($option_output_format eq "tty") {
+        exec("bash", "$TOOL_DIR/less-wrapper.sh", "/tmp/xsvutils-golang.bin", "hello");
+    } else {
+        exec("/tmp/xsvutils-golang.bin", "hello");
+    }
 } elsif ($subcommand eq "dummy") {
     exec("bash", "$TOOL_DIR/dummy.sh");
 }
