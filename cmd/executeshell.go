@@ -4,12 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os/exec"
-
-	"github.com/yomon8/xsvutils/shellcmd"
 )
 
 func executeShell(shelltext string, args []string) error {
-	shellfile, err := shellcmd.GetShellFile(shelltext)
+	shellfile, err := getShellFile(shelltext)
 	if err != nil {
 		return err
 	}
