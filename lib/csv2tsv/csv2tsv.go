@@ -9,6 +9,7 @@ import (
 
 func Convert(rd io.Reader) {
 	r := csv.NewReader(rd)
+	r.FieldsPerRecord = -1
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
