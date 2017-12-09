@@ -4,7 +4,7 @@
 !*.*
 !Makefile
 .DS_Store
-*.swp
+*.sw*
 pkg/
 
 # Binaries for programs and plugins
