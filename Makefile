@@ -33,10 +33,12 @@ target/golang.bin: gobuild
 	cp golang/golang target/golang.bin
 	chmod 777 target/golang.bin
 
-gobuild: godeps
-	cd golang; go run ./generator/generator.go && go build
+var/GOLANG_VERSION_HASH:
+	cat $$(find golang -type f -name "*.go" | LC_ALL=C sort) | shasum | cut -b1-40 > var/GOLANG_VERSION_HASH.txt.tmp
+	mv var/GOLANG_VERSION_HASH.txt.tmp var/GOLANG_VERSION_HASH-source.txt
 
-godeps:
-	go vet ./golang/...
-	go get -u github.com/spf13/cobra
+gobuild: var/GOLANG_VERSION_HASH
+	if ! diff var/GOLANG_VERSION_HASH-source.txt var/GOLANG_VERSION_HASH-build.txt >/dev/null; then cd golang; go vet ./...; go get -u github.com/spf13/cobra; go run ./generator/generator.go && go build; fi
+	cp var/GOLANG_VERSION_HASH-source.txt var/GOLANG_VERSION_HASH-build.txt
+
 
