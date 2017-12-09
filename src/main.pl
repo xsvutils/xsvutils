@@ -97,17 +97,16 @@ if ($subcommand eq "cat") {
         exec("cat", $option_input);
     }
 } elsif ($subcommand eq "hello") {
-    #exec("$TOOL_DIR/golang.bin", "hello");
     my @options = ();
     if ($option_output_format eq "tty") {
         push(@options, "--pager");
     }
-    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "/tmp/xsvutils-golang.bin", "hello");
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "$TOOL_DIR/golang.bin", "hello");
     exec(@command);
 } elsif ($subcommand eq "dummy") {
     exec("bash", "$TOOL_DIR/dummy.sh");
 } elsif ($subcommand eq "csv2tsv") {
-    exec("/tmp/xsvutils-golang.bin", "csv2tsv",$option_input);
+    exec("$TOOL_DIR/golang.bin", "csv2tsv", $option_input);
 }
 
 
