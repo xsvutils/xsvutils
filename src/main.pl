@@ -29,6 +29,8 @@ while (@ARGV) {
         $subcommand = $a;
     } elsif ($a eq "dummy") {
         $subcommand = $a;
+    } elsif ($a eq "csv2tsv") {
+        $subcommand = $a;
     } elsif ($a eq "-i") {
         die "option -i needs an argument" unless (@ARGV);
         $option_input = shift(@ARGV);
@@ -101,6 +103,8 @@ if ($subcommand eq "cat") {
     }
 } elsif ($subcommand eq "dummy") {
     exec("bash", "$TOOL_DIR/dummy.sh");
+} elsif ($subcommand eq "csv2tsv") {
+    exec("/tmp/xsvutils-golang.bin", "csv2tsv",$option_input);
 }
 
 
