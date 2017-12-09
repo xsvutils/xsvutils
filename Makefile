@@ -18,7 +18,8 @@ target/dummy.sh: src/dummy.sh
 	cp src/dummy.sh target/dummy.sh
 
 gobuild: godeps
-	go build
+	go run ./generator/generator.go && \
+	 	go build
 
 godeps:
 	go vet ./...
