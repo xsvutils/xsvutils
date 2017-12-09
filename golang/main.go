@@ -1,6 +1,6 @@
 package main
 
-import "github.com/yomon8/xsvutils/cmd"
+import "./cmd"
 
 func main() {
 	cmd.Execute()

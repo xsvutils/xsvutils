@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/yomon8/xsvutils/lib/csv2tsv"
+	"../lib/csv2tsv"
 
 	"github.com/spf13/cobra"
 )

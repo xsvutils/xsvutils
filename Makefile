@@ -21,10 +21,9 @@ target/dummy.sh: src/dummy.sh
 	cp src/dummy.sh target/dummy.sh
 
 gobuild: godeps
-	go run ./generator/generator.go && \
-	go build
+	cd golang; go run ./generator/generator.go && go build
 
 godeps:
-	go vet ./...
+	go vet ./golang/...
 	go get -u github.com/spf13/cobra
 
