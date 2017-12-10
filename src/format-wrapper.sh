@@ -35,9 +35,6 @@
 # 
 # --pager 出力に less を使う
 
-export WORKING_DIR=$(mktemp -d)
-trap "rm -rf $WORKING_DIR" EXIT
-
 option_format=
 option_pager=
 while [ "$#" != 0 ]; do

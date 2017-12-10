@@ -24,6 +24,21 @@ if [ ! -e $TOOL_DIR ]; then
     exit 1;
 fi
 
-exec perl $TOOL_DIR/main.pl "$@"
+if [ -z "$UID" ]; then
+    UID=$(id -u)
+fi
+if [ -d /run/user/$UID ]; then
+    export WORKING_DIR=$(mktemp -d /run/user/$UID/xsvutils-XXXXXXXX)
+elif [ -d /dev/shm ]; then
+    export WORKING_DIR=$(mktemp -d /dev/shm/xsvutils-XXXXXXXX)
+else
+    export WORKING_DIR=$(mktemp -d /tmp/xsvutils-XXXXXXXX)
+fi
+[ -n "$WORKING_DIR" ] || { echo "Cannot WORKING_DIR: $WORKING_DIR"; exit $?; }
+trap "rm -rf $WORKING_DIR" EXIT
+
+perl $TOOL_DIR/main.pl "$@"
+
+exit $?
 
 #SOURCE_IMAGE
