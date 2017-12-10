@@ -17,6 +17,8 @@ my $option_help = undef;
 my $option_input = undef;
 my $option_output = undef;
 
+my $option_format = undef;
+
 my $option_output_format = undef;
 
 my $subcommand_args = [];
@@ -25,6 +27,10 @@ while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--help") {
         $option_help = 1;
+    } elsif ($a eq "--tsv") {
+        $option_format = "--tsv";
+    } elsif ($a eq "--csv") {
+        $option_format = "--csv";
     } elsif ($a eq "hello") {
         $subcommand = $a;
     } elsif ($a eq "dummy") {
@@ -90,12 +96,20 @@ if ($isOutputTty) {
 }
 
 if ($subcommand eq "cat") {
-    # TODO
-    if ($option_input eq "") {
-        exec("cat");
-    } else {
-        exec("cat", $option_input);
+    my @options = ();
+    if (defined($option_format)) {
+        push(@options, $option_format);
     }
+    if ($option_output_format eq "tty") {
+        push(@options, "--pager");
+    }
+    if ($option_input ne "") {
+        my $data_in;
+        open($data_in, '<', $option_input) or die "Cannot open file: $!";
+        open(STDIN, '<&=', fileno($data_in));
+    }
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "cat");
+    exec(@command);
 } elsif ($subcommand eq "hello") {
     my @options = ();
     if ($option_output_format eq "tty") {

@@ -35,24 +35,31 @@
 # 
 # --pager 出力に less を使う
 
-WORKING_DIR=$(mktemp -d)
+export WORKING_DIR=$(mktemp -d)
 trap "rm -rf $WORKING_DIR" EXIT
 
+option_format=
 option_pager=
 while [ "$#" != 0 ]; do
     if [ "$1" = "--" ]; then
         shift
         break
+    elif [ "$1" = "--tsv" ]; then
+        option_format="--tsv"
+    elif [ "$1" = "--csv" ]; then
+        option_format="--csv"
     elif [ "$1" = "--pager" ]; then
         option_pager=1
     fi
     shift
 done
 
+guess_format_option=$option_format
+
 if [ -n "$option_pager" ]; then
-    perl $TOOL_DIR/guess-format.pl | exec "$@" | perl $TOOL_DIR/convert-output.pl | less -SRX
+    perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/convert-output.pl | less -SRX
 else
-    perl $TOOL_DIR/guess-format.pl | exec "$@" | perl $TOOL_DIR/convert-output.pl
+    perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/convert-output.pl
 fi
 
 
