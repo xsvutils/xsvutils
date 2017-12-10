@@ -28,7 +28,7 @@
 # 
 # --out-plain 子プロセスからの出力をいっさい変換せずに出力
 # 
-# --out-terminal-table 出力フォーマットを端末で見やすい固定長のテーブルに変換して出力
+# --out-table 出力フォーマットを端末で見やすい固定長のテーブルに変換して出力
 # 
 # 以上のオプションのうち、 --out で始まっているものは入力形式とは異なる出力形式にしたい場合に指定する。
 # --out のついていないものは、オプションを付けなければ自動推定するが、推定の失敗に備えたい場合に指定するオプション。
@@ -36,6 +36,7 @@
 # --pager 出力に less を使う
 
 option_format=
+option_out_table=
 option_pager=
 while [ "$#" != 0 ]; do
     if [ "$1" = "--" ]; then
@@ -45,6 +46,8 @@ while [ "$#" != 0 ]; do
         option_format="--tsv"
     elif [ "$1" = "--csv" ]; then
         option_format="--csv"
+    elif [ "$1" = "--out-table" ]; then
+        option_out_table=1
     elif [ "$1" = "--pager" ]; then
         option_pager=1
     fi
@@ -53,10 +56,16 @@ done
 
 guess_format_option=$option_format
 
-if [ -n "$option_pager" ]; then
-    perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/convert-output.pl | less -SRX
+perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/convert-output.pl |
+if [ -n "$option_out_table" ]; then
+    perl $TOOL_DIR/table.pl
 else
-    perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/convert-output.pl
+    cat
+fi |
+if [ -n "$option_pager" ]; then
+    less -SRX
+else
+    cat
 fi
 
 

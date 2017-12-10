@@ -7,7 +7,7 @@ xsvutils: src/boot.sh var/VERSION_HASH
 	chmod 755 var/xsvutils
 	mv var/xsvutils xsvutils
 
-var/VERSION_HASH: target/main.pl target/help.txt target/format-wrapper.sh target/guess-format.pl target/convert-output.pl target/golang.bin target/dummy.sh
+var/VERSION_HASH: target/main.pl target/help.txt target/format-wrapper.sh target/guess-format.pl target/convert-output.pl target/table.pl target/golang.bin target/dummy.sh
 	cat $$(find target -type f | LC_ALL=C sort) | shasum | cut -b1-40 > var/VERSION_HASH.txt.tmp
 	mv var/VERSION_HASH.txt.tmp var/VERSION_HASH.txt
 
@@ -25,6 +25,9 @@ target/guess-format.pl: src/guess-format.pl
 
 target/convert-output.pl: src/convert-output.pl
 	cp src/convert-output.pl target/convert-output.pl
+
+target/table.pl: src/table.pl
+	cp src/table.pl target/table.pl
 
 target/dummy.sh: src/dummy.sh
 	cp src/dummy.sh target/dummy.sh

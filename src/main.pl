@@ -101,6 +101,7 @@ if ($subcommand eq "cat") {
         push(@options, $option_format);
     }
     if ($option_output_format eq "tty") {
+        push(@options, "--out-table");
         push(@options, "--pager");
     }
     if ($option_input ne "") {
