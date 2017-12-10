@@ -43,6 +43,8 @@ while (@ARGV) {
     } elsif ($a eq "-o") {
         die "option -o needs an argument" unless (@ARGV);
         $option_output = shift(@ARGV);
+    } elsif (!defined($option_input) && -e $a) {
+        $option_input = $a;
     } else {
         push(@$subcommand_args, $a);
     }
