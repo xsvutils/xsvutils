@@ -15,7 +15,7 @@ if (-t STDOUT) {
 my $subcommand = undef;
 my $option_help = undef;
 my $option_input = undef;
-my $option_output = undef;
+my $option_output = ""; # 空文字列は標準出力の意味
 
 my $option_format = undef;
 
@@ -95,7 +95,14 @@ if ($help_stdout || $help_stderr) {
     }
 }
 
-if ($isOutputTty && !defined($option_output)) {
+if ($option_input ne "") {
+    # 入力がファイルの場合
+    my $data_in;
+    open($data_in, '<', $option_input) or die "Cannot open file: $!";
+    open(STDIN, '<&=', fileno($data_in));
+}
+
+if ($isOutputTty && $option_output eq "") {
     # 出力が端末の場合
     # TODO オプションで出力フォーマットが指定されていない場合に限定
     $option_output_format = "tty";
@@ -103,7 +110,7 @@ if ($isOutputTty && !defined($option_output)) {
     $option_output_format = "";
 }
 
-if (defined($option_output)) {
+if ($option_output ne "") {
     # 出力がファイルの場合
     my $data_out;
     open($data_out, '>', $option_output) or die "Cannot open file: $!";
@@ -119,11 +126,6 @@ if ($subcommand eq "cat") {
         push(@options, "--out-table");
         push(@options, "--pager");
     }
-    if ($option_input ne "") {
-        my $data_in;
-        open($data_in, '<', $option_input) or die "Cannot open file: $!";
-        open(STDIN, '<&=', fileno($data_in));
-    }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "cat");
     exec(@command);
 } elsif ($subcommand eq "wcl") {
@@ -133,11 +135,6 @@ if ($subcommand eq "cat") {
     }
     if ($option_output_format eq "tty") {
         push(@options, "--out-plain");
-    }
-    if ($option_input ne "") {
-        my $data_in;
-        open($data_in, '<', $option_input) or die "Cannot open file: $!";
-        open(STDIN, '<&=', fileno($data_in));
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "$TOOL_DIR/golang.bin", "wcl", "--header");
     exec(@command);
@@ -149,11 +146,6 @@ if ($subcommand eq "cat") {
     if ($option_output_format eq "tty") {
         push(@options, "--out-table");
         push(@options, "--pager");
-    }
-    if ($option_input ne "") {
-        my $data_in;
-        open($data_in, '<', $option_input) or die "Cannot open file: $!";
-        open(STDIN, '<&=', fileno($data_in));
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "perl", "$TOOL_DIR/cut.pl", @$subcommand_args);
     exec(@command);
