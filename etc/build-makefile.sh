@@ -1,5 +1,5 @@
 
-TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh|build-makefile\.sh)' | sed 's/^/target\//g') | LC_ALL=C sort))
+TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g') | LC_ALL=C sort))
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
 cat <<\EOF
