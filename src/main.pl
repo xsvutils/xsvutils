@@ -31,6 +31,10 @@ while (@ARGV) {
         $option_format = "--tsv";
     } elsif ($a eq "--csv") {
         $option_format = "--csv";
+    } elsif ($a eq "cat") {
+        $subcommand = $a;
+    } elsif ($a eq "wcl") {
+        $subcommand = $a;
     } elsif ($a eq "hello") {
         $subcommand = $a;
     } elsif ($a eq "dummy") {
@@ -76,7 +80,7 @@ if ($option_help) {
 
 if ($help_stdout || $help_stderr) {
     my $help_filepath = $TOOL_DIR . "/help.txt";
-    open(IN, '<', $help_filepath) or die "Cannot open $help_filepath";
+    open(IN, '<', $help_filepath) or die "Cannot open file: $!";
     my @lines = <IN>;
     my $str = join('', @lines);
     close IN;
@@ -112,6 +116,21 @@ if ($subcommand eq "cat") {
         open(STDIN, '<&=', fileno($data_in));
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "cat");
+    exec(@command);
+} elsif ($subcommand eq "wcl") {
+    my @options = ();
+    if (defined($option_format)) {
+        push(@options, $option_format);
+    }
+    if ($option_output_format eq "tty") {
+        push(@options, "--out-plain");
+    }
+    if ($option_input ne "") {
+        my $data_in;
+        open($data_in, '<', $option_input) or die "Cannot open file: $!";
+        open(STDIN, '<&=', fileno($data_in));
+    }
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "$TOOL_DIR/golang.bin", "wcl", "--header");
     exec(@command);
 } elsif ($subcommand eq "hello") {
     my @options = ();

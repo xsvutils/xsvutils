@@ -36,9 +36,9 @@ func Count(rd io.Reader, hasHeader bool) {
 		fmt.Println(lineCount)
 		os.Exit(0)
 	} else {
-		fmt.Println(line)
+		fmt.Println(lineCount)
 		for _, msg := range errmsgs {
-			fmt.Fprint(os.Stderr, msg)
+			fmt.Fprintln(os.Stderr, msg)
 		}
 		os.Exit(1)
 	}

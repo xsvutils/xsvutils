@@ -36,6 +36,7 @@
 # --pager 出力に less を使う
 
 option_format=
+option_out_plain=
 option_out_table=
 option_pager=
 while [ "$#" != 0 ]; do
@@ -46,7 +47,11 @@ while [ "$#" != 0 ]; do
         option_format="--tsv"
     elif [ "$1" = "--csv" ]; then
         option_format="--csv"
+    elif [ "$1" = "--out-plain" ]; then
+        option_out_plain=1
+        option_out_table=
     elif [ "$1" = "--out-table" ]; then
+        option_out_plain=
         option_out_table=1
     elif [ "$1" = "--pager" ]; then
         option_pager=1
@@ -57,7 +62,9 @@ done
 guess_format_option=$option_format
 
 perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/convert-output.pl |
-if [ -n "$option_out_table" ]; then
+if [ -n "$option_out_plain" ]; then
+    cat
+elif [ -n "$option_out_table" ]; then
     perl $TOOL_DIR/table.pl
 else
     cat
