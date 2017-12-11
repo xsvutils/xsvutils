@@ -35,6 +35,8 @@ while (@ARGV) {
         $subcommand = $a;
     } elsif ($a eq "wcl") {
         $subcommand = $a;
+    } elsif ($a eq "cut") {
+        $subcommand = $a;
     } elsif ($a eq "hello") {
         $subcommand = $a;
     } elsif ($a eq "dummy") {
@@ -131,6 +133,22 @@ if ($subcommand eq "cat") {
         open(STDIN, '<&=', fileno($data_in));
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "$TOOL_DIR/golang.bin", "wcl", "--header");
+    exec(@command);
+} elsif ($subcommand eq "cut") {
+    my @options = ();
+    if (defined($option_format)) {
+        push(@options, $option_format);
+    }
+    if ($option_output_format eq "tty") {
+        push(@options, "--out-table");
+        push(@options, "--pager");
+    }
+    if ($option_input ne "") {
+        my $data_in;
+        open($data_in, '<', $option_input) or die "Cannot open file: $!";
+        open(STDIN, '<&=', fileno($data_in));
+    }
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "perl", "$TOOL_DIR/cut.pl", @$subcommand_args);
     exec(@command);
 } elsif ($subcommand eq "hello") {
     my @options = ();
