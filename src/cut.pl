@@ -40,6 +40,7 @@ sub createSelectColumns {
                     my $f2name = $1;
                     my $f2num = $2;
                     if ($f1name eq $f2name) {
+                        # col1..col20 の形式
                         if ($f1num <= $f2num) {
                             for (my $i = $f1num; $i <= $f2num; $i++) {
                                 push(@columns3, "$f1name$i");
