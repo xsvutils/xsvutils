@@ -8,6 +8,7 @@ import (
 )
 
 var isCsvInput bool
+var hasHeader bool
 
 var RootCmd = &cobra.Command{
 	Use:   "xsvutils",
@@ -24,4 +25,5 @@ func Execute() {
 
 func init() {
 	RootCmd.PersistentFlags().BoolVarP(&isCsvInput, "incsv", "c", false, "default false(=tsv)")
+	RootCmd.PersistentFlags().BoolVarP(&hasHeader, "header", "H", false, "default false(=noheader)")
 }
