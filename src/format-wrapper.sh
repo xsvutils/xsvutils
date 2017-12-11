@@ -39,6 +39,7 @@ option_format=
 option_out_plain=
 option_out_table=
 option_pager=
+option_table_opt=
 while [ "$#" != 0 ]; do
     if [ "$1" = "--" ]; then
         shift
@@ -55,6 +56,9 @@ while [ "$#" != 0 ]; do
         option_out_table=1
     elif [ "$1" = "--pager" ]; then
         option_pager=1
+    elif [ "$1" = "--table-max-width" ]; then
+        shift
+        option_table_opt="$option_table_opt --max-width $1"
     fi
     shift
 done
@@ -65,7 +69,7 @@ perl $TOOL_DIR/guess-format.pl $guess_format_option | "$@" | perl $TOOL_DIR/conv
 if [ -n "$option_out_plain" ]; then
     cat
 elif [ -n "$option_out_table" ]; then
-    perl $TOOL_DIR/table.pl
+    perl $TOOL_DIR/table.pl $option_table_opt
 else
     cat
 fi |

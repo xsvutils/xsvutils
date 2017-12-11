@@ -7,6 +7,22 @@ use utf8;
 
 use Encode qw/encode_utf8 decode_utf8/;
 
+my $max_width = 80;
+
+while (@ARGV) {
+    my $a = shift(@ARGV);
+    if ($a eq "--max-width") {
+        die "option --max-width needs an argument" unless (@ARGV);
+        my $b = shift(@ARGV);
+        $max_width = $b + 0;
+        if ($max_width ne $b) {
+            die "option --max-width argument must be integer";
+        }
+    } else {
+        die "Unknown argument: $a";
+    }
+}
+
 sub charWidth {
     my ($ch) = @_;
     my $o = ord($ch);
@@ -51,16 +67,14 @@ sub stringViewPadding {
     return " " . $str . (" " x ($viewLength - $resultLength + 1));
 }
 
-my $max_viewLength = 80;
-
 sub printRecord {
     my ($cols, $col_lengths) = @_;
     my @colViews = ();
     my $col_count = scalar @$col_lengths;
     for (my $i = 0; $i < $col_count; $i++) {
         my $viewLength = $col_lengths->[$i];
-        if ($viewLength > $max_viewLength) {
-            $viewLength = $max_viewLength;
+        if ($viewLength > $max_width) {
+            $viewLength = $max_width;
         }
         my $col = $cols->[$i];
         push(@colViews, stringViewPadding($col, $viewLength));
