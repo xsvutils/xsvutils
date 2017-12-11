@@ -8,8 +8,8 @@ import (
 )
 
 func Count(rd io.Reader, hasHeader bool) {
-	line := 0
-	errLine := 0
+	lineCount := 0
+	errLineCount := 0
 	errmsgs := make([]string, 0)
 
 	r := csv.NewReader(rd)
@@ -26,14 +26,14 @@ func Count(rd io.Reader, hasHeader bool) {
 			break
 		}
 		if err != nil {
-			errLine++
+			errLineCount++
 			errmsgs = append(errmsgs, err.Error())
 		}
-		line++
+		lineCount++
 	}
 
-	if errLine == 0 {
-		fmt.Println(line)
+	if errLineCount == 0 {
+		fmt.Println(lineCount)
 		os.Exit(0)
 	} else {
 		fmt.Println(line)
