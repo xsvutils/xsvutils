@@ -2,13 +2,19 @@ use strict;
 use warnings;
 use utf8;
 
-my $option_fields = undef;
+my $option_columns = undef;
 
 while (@ARGV) {
     my $a = shift(@ARGV);
-    if ($a eq "--fields") {
-        die "option --fields needs an argument" unless (@ARGV);
-        $option_fields = shift(@ARGV);
+    if ($a eq "--col") {
+        die "option --col needs an argument" unless (@ARGV);
+        $option_columns = shift(@ARGV);
+    } elsif ($a eq "--cols") {
+        die "option --cols needs an argument" unless (@ARGV);
+        $option_columns = shift(@ARGV);
+    } elsif ($a eq "--columns") {
+        die "option --columns needs an argument" unless (@ARGV);
+        $option_columns = shift(@ARGV);
     } else {
         die "Unknown argument: $a";
     }
@@ -21,26 +27,26 @@ my $selectColumns = undef;
 
 sub createSelectColumns {
     my ($headers) = @_;
-    my @fields2 = split(/,/, $option_fields);
-    my @fields3 = ();
-    foreach my $f (@fields2) {
-        if ($f =~ /\A([.+?])\.\.([.+])\z/) {
+    my @columns2 = split(/,/, $option_columns);
+    my @columns3 = ();
+    foreach my $f (@columns2) {
+        if ($f =~ /\A(.+?)\.\.(.+)\z/) {
             my $f1 = $1;
             my $f2 = $2;
-            if ($f1 =~ /\A([.+])(0|[1-9][0-9]*)\z/) {
+            if ($f1 =~ /\A(.+)(0|[1-9][0-9]*)\z/) {
                 my $f1name = $1;
                 my $f1num = $2;
-                if ($f2 =~ /\A([.+])(0|[1-9][0-9]*)\z/) {
+                if ($f2 =~ /\A(.+)(0|[1-9][0-9]*)\z/) {
                     my $f2name = $1;
                     my $f2num = $2;
                     if ($f1name eq $f2name) {
                         if ($f1num <= $f2num) {
                             for (my $i = $f1num; $i <= $f2num; $i++) {
-                                push(@fields3, "$f1name$i");
+                                push(@columns3, "$f1name$i");
                             }
                         } else {
                             for (my $i = $f1num; $i >= $f2num; $i--) {
-                                push(@fields3, "$f1name$i");
+                                push(@columns3, "$f1name$i");
                             }
                         }
                         next;
@@ -48,28 +54,28 @@ sub createSelectColumns {
                 }
             }
         }
-        push(@fields3, $f);
+        push(@columns3, $f);
     }
 
     my $headerCount = @$headers;
-    my @fields4 = ();
-    foreach my $f (@fields3) {
+    my @columns4 = ();
+    foreach my $f (@columns3) {
         my $g = '';
         for (my $i = 0; $i < $headerCount; $i++) {
             if ($headers->[$i] eq $f) {
-                push(@fields4, $i);
+                push(@columns4, $i);
                 $g = 1;
                 last;
             }
         }
         unless ($g) {
-            print STDERR "Unknown field: $f\n";
+            print STDERR "Unknown column: $f\n";
         }
     }
-    unless (@fields4) {
-        die "Fields not specified.";
+    unless (@columns4) {
+        die "Columns not specified.";
     }
-    return \@fields4;
+    return \@columns4;
 
 }
 
