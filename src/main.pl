@@ -95,12 +95,19 @@ if ($help_stdout || $help_stderr) {
     }
 }
 
-if ($isOutputTty) {
+if ($isOutputTty && !defined($option_output)) {
     # 出力が端末の場合
     # TODO オプションで出力フォーマットが指定されていない場合に限定
     $option_output_format = "tty";
 } else {
     $option_output_format = "";
+}
+
+if (defined($option_output)) {
+    # 出力がファイルの場合
+    my $data_out;
+    open($data_out, '>', $option_output) or die "Cannot open file: $!";
+    open(STDOUT, '>&=', fileno($data_out));
 }
 
 if ($subcommand eq "cat") {
