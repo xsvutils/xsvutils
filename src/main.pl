@@ -37,6 +37,8 @@ while (@ARGV) {
         $subcommand = $a;
     } elsif ($a eq "cut") {
         $subcommand = $a;
+    } elsif ($a eq "summary") {
+        $subcommand = $a;
     } elsif ($a eq "hello") {
         $subcommand = $a;
     } elsif ($a eq "dummy") {
@@ -148,6 +150,18 @@ if ($subcommand eq "cat") {
         push(@options, "--pager");
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "perl", "$TOOL_DIR/cut.pl", @$subcommand_args);
+    exec(@command);
+} elsif ($subcommand eq "summary") {
+    my @options = ();
+    if (defined($option_format)) {
+        push(@options, $option_format);
+    }
+    if ($option_output_format eq "tty") {
+        push(@options, "--out-table");
+        push(@options, "--table-max-width", "500");
+        push(@options, "--pager");
+    }
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "perl", "$TOOL_DIR/summary.pl", @$subcommand_args);
     exec(@command);
 } elsif ($subcommand eq "hello") {
     my @options = ();
