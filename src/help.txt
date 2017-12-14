@@ -2,7 +2,30 @@ Utilities for handling separated value data
 
 Usage:
 
-    xsvutils [FILENAME] [SUBCOMMAND] [OPTIONS...]
+    xsvutils [<FILENAME>] [<SUBCOMMAND>] [<OPTIONS>...]
+
+Subcommands:
+
+    cat    Print data to the terminal
+    cut    Print specified columns
+    head   Print first N records
+
+    SUBCOMMAND省略時はcatになる。
+
+Common options:
+
+    --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
+    --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
+    -i <FILENAME>    Input from <FILENAME> (default is stdin)
+    -o <FILENAME>    Output to <FILENAME>  (default is stdout)
+
+Subcommand `cat`:
+
+Subcommand `cut`:
+
+Subcommand `head`:
+
+    -n <N>       Print first N records (default is 10)
 
 Example:
 
