@@ -33,9 +33,11 @@ while (@ARGV) {
         $option_format = "--csv";
     } elsif ($a eq "cat") {
         $subcommand = $a;
-    } elsif ($a eq "wcl") {
+    } elsif ($a eq "head") {
         $subcommand = $a;
     } elsif ($a eq "cut") {
+        $subcommand = $a;
+    } elsif ($a eq "wcl") {
         $subcommand = $a;
     } elsif ($a eq "summary") {
         $subcommand = $a;
@@ -130,15 +132,16 @@ if ($subcommand eq "cat") {
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "cat");
     exec(@command);
-} elsif ($subcommand eq "wcl") {
+} elsif ($subcommand eq "head") {
     my @options = ();
     if (defined($option_format)) {
         push(@options, $option_format);
     }
     if ($option_output_format eq "tty") {
-        push(@options, "--out-plain");
+        push(@options, "--out-table");
+        push(@options, "--pager");
     }
-    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "$TOOL_DIR/golang.bin", "wcl", "--header");
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "bash", "$TOOL_DIR/head.sh", @$subcommand_args);
     exec(@command);
 } elsif ($subcommand eq "cut") {
     my @options = ();
@@ -150,6 +153,16 @@ if ($subcommand eq "cat") {
         push(@options, "--pager");
     }
     my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "perl", "$TOOL_DIR/cut.pl", @$subcommand_args);
+    exec(@command);
+} elsif ($subcommand eq "wcl") {
+    my @options = ();
+    if (defined($option_format)) {
+        push(@options, $option_format);
+    }
+    if ($option_output_format eq "tty") {
+        push(@options, "--out-plain");
+    }
+    my @command = ("bash", "$TOOL_DIR/format-wrapper.sh", @options, "--", "$TOOL_DIR/golang.bin", "wcl", "--header");
     exec(@command);
 } elsif ($subcommand eq "summary") {
     my @options = ();
