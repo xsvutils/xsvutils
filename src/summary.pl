@@ -2,11 +2,12 @@ use strict;
 use warnings;
 use utf8;
 
-my $max_record_count = 1000;
+my $max_record_count = 10000;
 my $max_value_count = 167;
 
 my $headers = undef;
 my $header_count = 0;
+my $header_indeces = [];
 
 my $col_values = [];
 
@@ -20,6 +21,7 @@ while (my $line = <STDIN>) {
         $headers = \@cols;
         $header_count = scalar @cols;
         for (my $i = 0; $i < $header_count; $i++) {
+            push(@$header_indeces, $i);
             push(@$col_values, []);
         }
         next;
@@ -27,7 +29,7 @@ while (my $line = <STDIN>) {
 
     $record_count++;
 
-    for (my $i = 0; $i < $header_count; $i++) {
+    for my $i (@$header_indeces) {
         my $v = "";
         if (defined($cols[$i])) {
             $v = $cols[$i];
@@ -40,6 +42,7 @@ while (my $line = <STDIN>) {
             } elsif (@{$col_values->[$i]} == $max_value_count) {
                 unless (grep {$_ eq $v} @{$col_values->[$i]}) {
                     push(@{$col_values->[$i]}, "...");
+                    $header_indeces = [grep {$_ ne $i} @$header_indeces];
                 }
             }
         }
