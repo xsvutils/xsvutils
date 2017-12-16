@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use utf8;
 
+my $header_count = undef;
 my $counts = {};
 
 my $record_count = 0;
@@ -20,6 +21,11 @@ while (my $line = <STDIN>) {
     $record_count++;
 
     my $c = scalar @cols;
+
+    if (!defined($header_count)) {
+        $header_count = $c;
+    }
+
     if (defined($counts->{$c})) {
         $counts->{$c}++;
     } else {
@@ -37,10 +43,14 @@ while (my $line = <STDIN>) {
 
 my @counts2 = sort { $a <=> $b } (keys %$counts);
 
-print "cols\trecords\tratio\n";
+print "cols\trecords\tratio\theader\n";
 for my $c (@counts2) {
     my $v = $counts->{$c};
     my $ratio = sprintf("%.2f%%", 100.0 * $v / $record_count);
-    print "$c\t$v\t$ratio\n";
+    my $h = "";
+    if ($c == $header_count) {
+        $h = "*";
+    }
+    print "$c\t$v\t$ratio\t$h\n";
 }
 
