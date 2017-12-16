@@ -1,7 +1,6 @@
 package wcl
 
 import (
-	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
@@ -9,37 +8,41 @@ import (
 
 func Count(rd io.Reader, hasHeader bool) {
 	lineCount := 0
-	errLineCount := 0
-	errmsgs := make([]string, 0)
 
-	r := csv.NewReader(rd)
-	r.Comma = '\t'
-	r.FieldsPerRecord = -1
-
-	if hasHeader {
-		r.Read()
-	}
-
+	var lastLF bool = false;
+	buf := make([]byte, 4096)
 	for {
-		_, err := r.Read()
+		len, err := rd.Read(buf)
 		if err == io.EOF {
+			if !lastLF {
+				lineCount++;
+			}
 			break
 		}
 		if err != nil {
-			errLineCount++
-			errmsgs = append(errmsgs, err.Error())
+			fmt.Fprintln(os.Stderr, err.Error())
+			break
 		}
-		lineCount++
+
+		for i := 0; i < len; i++ {
+			if buf[i] == '\n' {
+				lineCount++;
+				if lineCount % 1000000 == 0 {
+					fmt.Fprintf(os.Stderr, "Record: %d\n", lineCount);
+				}
+			}
+		}
+		if buf[len - 1] == '\n' {
+			lastLF = true;
+		} else {
+			lastLF = false;
+		}
 	}
 
-	if errLineCount == 0 {
-		fmt.Println(lineCount)
-		os.Exit(0)
-	} else {
-		fmt.Println(lineCount)
-		for _, msg := range errmsgs {
-			fmt.Fprintln(os.Stderr, msg)
-		}
-		os.Exit(1)
+	if hasHeader {
+		lineCount--;
 	}
+
+	fmt.Println(lineCount)
+	os.Exit(0)
 }

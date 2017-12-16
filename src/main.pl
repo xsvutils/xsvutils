@@ -47,6 +47,9 @@ while (@ARGV) {
     } elsif ($a eq "cut") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+    } elsif ($a eq "wcl") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
+        $subcommand = $a;
     } elsif ($a eq "summary") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
@@ -198,15 +201,22 @@ if ($format eq "csv") {
     $main_1_source = "$TOOL_DIR/golang.bin csv2tsv";
 }
 
+my $last_subcommand = undef;
 foreach my $t (@$subcommands) {
     $subcommand = shift(@$t);
     $subcommand_args = $t;
+    if (defined($last_subcommand) && $last_subcommand eq "wcl") {
+        die "subcommand `wcl` must be last`\n";
+    }
     if ($subcommand eq "head") {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "bash $TOOL_DIR/head.sh @$subcommand_args";
     } elsif ($subcommand eq "cut") {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "perl $TOOL_DIR/cut.pl @$subcommand_args";
+    } elsif ($subcommand eq "wcl") {
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "$TOOL_DIR/golang.bin wcl --header @$subcommand_args";
     } elsif ($subcommand eq "summary") {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "perl $TOOL_DIR/summary.pl @$subcommand_args";
@@ -214,11 +224,12 @@ foreach my $t (@$subcommands) {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "perl $TOOL_DIR/countcols.pl @$subcommand_args";
     }
+    $last_subcommand = $subcommand;
 }
 
-if ($option_output_format eq "tty") {
+if ($last_subcommand ne "wcl" && $option_output_format eq "tty") {
     my $table_option = "";
-    if ($subcommand eq "summary") {
+    if ($last_subcommand eq "summary") {
         $table_option .= " --max-width 500";
     }
     $main_1_source .= " | " if ($main_1_source ne "");

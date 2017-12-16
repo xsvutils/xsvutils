@@ -17,7 +17,6 @@ if (defined($ENV{TERMINAL_LINES})) {
 } else {
     $terminal_height = 0;
 }
-print STDERR "terminal_height=$terminal_height\n";
 
 my $max_width = 80;
 
