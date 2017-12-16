@@ -22,7 +22,7 @@ $SIG{INT} = \&interrupt;
 
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
-    my @cols = split(/\t/, $line);
+    my @cols = split(/\t/, $line, -1);
 
     $record_count++;
 

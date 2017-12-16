@@ -118,7 +118,7 @@ my $col_lengths = undef;
 
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
-    my @cols = split(/\t/, $line);
+    my @cols = split(/\t/, $line, -1);
 
     if (!defined($headers)) {
         $headers = \@cols;
