@@ -7,6 +7,18 @@ use utf8;
 
 use Encode qw/encode_utf8 decode_utf8/;
 
+# 端末に表示できる行数
+my $terminal_height;
+if (defined($ENV{TERMINAL_LINES})) {
+    $terminal_height = $ENV{TERMINAL_LINES};
+    if ($terminal_height < 3) {
+        $terminal_height = 0;
+    }
+} else {
+    $terminal_height = 0;
+}
+print STDERR "terminal_height=$terminal_height\n";
+
 my $max_width = 80;
 
 while (@ARGV) {
@@ -73,8 +85,18 @@ sub stringViewPadding {
     return " " . $str . (" " x ($viewLength - $resultLength + 1));
 }
 
+my $printed_line_count = 0;
+my $printing_header_cols = undef;
+
 sub printRecord {
-    my ($cols, $col_lengths) = @_;
+    my ($cols, $col_lengths, $header_flag) = @_;
+
+    if (!$header_flag && $terminal_height > 0 && $printed_line_count > 0 &&
+        $printed_line_count % ($terminal_height - 1) == 0) {
+        printRecord($printing_header_cols, $col_lengths, 1);
+    }
+    $printed_line_count++;
+
     my @colViews = ();
     my $col_count = scalar @$col_lengths;
     for (my $i = 0; $i < $col_count; $i++) {
@@ -116,11 +138,13 @@ while (my $line = <STDIN>) {
             }
         }
         unless (@records) {
+            # header line
             my @numheader = ();
             for (my $i = 0; $i < $header_count; $i++) {
                 push(@numheader, $i + 1);
             }
             push(@records, \@numheader);
+            $printing_header_cols = \@cols;
         }
         push(@records, \@cols);
         next;

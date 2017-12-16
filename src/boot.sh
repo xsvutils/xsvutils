@@ -37,6 +37,8 @@ fi
 [ -n "$WORKING_DIR" ] || { echo "Cannot WORKING_DIR: $WORKING_DIR"; exit $?; }
 trap "rm -rf $WORKING_DIR" EXIT
 
+export TERMINAL_LINES=$(tput lines);
+
 perl $TOOL_DIR/main.pl "$@"
 
 exit $?
