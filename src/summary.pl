@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use utf8;
 
-my $max_record_count = 10000;
 my $max_value_count = 167;
 
 my $headers = undef;
@@ -13,9 +12,18 @@ my $col_values = [];
 
 my $record_count = 0;
 
+# Ctrl-C で中断して結果を表示するためのハンドラ
+my $interrupted = '';
+sub interrupt {
+    $interrupted = 1;
+}
+$SIG{INT} = \&interrupt;
+
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line);
+
+    $record_count++;
 
     if (!defined($headers)) {
         $headers = \@cols;
@@ -26,8 +34,6 @@ while (my $line = <STDIN>) {
         }
         next;
     }
-
-    $record_count++;
 
     for my $i (@$header_indeces) {
         my $v = "";
@@ -48,7 +54,11 @@ while (my $line = <STDIN>) {
         }
     }
 
-    if ($record_count == $max_record_count) {
+    if ($record_count % 10000 == 0) {
+        print STDERR "Record: $record_count\n";
+    }
+
+    if (!@$header_indeces || $interrupted) {
         for (my $i = 0; $i < $header_count; $i++) {
             if (@{$col_values->[$i]} <= $max_value_count) {
                 push(@{$col_values->[$i]}, "...");

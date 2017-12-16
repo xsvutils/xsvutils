@@ -23,6 +23,12 @@ while (@ARGV) {
     }
 }
 
+# Ctrl-C を無視するハンドラ
+sub interrupt {
+    # nothing
+}
+$SIG{INT} = \&interrupt;
+
 sub charWidth {
     my ($ch) = @_;
     my $o = ord($ch);
