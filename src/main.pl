@@ -41,6 +41,9 @@ my $subcommand_args = [];
 my $addcol_name = undef;
 my $addcol_value = undef;
 
+my $exists_args = '';
+$exists_args = 1 if (@ARGV);
+
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--help") {
@@ -53,10 +56,15 @@ while (@ARGV) {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
         $subcommand_args = [];
-    } elsif ($a eq "head") {
+    } elsif ($a eq "take" || $a eq "head") {
+        $a = "take";
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
-        $subcommand_args = [];
+        $subcommand_args = ['10'];
+    } elsif ($a eq "drop") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
+        $subcommand = $a;
+        $subcommand_args = ['10'];
     } elsif ($a eq "cut") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
@@ -93,16 +101,21 @@ while (@ARGV) {
     } elsif (!defined($option_input) && -e $a) {
         $option_input = $a;
     } elsif (defined($subcommand)) {
-        if ($subcommand eq "head") {
+        if ($subcommand eq "take" || $subcommand eq "drop") {
+            my $num = undef;
             if ($a eq "-n") {
                 die "option -n needs an argument" unless (@ARGV);
-                push(@$subcommand_args, $a, shift(@ARGV));
+                $num = shift(@ARGV);
+                die "option -n needs a number argument" unless ($num =~ /\A(0|[1-9][0-9]*)\z/);
             } elsif ($a =~ /\A-n(0|[1-9][0-9]*)\z/) {
-                push(@$subcommand_args, '-n', $1);
+                $num = $1;
             } elsif ($a =~ /\A(0|[1-9][0-9]*)\z/) {
-                push(@$subcommand_args, '-n', $a);
+                $num = $a;
             } else {
                 die "Unknown argument: $a";
+            }
+            if (defined($num)) {
+                $subcommand_args = [$num];
             }
         } elsif ($subcommand eq "cut") {
             if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
@@ -170,9 +183,14 @@ my $help_stderr = undef;
 if ($option_help) {
     $help_stdout = 1;
 } elsif (!defined($option_input)) {
-    # 入力がない場合は、
-    # ヘルプをエラー出力する。
-    $help_stderr = 1;
+    if ($exists_args) {
+        # 入力がない場合は、
+        # ヘルプをエラー出力する。
+        $help_stderr = 1;
+    } else {
+        # なにもパラメータがない場合は、 --help を付けたのと同じ扱いとする
+        $help_stdout = 1;
+    }
 }
 
 if ($help_stdout || $help_stderr) {
@@ -181,12 +199,13 @@ if ($help_stdout || $help_stderr) {
     my @lines = <IN>;
     my $str = join('', @lines);
     close IN;
-    if ($help_stdout) {
-        print $str;
-        exit(0);
+    if ($help_stderr) {
+        open(STDOUT, '>&=', fileno(STDERR));
+    }
+    if ($isOutputTty) {
+        exec("less", "-SRXF", "$TOOL_DIR/help.txt");
     } else {
-        print STDERR $str;
-        exit(1);
+        exec("cat", "$TOOL_DIR/help.txt");
     }
 }
 
@@ -269,9 +288,18 @@ foreach my $t (@$subcommands) {
     if (defined($last_subcommand) && $last_subcommand eq "wcl") {
         die "subcommand `wcl` must be last`\n";
     }
-    if ($subcommand eq "head") {
+    if ($subcommand eq "take") {
+        my $num = $subcommand_args->[0];
+        my $arg = escape_for_bash('-n' . ($num + 1));
+
         $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "bash $TOOL_DIR/head.sh @$subcommand_args";
+        $main_1_source .= "head $arg";
+    } elsif ($subcommand eq "drop") {
+        my $num = $subcommand_args->[0];
+        my $arg = escape_for_bash(($num + 2) . ',$p');
+
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "sed -n -e 1p -e $arg";
     } elsif ($subcommand eq "cut") {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "perl $TOOL_DIR/cut.pl @$subcommand_args";

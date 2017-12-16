@@ -12,7 +12,9 @@ Usage:
 Subcommands:
 
     cat       Print data to the terminal
+    take      Print first N records
     head      Print first N records
+    drop      Print all except first N records
     cut       Print specified columns
     wcl       レコード数を表示する
     summary   データのサマリを表示する
@@ -68,7 +70,7 @@ Subcommand `cut`:
 
         $ xsvutils data.tsv cut --col foo,col1..col20
 
-Subcommand `head`:
+Subcommand `take` and Subcommand `head`:
 
     Options:
         -n <N>    Print first N records (default is 10)
@@ -79,11 +81,24 @@ Subcommand `head`:
         $ xsvutils FILENAME head -n5
         $ xsvutils FILENAME head 5
 
-    cut と head を組み合わせることも可能で、以下は結果が同じになる。
+    他のサブコマンドと組み合わせることも可能で、以下は結果が同じになる。
     つまり先頭の20レコード(ヘッダ行を除く)のid,nameの2列を表示する。
 
         $ xsvutils FILENAME head 20 cut id,name
         $ xsvutils FILENAME cut id,name head 20
+
+Subcommand `drop`:
+
+    Options:
+        -n <N>    Print all except first N records (default is 10)
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME drop -n 5
+        $ xsvutils FILENAME drop -n5
+        $ xsvutils FILENAME drop 5
+
+    他のサブコマンドとの組み合わせは `take` サブコマンドと同様である。
 
 Subcommand `wcl`:
 
@@ -132,5 +147,10 @@ Subcommand `addcol`:
         $ xsvutils FILENAME addcol --name col21 --value 0
         $ xsvutils FILENAME addcol --value 0 --name col21
         $ xsvutils FILENAME addcol col21 0
+
+    他のサブコマンドと組み合わせることも可能。
+    以下の例では、FILENAME の id カラムと固定値 0 のカラム col0 の2カラムを表示する。
+
+        $ xsvutils FILENAME addcol col0 dummy cut id,col0
 
 
