@@ -3,6 +3,12 @@
 TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g') | LC_ALL=C sort))
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
+RM_TARGET=$(diff -u <(ls $TARGET_SOURCES) <(ls target/*) | grep -E '^\+target' | cut -b2-)
+if [ -n "$RM_TARGET" ]; then
+    echo rm $RM_TARGET >&2
+    rm $RM_TARGET >&2
+fi
+
 if ! which go >/dev/null; then
     bash etc/install-golang.sh >&2 || exit $?
     cat <<EOF
