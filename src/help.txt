@@ -29,6 +29,7 @@ Common options:
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
     --i-header <HEADERS> 入力にはヘッダーがなくヘッダーをオプションで指定。HEADERS はコンマ区切り
+    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。

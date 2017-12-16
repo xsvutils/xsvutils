@@ -31,6 +31,7 @@ my $option_output = ""; # 空文字列は標準出力の意味
 
 my $option_format = undef;
 my $option_input_headers = undef;
+my $option_output_headers_flag = 1;
 my $option_output_format = undef;
 
 my $subcommands = [];
@@ -87,6 +88,8 @@ while (@ARGV) {
     } elsif ($a eq "--i-header") {
         die "option --i-header needs an argument" unless (@ARGV);
         $option_input_headers = shift(@ARGV);
+    } elsif ($a eq "--o-no-header") {
+        $option_output_headers_flag = '';
     } elsif (!defined($option_input) && -e $a) {
         $option_input = $a;
     } elsif (defined($subcommand)) {
@@ -299,6 +302,11 @@ if ($last_subcommand ne "wcl" && $option_output_format eq "tty") {
     }
     $main_1_source .= " | " if ($main_1_source ne "");
     $main_1_source .= "perl $TOOL_DIR/table.pl$table_option | less -SRX";
+}
+
+if ($last_subcommand ne "wcl" && !$option_output_headers_flag && $option_output_format ne "tty") {
+    $main_1_source .= " | " if ($main_1_source ne "");
+    $main_1_source .= "tail -n+2";
 }
 
 $main_1_source = "cat" if ($main_1_source eq "");
