@@ -247,6 +247,43 @@ sub guess_format {
     }
 }
 
+sub guess_charencoding {
+    my ($head_buf) = @_;
+    my $len = length($head_buf);
+    my $utf8_multi = 0;
+    my $utf8_flag = 1;
+    my $sjis_multi = 0;
+    my $sjis_flag = 1;
+    for (my $i = 0; $i < $len; $i++) {
+        my $b = ord(substr($head_buf, $i, 1));
+        if ($utf8_multi > 0) {
+            if    ($b >= 0x80 && $b < 0xC0)  { $utf8_multi--; }
+            else                             { $utf8_multi = 0; $utf8_flag = ''; }
+        } else {
+            if    ($b < 0x80)                { ; }
+            elsif ($b >= 0xC2 && $b < 0xE0)  { $utf8_multi = 1; }
+            elsif ($b >= 0xE0 && $b < 0xF0)  { $utf8_multi = 2; }
+            elsif ($b >= 0xF0 && $b < 0xF8)  { $utf8_multi = 3; }
+            else                             { $utf8_flag = ''; }
+        }
+        if ($sjis_multi > 0) {
+            if    ($b >= 0x40 && $b <= 0x7E) { $sjis_multi = 0; }
+            elsif ($b >= 0x80 && $b <= 0xFC) { $sjis_multi = 0; }
+            else                             { $sjis_multi = 0; $sjis_flag = ''; }
+        } else {
+            if    ($b <= 0x7F)               { ; }
+            elsif ($b >= 0x81 && $b <= 0x9F) { $sjis_multi = 1; }
+            elsif ($b >= 0xE0 && $b <= 0xFC) { $sjis_multi = 1; }
+            else                             { $sjis_flag = ''; }
+        }
+    }
+    if (!$utf8_flag && $sjis_flag) {
+        return "SHIFT-JIS";
+    } else {
+        return "UTF-8";
+    }
+}
+
 my $head_size = 100 * 4096;
 my $head_buf;
 
@@ -258,12 +295,18 @@ if (defined($option_format)) {
 } else {
     $format = guess_format($head_buf);
 }
+my $charencoding = guess_charencoding($head_buf);
 
 ################################################################################
 # build script
 ################################################################################
 
 my $main_1_source = "";
+
+if ($charencoding ne "UTF-8") {
+    $main_1_source .= " | " if ($main_1_source ne "");
+    $main_1_source .= "iconv -f $charencoding -t UTF-8";
+}
 
 if ($format eq "csv") {
     $main_1_source .= " | " if ($main_1_source ne "");
