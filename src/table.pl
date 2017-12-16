@@ -19,6 +19,8 @@ if (defined($ENV{TERMINAL_LINES})) {
 }
 
 my $max_width = 80;
+my $option_col_number = '';
+my $option_record_number = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
@@ -29,6 +31,10 @@ while (@ARGV) {
         if ($max_width ne $b) {
             die "option --max-width argument must be integer";
         }
+    } elsif ($a eq "--col-number") {
+        $option_col_number = 1;
+    } elsif ($a eq "--record-number") {
+        $option_record_number = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -116,9 +122,20 @@ my $headers = undef;
 my $header_count = 0;
 my $col_lengths = undef;
 
+my $record_count = 0;
+
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
+
+    if ($option_record_number) {
+        if (defined($headers)) {
+            unshift(@cols, $record_count);
+        } else {
+            unshift(@cols, '');
+        }
+    }
+    $record_count++;
 
     if (!defined($headers)) {
         $headers = \@cols;
@@ -138,11 +155,16 @@ while (my $line = <STDIN>) {
         }
         unless (@records) {
             # header line
-            my @numheader = ();
-            for (my $i = 0; $i < $header_count; $i++) {
-                push(@numheader, $i + 1);
+            if ($option_col_number) {
+                my @numheader = ();
+                if ($option_record_number) {
+                    unshift(@numheader, '');
+                }
+                for (my $i = 0; $i < $header_count; $i++) {
+                    push(@numheader, $i + 1);
+                }
+                push(@records, \@numheader);
             }
-            push(@records, \@numheader);
             $printing_header_cols = \@cols;
         }
         push(@records, \@cols);

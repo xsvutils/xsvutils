@@ -290,6 +290,10 @@ foreach my $t (@$subcommands) {
 
 if ($last_subcommand ne "wcl" && $option_output_format eq "tty") {
     my $table_option = "";
+    if ($last_subcommand ne "countcols") {
+        $table_option .= " --col-number";
+        $table_option .= " --record-number";
+    }
     if ($last_subcommand eq "summary") {
         $table_option .= " --max-width 500";
     }
