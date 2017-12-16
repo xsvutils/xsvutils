@@ -8,6 +8,7 @@ my $headers = undef;
 my $header_count = 0;
 my $header_indeces = [];
 
+my $col_counts = [];
 my $col_values = [];
 
 my $record_count = 0;
@@ -30,9 +31,20 @@ while (my $line = <STDIN>) {
         $header_count = scalar @cols;
         for (my $i = 0; $i < $header_count; $i++) {
             push(@$header_indeces, $i);
+            push(@$col_counts, 0);
             push(@$col_values, []);
         }
         next;
+    }
+
+    for (my $i = 0; $i < $header_count; $i++) {
+        my $v = "";
+        if (defined($cols[$i])) {
+            $v = $cols[$i];
+        }
+        if ($v ne "") {
+            $col_counts->[$i]++;
+        }
     }
 
     for my $i (@$header_indeces) {
@@ -68,10 +80,12 @@ while (my $line = <STDIN>) {
     }
 }
 
-print "column\tvalues\n";
+print "column\tratio\tvalues\n";
 for (my $i = 0; $i < $header_count; $i++) {
     my $col_name = $headers->[$i];
+    my $count = $col_counts->[$i];
+    my $ratio = sprintf("%.2f%%", 100.0 * $count / $record_count);
     my $values = join(", ", @{$col_values->[$i]});
-    print "$col_name\t$values\n";
+    print "$col_name\t$ratio\t$values\n";
 }
 
