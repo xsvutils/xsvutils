@@ -4,11 +4,19 @@ Usage:
 
     xsvutils [<FILENAME>] [<SUBCOMMAND>] [<OPTIONS>...]
 
+    FILENAME と SUBCOMMAND は順番が逆でも可能。
+    SUBCOMMAND と解釈されうる FILENAME は -i オプションでの指定が必要。
+
+    サブコマンドは内容により複数を組み合わせることも可能。
+
 Subcommands:
 
-    cat    Print data to the terminal
-    cut    Print specified columns
-    head   Print first N records
+    cat       Print data to the terminal
+    head      Print first N records
+    cut       Print specified columns
+    wcl       レコード数を表示する
+    summary   データのサマリを表示する
+    countcols 列数を集計する
 
     SUBCOMMAND省略時はcatになる。
 
@@ -19,43 +27,93 @@ Common options:
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
+    --i-header <HEADERS> 入力にはヘッダーがなくヘッダーをオプションで指定。HEADERS はコンマ区切り
+
+    xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
+    それらがない場合は標準入力が入力になる。
+
+    これらのオプションは FILENAME, SUBCOMMAND の前に置くことも可能。
+    サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
+
 Subcommand `cat`:
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME
+        $ xsvutils FILENAME cat
+        $ xsvutils -i FILENAME
+        $ xsvutils -i FILENAME cat
+        $ xsvutils < FILENAME
+        $ xsvutils cat < FILENAME
 
 Subcommand `cut`:
 
-    --col <COLUMNS>   Print <COLUMNS>
+    Options:
+        --col <COLUMNS>   Print <COLUMNS>
 
-    以下は同じ意味です。
+    以下は同じ意味である。
 
-    cut --col name1,name2,name3
-    cut --col name1..name3
-    cut name1,name2,name3
-    cut name1..name3
+        $ xsvutils FILENAME cut --col name1,name2,name3
+        $ xsvutils FILENAME cut --col name1..name3
+        $ xsvutils FILENAME cut name1,name2,name3
+        $ xsvutils FILENAME cut name1..name3
+
+    Retrieve only 3 columns: foo, col1, col20
+
+        $ xsvutils data.tsv cut --col foo,col1,col20
+
+    retrieve 21 columns: foo, col1, col2, col3, ... col20
+
+        $ xsvutils data.tsv cut --col foo,col1..col20
 
 Subcommand `head`:
 
-    -n <N>           Print first N records (default is 10)
+    Options:
+        -n <N>    Print first N records (default is 10)
 
     以下は同じ意味です。
 
-    head -n 5
-    head -n5
-    head 5
+        $ xsvutils FILENAME head -n 5
+        $ xsvutils FILENAME head -n5
+        $ xsvutils FILENAME head 5
 
-Example:
+    cut と head を組み合わせることも可能で、以下は結果が同じになる。
+    つまり先頭の20レコード(ヘッダ行を除く)のid,nameの2列を表示する。
 
-    Print tsv/csv data to the terminal.
+        $ xsvutils FILENAME head 20 cut id,name
+        $ xsvutils FILENAME cut id,name head 20
 
-    $ xsvutils data.tsv
-    $ xsvutils data.csv
-    $ ssh remote-host cat foo/bar.csv | xsvutils
+Subcommand `wcl`:
 
-    Retrieve specified columns.
+    レコード数を表示する。ヘッダ行は含まない。
 
-    $ xsvutils data.tsv cut --col foo,col1,col20    # retrieve only 3 columns: foo, col1, col20
-    $ xsvutils data.tsv cut --col foo,col1..col20   # retrieve 21 columns: foo, col1, col2, col3, ... col20
+    データが大きい場合には、進捗表示をする。
 
-    Retrieve specified columns of first 10 records.
+Subcommand `summary`:
 
-    $ xsvutils data.tsv cut col1,col2 head
+    データのカラムごとのサマリを表示する。
+
+    出力は右から、カラムの位置、カラム名、データが含まれている割合、値の例の列挙である。
+
+    データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+
+Subcommand `countcols`:
+
+    カラム数を集計する。ヘッダ行も含めて集計する。
+
+    データのカラム数が不明な場合に、正しいカラム数を推測するための参考情報になる。
+
+    以下の出力例は、1行目が59カラムあり、しかしほとんどの列が56カラムであり、
+    もっともカラム数の少ないのは51カラムであることを示す。
+
+        | cols | records | ratio  | header |
+        | 51   | 439     | 0.36%  |        |
+        | 54   | 239     | 0.20%  |        |
+        | 55   | 169     | 0.14%  |        |
+        | 56   | 118485  | 97.36% |        |
+        | 57   | 1423    | 1.17%  |        |
+        | 58   | 846     | 0.70%  |        |
+        | 59   | 96      | 0.08%  | *      |
+
+    データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
 
