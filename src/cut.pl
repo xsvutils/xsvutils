@@ -9,12 +9,6 @@ while (@ARGV) {
     if ($a eq "--col") {
         die "option --col needs an argument" unless (@ARGV);
         $option_columns = shift(@ARGV);
-    } elsif ($a eq "--cols") {
-        die "option --cols needs an argument" unless (@ARGV);
-        $option_columns = shift(@ARGV);
-    } elsif ($a eq "--columns") {
-        die "option --columns needs an argument" unless (@ARGV);
-        $option_columns = shift(@ARGV);
     } else {
         die "Unknown argument: $a";
     }

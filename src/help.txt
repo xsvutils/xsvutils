@@ -23,9 +23,24 @@ Subcommand `cat`:
 
 Subcommand `cut`:
 
+    --col <COLUMNS>   Print <COLUMNS>
+
+    以下は同じ意味です。
+
+    cut --col name1,name2,name3
+    cut --col name1..name3
+    cut name1,name2,name3
+    cut name1..name3
+
 Subcommand `head`:
 
-    -n <N>       Print first N records (default is 10)
+    -n <N>           Print first N records (default is 10)
+
+    以下は同じ意味です。
+
+    head -n 5
+    head -n5
+    head 5
 
 Example:
 
@@ -39,4 +54,8 @@ Example:
 
     $ xsvutils data.tsv cut --col foo,col1,col20    # retrieve only 3 columns: foo, col1, col20
     $ xsvutils data.tsv cut --col foo,col1..col20   # retrieve 21 columns: foo, col1, col2, col3, ... col20
+
+    Retrieve specified columns of first 10 records.
+
+    $ xsvutils data.tsv cut col1,col2 head
 

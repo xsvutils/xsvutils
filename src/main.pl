@@ -19,7 +19,6 @@ if (-t STDOUT) {
 # parse command line options
 ################################################################################
 
-my $subcommand = undef;
 my $option_help = undef;
 my $option_input = undef;
 my $option_output = ""; # 空文字列は標準出力の意味
@@ -27,6 +26,8 @@ my $option_output = ""; # 空文字列は標準出力の意味
 my $option_format = undef;
 my $option_output_format = undef;
 
+my $subcommands = [];
+my $subcommand = undef;
 my $subcommand_args = [];
 
 while (@ARGV) {
@@ -38,12 +39,16 @@ while (@ARGV) {
     } elsif ($a eq "--csv") {
         $option_format = "csv";
     } elsif ($a eq "cat") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
     } elsif ($a eq "head") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
     } elsif ($a eq "cut") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
     } elsif ($a eq "summary") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
     } elsif ($a eq "-i") {
         die "option -i needs an argument" unless (@ARGV);
@@ -53,20 +58,34 @@ while (@ARGV) {
         $option_output = shift(@ARGV);
     } elsif (!defined($option_input) && -e $a) {
         $option_input = $a;
-    } elsif (defined($subcommand) && $subcommand eq "head" && $a eq "-n") {
-        die "option -n needs an argument" unless (@ARGV);
-        push(@$subcommand_args, $a, shift(@ARGV));
-    } elsif (defined($subcommand) && $subcommand eq "cut" && $a eq "--col") {
-        die "option --col needs an argument" unless (@ARGV);
-        push(@$subcommand_args, $a, shift(@ARGV));
-    } elsif (defined($subcommand) && $subcommand eq "cut" && $a eq "--cols") {
-        die "option --cols needs an argument" unless (@ARGV);
-        push(@$subcommand_args, $a, shift(@ARGV));
-    } elsif (defined($subcommand) && $subcommand eq "cut" && $a eq "--columns") {
-        die "option --columns needs an argument" unless (@ARGV);
-        push(@$subcommand_args, $a, shift(@ARGV));
+    } elsif (defined($subcommand)) {
+        if ($subcommand eq "head") {
+            if ($a eq "-n") {
+                die "option -n needs an argument" unless (@ARGV);
+                push(@$subcommand_args, $a, shift(@ARGV));
+            } elsif ($a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+                push(@$subcommand_args, '-n', $1);
+            } elsif ($a =~ /\A(0|[1-9][0-9]*)\z/) {
+                push(@$subcommand_args, '-n', $a);
+            } else {
+                die "Unknown argument: $a";
+            }
+        } elsif ($subcommand eq "cut") {
+            if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
+                die "option $a needs an argument" unless (@ARGV);
+                push(@$subcommand_args, '--col', shift(@ARGV));
+            } else {
+                push(@$subcommand_args, '--col', $a);
+            }
+        } else {
+            die "Unknown argument: $a";
+        }
+    } else {
+        die "Unknown argument: $a";
     }
 }
+
+push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
 
 if (!$isInputTty && !defined($option_input) && !$option_help) {
     # 入力がパイプにつながっていて
@@ -76,10 +95,10 @@ if (!$isInputTty && !defined($option_input) && !$option_help) {
     $option_input = ""; # stdin
 }
 
-if (defined($option_input) && !defined($subcommand)) {
+if (defined($option_input) && !@$subcommands) {
     # 入力があり、サブコマンドが指定されていない場合は、
     # サブコマンドを cat とする。
-    $subcommand = "cat";
+    push(@$subcommands, ["cat"]);
 }
 
 if ($isOutputTty && $option_output eq "") {
@@ -176,15 +195,19 @@ if ($format eq "csv") {
     $main_1_source = "$TOOL_DIR/golang.bin csv2tsv";
 }
 
-if ($subcommand eq "head") {
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "bash $TOOL_DIR/head.sh @$subcommand_args";
-} elsif ($subcommand eq "cut") {
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "perl $TOOL_DIR/cut.pl @$subcommand_args";
-} elsif ($subcommand eq "summary") {
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "perl $TOOL_DIR/summary.pl @$subcommand_args";
+foreach my $t (@$subcommands) {
+    $subcommand = shift(@$t);
+    $subcommand_args = $t;
+    if ($subcommand eq "head") {
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "bash $TOOL_DIR/head.sh @$subcommand_args";
+    } elsif ($subcommand eq "cut") {
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "perl $TOOL_DIR/cut.pl @$subcommand_args";
+    } elsif ($subcommand eq "summary") {
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "perl $TOOL_DIR/summary.pl @$subcommand_args";
+    }
 }
 
 if ($option_output_format eq "tty") {
