@@ -50,6 +50,9 @@ while (@ARGV) {
     } elsif ($a eq "summary") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+    } elsif ($a eq "countcols") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
+        $subcommand = $a;
     } elsif ($a eq "-i") {
         die "option -i needs an argument" unless (@ARGV);
         $option_input = shift(@ARGV);
@@ -207,6 +210,9 @@ foreach my $t (@$subcommands) {
     } elsif ($subcommand eq "summary") {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "perl $TOOL_DIR/summary.pl @$subcommand_args";
+    } elsif ($subcommand eq "countcols") {
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "perl $TOOL_DIR/countcols.pl @$subcommand_args";
     }
 }
 

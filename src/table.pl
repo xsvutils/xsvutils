@@ -115,6 +115,13 @@ while (my $line = <STDIN>) {
                 $col_lengths->[$i] = $l;
             }
         }
+        unless (@records) {
+            my @numheader = ();
+            for (my $i = 0; $i < $header_count; $i++) {
+                push(@numheader, $i + 1);
+            }
+            push(@records, \@numheader);
+        }
         push(@records, \@cols);
         next;
     }

@@ -80,12 +80,13 @@ while (my $line = <STDIN>) {
     }
 }
 
-print "column\tratio\tvalues\n";
+print "num\tcolumn\tratio\tvalues\n";
 for (my $i = 0; $i < $header_count; $i++) {
+    my $num = $i + 1;
     my $col_name = $headers->[$i];
     my $count = $col_counts->[$i];
     my $ratio = sprintf("%.2f%%", 100.0 * $count / $record_count);
     my $values = join(", ", @{$col_values->[$i]});
-    print "$col_name\t$ratio\t$values\n";
+    print "$num\t$col_name\t$ratio\t$values\n";
 }
 
