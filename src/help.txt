@@ -16,7 +16,8 @@ Subcommands:
     cut       Print specified columns
     wcl       レコード数を表示する
     summary   データのサマリを表示する
-    countcols 列数を集計する
+    countcols カラム数を集計する
+    addcol    固定値のカラムを一番左に追加する
 
     SUBCOMMAND省略時はcatになる。
 
@@ -71,7 +72,7 @@ Subcommand `head`:
     Options:
         -n <N>    Print first N records (default is 10)
 
-    以下は同じ意味です。
+    以下は同じ意味である。
 
         $ xsvutils FILENAME head -n 5
         $ xsvutils FILENAME head -n5
@@ -116,4 +117,19 @@ Subcommand `countcols`:
         | 59   | 96      | 0.08%  | *      |
 
     データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+
+Subcommand `addcol`:
+
+    固定値のカラムを一番左に追加する
+
+    Options:
+        --name <COLUMN>
+        --value <VALUE>
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME addcol --name col21 --value 0
+        $ xsvutils FILENAME addcol --value 0 --name col21
+        $ xsvutils FILENAME addcol col21 0
+
 

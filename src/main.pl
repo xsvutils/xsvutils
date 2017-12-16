@@ -19,6 +19,12 @@ if (-t STDOUT) {
 # parse command line options
 ################################################################################
 
+sub escape_for_bash {
+    my ($str) = @_;
+    $str =~ s/'/'"'"'/g;
+    return "'" . $str . "'";
+}
+
 my $option_help = undef;
 my $option_input = undef;
 my $option_output = ""; # 空文字列は標準出力の意味
@@ -31,6 +37,9 @@ my $subcommands = [];
 my $subcommand = undef;
 my $subcommand_args = [];
 
+my $addcol_name = undef;
+my $addcol_value = undef;
+
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--help") {
@@ -42,21 +51,33 @@ while (@ARGV) {
     } elsif ($a eq "cat") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+        $subcommand_args = [];
     } elsif ($a eq "head") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+        $subcommand_args = [];
     } elsif ($a eq "cut") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+        $subcommand_args = [];
     } elsif ($a eq "wcl") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+        $subcommand_args = [];
     } elsif ($a eq "summary") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+        $subcommand_args = [];
     } elsif ($a eq "countcols") {
         push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
         $subcommand = $a;
+        $subcommand_args = [];
+    } elsif ($a eq "addcol") {
+        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
+        $subcommand = $a;
+        $subcommand_args = [];
+        $addcol_name = undef;
+        $addcol_value = undef;
     } elsif ($a eq "-i") {
         die "option -i needs an argument" unless (@ARGV);
         $option_input = shift(@ARGV);
@@ -86,6 +107,24 @@ while (@ARGV) {
                 push(@$subcommand_args, '--col', shift(@ARGV));
             } else {
                 push(@$subcommand_args, '--col', $a);
+            }
+        } elsif ($subcommand eq "addcol") {
+            if ($a eq "--name") {
+                die "option $a needs an argument" unless (@ARGV);
+                $addcol_name = shift(@ARGV);
+                push(@$subcommand_args, '--name', $addcol_name);
+            } elsif ($a eq "--value") {
+                die "option $a needs an argument" unless (@ARGV);
+                $addcol_value = shift(@ARGV);
+                push(@$subcommand_args, '--value', $addcol_value);
+            } elsif (!defined($addcol_name)) {
+                $addcol_name = $a;
+                push(@$subcommand_args, '--name', escape_for_bash($addcol_name));
+            } elsif (!defined($addcol_value)) {
+                $addcol_value = $a;
+                push(@$subcommand_args, '--value', escape_for_bash($addcol_value));
+            } else {
+                die "Unknown argument: $a";
             }
         } else {
             die "Unknown argument: $a";
@@ -212,11 +251,11 @@ if (defined($option_input_headers)) {
             die "Illegal header: $h\n";
         }
     }
-    my $headers = join("\\t", @headers) . "\\n";
+    my $headers = escape_for_bash(join("\t", @headers));
     if ($main_1_source eq "") {
-        $main_1_source = "(printf \"$headers\"; cat)";
+        $main_1_source = "(printf '%s' $headers; echo; cat)";
     } else {
-        $main_1_source = "(printf \"$headers\"; $main_1_source)";
+        $main_1_source = "(printf '%s' $headers; echo; $main_1_source)";
     }
 }
 
@@ -242,6 +281,9 @@ foreach my $t (@$subcommands) {
     } elsif ($subcommand eq "countcols") {
         $main_1_source .= " | " if ($main_1_source ne "");
         $main_1_source .= "perl $TOOL_DIR/countcols.pl @$subcommand_args";
+    } elsif ($subcommand eq "addcol") {
+        $main_1_source .= " | " if ($main_1_source ne "");
+        $main_1_source .= "perl $TOOL_DIR/addcol.pl @$subcommand_args";
     }
     $last_subcommand = $subcommand;
 }
