@@ -24,6 +24,7 @@ my $option_input = undef;
 my $option_output = ""; # 空文字列は標準出力の意味
 
 my $option_format = undef;
+my $option_input_headers = undef;
 my $option_output_format = undef;
 
 my $subcommands = [];
@@ -62,6 +63,9 @@ while (@ARGV) {
     } elsif ($a eq "-o") {
         die "option -o needs an argument" unless (@ARGV);
         $option_output = shift(@ARGV);
+    } elsif ($a eq "--i-header") {
+        die "option --i-header needs an argument" unless (@ARGV);
+        $option_input_headers = shift(@ARGV);
     } elsif (!defined($option_input) && -e $a) {
         $option_input = $a;
     } elsif (defined($subcommand)) {
@@ -199,6 +203,21 @@ my $main_1_source = "";
 if ($format eq "csv") {
     $main_1_source .= " | " if ($main_1_source ne "");
     $main_1_source = "$TOOL_DIR/golang.bin csv2tsv";
+}
+
+if (defined($option_input_headers)) {
+    my @headers = split(/,/, $option_input_headers);
+    for my $h (@headers) {
+        unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+            die "Illegal header: $h\n";
+        }
+    }
+    my $headers = join("\\t", @headers) . "\\n";
+    if ($main_1_source eq "") {
+        $main_1_source = "(printf \"$headers\"; cat)";
+    } else {
+        $main_1_source = "(printf \"$headers\"; $main_1_source)";
+    }
 }
 
 my $last_subcommand = undef;
