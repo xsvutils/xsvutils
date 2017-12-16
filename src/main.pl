@@ -29,6 +29,8 @@ my $option_help = undef;
 my $option_input = undef;
 my $option_output = ""; # 空文字列は標準出力の意味
 
+my $option_explain = undef;
+
 my $option_format = undef;
 my $option_input_headers = undef;
 my $option_output_headers_flag = 1;
@@ -48,6 +50,8 @@ while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--help") {
         $option_help = 1;
+    } elsif ($a eq "--explain") {
+        $option_explain = 1;
     } elsif ($a eq "--tsv") {
         $option_format = "tsv";
     } elsif ($a eq "--csv") {
@@ -263,7 +267,7 @@ my $main_1_source = "";
 
 if ($format eq "csv") {
     $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source = "$TOOL_DIR/golang.bin csv2tsv";
+    $main_1_source .= "\$TOOL_DIR/golang.bin csv2tsv";
 }
 
 if (defined($option_input_headers)) {
@@ -302,19 +306,19 @@ foreach my $t (@$subcommands) {
         $main_1_source .= "sed -n -e 1p -e $arg";
     } elsif ($subcommand eq "cut") {
         $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl $TOOL_DIR/cut.pl @$subcommand_args";
+        $main_1_source .= "perl \$TOOL_DIR/cut.pl @$subcommand_args";
     } elsif ($subcommand eq "wcl") {
         $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "$TOOL_DIR/golang.bin wcl --header @$subcommand_args";
+        $main_1_source .= "\$TOOL_DIR/golang.bin wcl --header @$subcommand_args";
     } elsif ($subcommand eq "summary") {
         $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl $TOOL_DIR/summary.pl @$subcommand_args";
+        $main_1_source .= "perl \$TOOL_DIR/summary.pl @$subcommand_args";
     } elsif ($subcommand eq "countcols") {
         $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl $TOOL_DIR/countcols.pl @$subcommand_args";
+        $main_1_source .= "perl \$TOOL_DIR/countcols.pl @$subcommand_args";
     } elsif ($subcommand eq "addcol") {
         $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl $TOOL_DIR/addcol.pl @$subcommand_args";
+        $main_1_source .= "perl \$TOOL_DIR/addcol.pl @$subcommand_args";
     }
     $last_subcommand = $subcommand;
 }
@@ -329,7 +333,7 @@ if ($last_subcommand ne "wcl" && $option_output_format eq "tty") {
         $table_option .= " --max-width 500";
     }
     $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "perl $TOOL_DIR/table.pl$table_option | less -SRX";
+    $main_1_source .= "perl \$TOOL_DIR/table.pl$table_option | less -SRX";
 }
 
 if ($last_subcommand ne "wcl" && !$option_output_headers_flag && $option_output_format ne "tty") {
@@ -344,7 +348,9 @@ open(my $main_1_out, '>', "$WORKING_DIR/main-1.sh") or die $!;
 print $main_1_out $main_1_source;
 close($main_1_out);
 
-#print STDERR $main_1_source;
+if ($option_explain) {
+    print STDERR $main_1_source;
+}
 
 ################################################################################
 # exec script
