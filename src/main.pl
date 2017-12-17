@@ -21,6 +21,9 @@ if (-t STDOUT) {
 
 sub escape_for_bash {
     my ($str) = @_;
+    if ($str =~ /\A[-_.=\/0-9a-zA-Z]+\z/) {
+        return $str;
+    }
     $str =~ s/'/'"'"'/g;
     return "'" . $str . "'";
 }
@@ -298,19 +301,17 @@ if (defined($option_format)) {
 my $charencoding = guess_charencoding($head_buf);
 
 ################################################################################
-# build script
+# subcommand list to intermediate code
 ################################################################################
 
-my $main_1_source = "";
+my $ircode = [["cmd", "cat"]];
 
 if ($charencoding ne "UTF-8") {
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "iconv -f $charencoding -t UTF-8";
+    push(@$ircode, ["cmd", "iconv -f $charencoding -t UTF-8"]);
 }
 
 if ($format eq "csv") {
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "\$TOOL_DIR/golang.bin csv2tsv";
+    push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
 }
 
 if (defined($option_input_headers)) {
@@ -321,11 +322,10 @@ if (defined($option_input_headers)) {
         }
     }
     my $headers = escape_for_bash(join("\t", @headers));
-    if ($main_1_source eq "") {
-        $main_1_source = "(printf '%s' $headers; echo; cat)";
-    } else {
-        $main_1_source = "(printf '%s' $headers; echo; $main_1_source)";
-    }
+    $ircode = [["seq",
+                [["cmd", "printf '%s' $headers"],
+                 ["cmd", "echo"],
+                 ["pipe", $ircode]]]];
 }
 
 my $last_subcommand = undef;
@@ -339,29 +339,22 @@ foreach my $t (@$subcommands) {
         my $num = $subcommand_args->[0];
         my $arg = escape_for_bash('-n' . ($num + 1));
 
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "head $arg";
+        push(@$ircode, ["cmd", "head $arg"]);
     } elsif ($subcommand eq "drop") {
         my $num = $subcommand_args->[0];
         my $arg = escape_for_bash(($num + 2) . ',$p');
 
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "sed -n -e 1p -e $arg";
+        push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
     } elsif ($subcommand eq "cut") {
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl \$TOOL_DIR/cut.pl @$subcommand_args";
+        push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl @$subcommand_args"]);
     } elsif ($subcommand eq "wcl") {
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "\$TOOL_DIR/golang.bin wcl --header @$subcommand_args";
+        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header @$subcommand_args"]);
     } elsif ($subcommand eq "summary") {
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl \$TOOL_DIR/summary.pl @$subcommand_args";
+        push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl @$subcommand_args"]);
     } elsif ($subcommand eq "countcols") {
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl \$TOOL_DIR/countcols.pl @$subcommand_args";
+        push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl @$subcommand_args"]);
     } elsif ($subcommand eq "addcol") {
-        $main_1_source .= " | " if ($main_1_source ne "");
-        $main_1_source .= "perl \$TOOL_DIR/addcol.pl @$subcommand_args";
+        push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl @$subcommand_args"]);
     }
     $last_subcommand = $subcommand;
 }
@@ -375,24 +368,96 @@ if ($last_subcommand ne "wcl" && $option_output_format eq "tty") {
     if ($last_subcommand eq "summary") {
         $table_option .= " --max-width 500";
     }
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "perl \$TOOL_DIR/table.pl$table_option | less -SRX";
+    push(@$ircode, ["cmd", "perl \$TOOL_DIR/table.pl$table_option"]);
+    push(@$ircode, ["cmd", "less -SRX"]);
 }
 
 if ($last_subcommand ne "wcl" && !$option_output_headers_flag && $option_output_format ne "tty") {
-    $main_1_source .= " | " if ($main_1_source ne "");
-    $main_1_source .= "tail -n+2";
+    push(@$ircode, ["cmd", "tail -n+2"]);
 }
 
-$main_1_source = "cat" if ($main_1_source eq "");
-$main_1_source .= "\n";
+$ircode = ["pipe", $ircode];
+
+################################################################################
+# intermediate code to shell script
+################################################################################
+
+sub irToShellscript {
+    my ($code) = @_;
+    my $type = $code->[0];
+    if ($type eq "pipe") {
+        my @cs = @{$code->[1]};
+        if (!@cs) {
+            [":"];
+        } elsif ((scalar @cs) == 1) {
+            irToShellscript($cs[0]);
+        } else {
+            joinShellscriptLines([map { irToShellscript($_) } @cs], "", "", " |", "    ", "    ", " |", "    ", "    ", "");
+        }
+    } elsif ($type eq "seq") {
+        my @cs = @{$code->[1]};
+        if (!@cs) {
+            [":"];
+        } elsif ((scalar @cs) == 1) {
+            irToShellscript($cs[0]);
+        } else {
+            joinShellscriptLines([map { irToShellscript($_) } @cs], "( ", "  ", ";", "  ", "  ", ";", "  ", "  ", ")");
+        }
+    } elsif ($type eq "cmd") {
+        my $script = $code->[1];
+        [$script];
+    }
+}
+
+sub joinShellscriptLines {
+    my ($sources, $begin, $begin_b, $end0, $begin1, $begin1_b, $end1, $begin2, $begin2_b, $end) = @_;
+
+    if (@$sources == 0) {
+        die;
+    } elsif (@$sources == 1) {
+        die;
+    }
+
+    my $first = shift(@$sources);
+    my $last  = pop(@$sources);
+
+    [
+     @{joinShellscriptLinesSub($first, $begin, $begin_b, $end0)},
+     (map { @{joinShellscriptLinesSub($_, $begin1, $begin1_b, $end1)} } @$sources),
+     @{joinShellscriptLinesSub($last,  $begin2, $begin2_b, $end)}
+    ];
+}
+
+sub joinShellscriptLinesSub {
+    my ($sources, $begin, $begin_b, $end) = @_;
+
+    if (@$sources == 0) {
+        die;
+    }
+    if (@$sources == 1) {
+        return [$begin . $sources->[0] . $end];
+    }
+
+    my $first = shift(@$sources);
+    my $last  = pop(@$sources);
+
+    [
+     $begin . $first,
+     (map { $begin_b . $_ } @$sources),
+     $begin_b . $last . $end,
+    ];
+}
+
+my $main_1_source = join("\n", @{irToShellscript($ircode)}) . "\n";
 
 open(my $main_1_out, '>', "$WORKING_DIR/main-1.sh") or die $!;
 print $main_1_out $main_1_source;
 close($main_1_out);
 
 if ($option_explain) {
-    print STDERR $main_1_source;
+    my $view = $main_1_source;
+    $view =~ s/^/> /gm;
+    print STDERR $view;
 }
 
 ################################################################################
