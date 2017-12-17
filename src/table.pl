@@ -115,7 +115,7 @@ sub printRecord {
     print "|" . join("|", @colViews) . "|\n";
 }
 
-my $max_line_count = 1000;
+my $max_line_count = 1010;
 
 my @records = ();
 my $headers = undef;
@@ -145,7 +145,7 @@ while (my $line = <STDIN>) {
         }
     }
 
-    if (@records < $max_line_count) {
+    if ($record_count < $max_line_count) {
         for (my $i = 0; $i < $header_count; $i++) {
             last unless defined($cols[$i]);
             my $l = stringViewLength($cols[$i]);
@@ -171,7 +171,7 @@ while (my $line = <STDIN>) {
         next;
     }
 
-    if (@records == $max_line_count) {
+    if ($record_count == $max_line_count) {
         foreach my $record (@records) {
             printRecord($record, $col_lengths);
         }
@@ -180,7 +180,7 @@ while (my $line = <STDIN>) {
     printRecord(\@cols, $col_lengths);
 }
 
-if (@records < $max_line_count) {
+if ($record_count < $max_line_count) {
     foreach my $record (@records) {
         printRecord($record, $col_lengths);
     }
