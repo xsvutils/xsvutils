@@ -18,14 +18,10 @@ while (@ARGV) {
     }
 }
 
-my $is_header = 1;
+my $line = <STDIN>;
+print "$option_name\t$line";
 
 while (my $line = <STDIN>) {
-    if ($is_header) {
-        print "$option_name\t$line";
-        $is_header = '';
-    } else {
-        print "$option_value\t$line";
-    }
+    print "$option_value\t$line";
 }
 
