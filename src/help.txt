@@ -2,12 +2,14 @@ Utilities for handling separated value data
 
 Usage:
 
-    xsvutils [<FILENAME>] [<SUBCOMMAND>] [<OPTIONS>...]
+    $ xsvutils [<FILENAME>] [<SUBCOMMAND>] [<OPTIONS>...]
 
     FILENAME と SUBCOMMAND は順番が逆でも可能。
     SUBCOMMAND と解釈されうる FILENAME は -i オプションでの指定が必要。
 
-    サブコマンドは内容により複数を組み合わせることも可能。
+    SUBCOMMAND は内容により複数を組み合わせることも可能。
+    SUBCOMMAND 省略時はcatになる。
+
 
 Subcommands:
 
@@ -21,7 +23,6 @@ Subcommands:
     countcols カラム数を集計する
     addcol    固定値のカラムを一番左に追加する
 
-    SUBCOMMAND省略時はcatになる。
 
 Common options:
 
@@ -39,6 +40,7 @@ Common options:
     これらのオプションは FILENAME, SUBCOMMAND の前に置くことも可能。
     サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
 
+
 Subcommand `cat`:
 
     以下は同じ意味である。
@@ -49,6 +51,7 @@ Subcommand `cat`:
         $ xsvutils -i FILENAME cat
         $ xsvutils < FILENAME
         $ xsvutils cat < FILENAME
+
 
 Subcommand `cut`:
 
@@ -70,6 +73,7 @@ Subcommand `cut`:
 
         $ xsvutils data.tsv cut --col foo,col1..col20
 
+
 Subcommand `take` and Subcommand `head`:
 
     Options:
@@ -87,6 +91,7 @@ Subcommand `take` and Subcommand `head`:
         $ xsvutils FILENAME head 20 cut id,name
         $ xsvutils FILENAME cut id,name head 20
 
+
 Subcommand `drop`:
 
     Options:
@@ -100,11 +105,13 @@ Subcommand `drop`:
 
     他のサブコマンドとの組み合わせは `take` サブコマンドと同様である。
 
+
 Subcommand `wcl`:
 
     レコード数を表示する。ヘッダ行は含まない。
 
     データが大きい場合には、進捗表示をする。
+
 
 Subcommand `summary`:
 
@@ -113,6 +120,7 @@ Subcommand `summary`:
     出力は右から、カラムの位置、カラム名、データが含まれている割合、値の例の列挙である。
 
     データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+
 
 Subcommand `countcols`:
 
@@ -134,6 +142,7 @@ Subcommand `countcols`:
 
     データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
 
+
 Subcommand `addcol`:
 
     固定値のカラムを一番左に追加する
@@ -152,5 +161,10 @@ Subcommand `addcol`:
     以下の例では、FILENAME の id カラムと固定値 0 のカラム col0 の2カラムを表示する。
 
         $ xsvutils FILENAME addcol col0 dummy cut id,col0
+
+
+Common options for developer:
+
+    --explain 実行するスクリプトを標準エラー出力に出力する
 
 
