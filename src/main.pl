@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use utf8;
 
+use Data::Dumper;
+
 use POSIX qw/mkfifo/;
 
 my $TOOL_DIR = $ENV{"TOOL_DIR"};
@@ -15,10 +17,6 @@ if (-t STDOUT) {
     $isOutputTty = 1;
 }
 
-################################################################################
-# parse command line options
-################################################################################
-
 sub escape_for_bash {
     my ($str) = @_;
     if ($str =~ /\A[-_.=\/0-9a-zA-Z]+\z/) {
@@ -28,158 +26,221 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
+################################################################################
+# parse command line options
+################################################################################
+
 my $option_help = undef;
-my $option_input = undef;
-my $option_output = ""; # 空文字列は標準出力の意味
-
 my $option_explain = undef;
-
-my $option_format = undef;
-my $option_input_headers = undef;
-my $option_output_headers_flag = 1;
-my $option_output_format = undef;
-
-my $subcommands = [];
-my $subcommand = undef;
-my $subcommand_args = [];
-
-my $addcol_name = undef;
-my $addcol_value = undef;
 
 my $exists_args = '';
 $exists_args = 1 if (@ARGV);
 
-while (@ARGV) {
-    my $a = shift(@ARGV);
-    if ($a eq "--help") {
-        $option_help = 1;
-    } elsif ($a eq "--explain") {
-        $option_explain = 1;
-    } elsif ($a eq "--tsv") {
-        $option_format = "tsv";
-    } elsif ($a eq "--csv") {
-        $option_format = "csv";
-    } elsif ($a eq "cat") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = [];
-    } elsif ($a eq "take" || $a eq "head") {
-        $a = "take";
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = ['10'];
-    } elsif ($a eq "drop") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = ['10'];
-    } elsif ($a eq "cut") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = [];
-    } elsif ($a eq "wcl") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = [];
-    } elsif ($a eq "summary") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = [];
-    } elsif ($a eq "countcols") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = [];
-    } elsif ($a eq "addcol") {
-        push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-        $subcommand = $a;
-        $subcommand_args = [];
-        $addcol_name = undef;
-        $addcol_value = undef;
-    } elsif ($a eq "-i") {
-        die "option -i needs an argument" unless (@ARGV);
-        $option_input = shift(@ARGV);
-    } elsif ($a eq "-o") {
-        die "option -o needs an argument" unless (@ARGV);
-        $option_output = shift(@ARGV);
-    } elsif ($a eq "--i-header") {
-        die "option --i-header needs an argument" unless (@ARGV);
-        $option_input_headers = shift(@ARGV);
-    } elsif ($a eq "--o-no-header") {
-        $option_output_headers_flag = '';
-    } elsif (!defined($option_input) && -e $a) {
-        $option_input = $a;
-    } elsif (defined($subcommand)) {
-        if ($subcommand eq "take" || $subcommand eq "drop") {
-            my $num = undef;
-            if ($a eq "-n") {
-                die "option -n needs an argument" unless (@ARGV);
-                $num = shift(@ARGV);
-                die "option -n needs a number argument" unless ($num =~ /\A(0|[1-9][0-9]*)\z/);
-            } elsif ($a =~ /\A-n(0|[1-9][0-9]*)\z/) {
-                $num = $1;
-            } elsif ($a =~ /\A(0|[1-9][0-9]*)\z/) {
-                $num = $a;
-            } else {
-                die "Unknown argument: $a";
+sub parseOptionSequence {
+    # 2値を返す関数。
+    # 1つ目の返り値の例
+    # { "commands" => [["head", "20"], ["cut", "id,name"]],
+    #   "input" => "", # 入力ファイル名、または空文字列は標準入力の意味
+    #   "output" => "", # 出力ファイル名、または空文字列は標準出力の意味
+    #   "format" => "", # 入力フォーマット、または空文字列は自動判定の意味
+    #   "input_header" => "id,name,desc", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
+    #   "output_header_flag" => 1, # 出力にヘッダをつけるかどうか 1 or ''
+    # }
+    # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
+
+    my ($argv) = @_;
+
+    my $commands = [];
+    my $curr_command = undef;
+    my $input = undef;
+    my $output = undef;
+    my $format = undef;
+    my $input_header = undef;
+    my $output_header_flag = 1;
+
+    while (@$argv) {
+        my $a = shift(@$argv);
+        if ($a eq "--help") {
+            $option_help = 1;
+        } elsif ($a eq "--explain") {
+            $option_explain = 1;
+
+        } elsif ($a eq "cat") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = undef;
+
+        } elsif ($a eq "take" || $a eq "head") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["take", ""];
+
+        } elsif ($a eq "drop") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["drop", ""];
+
+        } elsif ($a eq "cut") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["cut", ""];
+
+        } elsif ($a eq "addcol") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["addcol", undef, undef];
+
+        } elsif ($a eq "wcl") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["wcl"];
+
+        } elsif ($a eq "summary") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["summary"];
+
+        } elsif ($a eq "countcols") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["countcols"];
+
+        } elsif ($a eq "-i") {
+            die "option -i needs an argument" unless (@$argv);
+            die "duplicated option: $a" if defined($input);
+            $input = shift(@$argv);
+
+        } elsif ($a eq "-o") {
+            die "option -o needs an argument" unless (@$argv);
+            die "duplicated option: $a" if defined($output);
+            $output = shift(@$argv);
+
+        } elsif ($a eq "--i-header") {
+            die "option --i-header needs an argument" unless (@$argv);
+            die "duplicated option: $a" if defined($input_header);
+            $input_header = shift(@$argv);
+
+        } elsif ($a eq "--o-no-header") {
+            $output_header_flag = '';
+
+        } elsif (!defined($input) && -e $a) {
+            $input = $a;
+
+        } elsif (defined($curr_command)) {
+            if ($curr_command->[0] eq "take" || $curr_command->[0] eq "drop") {
+                my $num = undef;
+                if ($a eq "-n") {
+                    die "option -n needs an argument" unless (@$argv);
+                    $num = shift(@$argv);
+                    die "option -n needs a number argument" unless ($num =~ /\A(0|[1-9][0-9]*)\z/);
+                } elsif ($a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+                    $num = $1;
+                } elsif ($a =~ /\A(0|[1-9][0-9]*)\z/) {
+                    $num = $a;
+                } else {
+                    die "Unknown argument: $a";
+                }
+                if (defined($num)) {
+                    if ($curr_command->[1] ne "") {
+                        die "duplicated option: $a";
+                    }
+                    $curr_command->[1] = $num;
+                }
+
+            } elsif ($curr_command->[0] eq "cut") {
+                if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } else {
+                    $curr_command->[1] = $a;
+                }
+
+            } elsif ($curr_command->[0] eq "addcol") {
+                if ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $addcol_name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $addcol_name;
+                } elsif ($a eq "--value") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $addcol_value = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --value";
+                    }
+                    $curr_command->[2] = $addcol_value;
+                } elsif (!defined($curr_command->[1])) {
+                    my $addcol_name = $a;
+                    $curr_command->[1] = $addcol_name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $addcol_value = $a;
+                    $curr_command->[2] = $addcol_value;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
             }
-            if (defined($num)) {
-                $subcommand_args = [$num];
-            }
-        } elsif ($subcommand eq "cut") {
-            if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
-                die "option $a needs an argument" unless (@ARGV);
-                push(@$subcommand_args, '--col', shift(@ARGV));
-            } else {
-                push(@$subcommand_args, '--col', $a);
-            }
-        } elsif ($subcommand eq "addcol") {
-            if ($a eq "--name") {
-                die "option $a needs an argument" unless (@ARGV);
-                $addcol_name = shift(@ARGV);
-                push(@$subcommand_args, '--name', $addcol_name);
-            } elsif ($a eq "--value") {
-                die "option $a needs an argument" unless (@ARGV);
-                $addcol_value = shift(@ARGV);
-                push(@$subcommand_args, '--value', $addcol_value);
-            } elsif (!defined($addcol_name)) {
-                $addcol_name = $a;
-                push(@$subcommand_args, '--name', escape_for_bash($addcol_name));
-            } elsif (!defined($addcol_value)) {
-                $addcol_value = $a;
-                push(@$subcommand_args, '--value', escape_for_bash($addcol_value));
-            } else {
-                die "Unknown argument: $a";
-            }
+
         } else {
-            die "Unknown argument: $a";
+            #die "Unknown argument: $a";
         }
-    } else {
-        die "Unknown argument: $a";
     }
+
+    if (defined($curr_command)) {
+        push(@$commands, $curr_command);
+    }
+    if (!defined($input)) {
+        $input = '';
+    }
+    if (!defined($output)) {
+        $output = '';
+    }
+    if (!defined($format)) {
+        $format = '';
+    }
+    if (!defined($input_header)) {
+        $input_header = "";
+    }
+
+    my $commands2 = [];
+    for my $c (@$commands) {
+        if ($c->[0] eq "take") {
+            if ($c->[1] eq "") {
+                $c->[1] = "10";
+            }
+            push(@$commands2, ["range", "", $c->[1]]);
+        } elsif ($c->[0] eq "drop") {
+            if ($c->[1] eq "") {
+                $c->[1] = "10";
+            }
+            push(@$commands2, ["range", $c->[1], ""]);
+        } elsif ($c->[0] eq "cut") {
+            if ($c->[1] eq "") {
+                die "subcommand \`cut\` needs --col option";
+            }
+            push(@$commands2, ["cut", $c->[1]]);
+        } elsif ($c->[0] eq "addcol") {
+            if (!defined($c->[1])) {
+                die "subcommand \`addcol\` needs --name option";
+            }
+            if (!defined($c->[2])) {
+                $c->[2] = "";
+            }
+            push(@$commands2, ["addcol", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "wcl") {
+            push(@$commands2, ["wcl"]);
+        } elsif ($c->[0] eq "summary") {
+            push(@$commands2, ["summary"]);
+        } elsif ($c->[0] eq "countcols") {
+            push(@$commands2, ["countcols"]);
+        } else {
+            die $c->[0];
+        }
+    }
+
+    ({"commands" => $commands2,
+      "input" => $input,
+      "output" => $output,
+      "format" => $format,
+      "input_header" => $input_header,
+      "output_header_flag" => $output_header_flag},
+     $argv);
 }
 
-push(@$subcommands, [$subcommand, @$subcommand_args]) if (defined($subcommand));
-
-if (!$isInputTty && !defined($option_input) && !$option_help) {
-    # 入力がパイプにつながっていて
-    # 入力ファイル名が指定されていなくて
-    # ヘルプオプションも指定されていない場合は、
-    # 標準入力を入力とする。
-    $option_input = ""; # stdin
-}
-
-if (defined($option_input) && !@$subcommands) {
-    # 入力があり、サブコマンドが指定されていない場合は、
-    # サブコマンドを cat とする。
-    push(@$subcommands, ["cat"]);
-}
-
-if ($isOutputTty && $option_output eq "") {
-    # 出力が端末の場合
-    # TODO オプションで出力フォーマットが指定されていない場合に限定
-    $option_output_format = "tty";
-} else {
-    $option_output_format = "";
-}
+my ($command_seq, $tail_argv) = parseOptionSequence(\@ARGV);
 
 ################################################################################
 # help
@@ -189,7 +250,7 @@ my $help_stdout = undef;
 my $help_stderr = undef;
 if ($option_help) {
     $help_stdout = 1;
-} elsif (!defined($option_input)) {
+} elsif ($isInputTty && $command_seq->{input} eq "") {
     if ($exists_args) {
         # 入力がない場合は、
         # ヘルプをエラー出力する。
@@ -202,36 +263,18 @@ if ($option_help) {
 
 if ($help_stdout || $help_stderr) {
     my $help_filepath = $TOOL_DIR . "/help.txt";
-    open(IN, '<', $help_filepath) or die $!;
-    my @lines = <IN>;
-    my $str = join('', @lines);
-    close IN;
     if ($help_stderr) {
+        open(IN, '<', $help_filepath) or die $!;
+        my @lines = <IN>;
+        my $str = join('', @lines);
+        close IN;
         open(STDOUT, '>&=', fileno(STDERR));
     }
     if ($isOutputTty) {
-        exec("less", "-SRXF", "$TOOL_DIR/help.txt");
+        exec("less", "-SRXF", $help_filepath);
     } else {
-        exec("cat", "$TOOL_DIR/help.txt");
+        exec("cat", $help_filepath);
     }
-}
-
-################################################################################
-# 入出力を stdin, stdout に統一
-################################################################################
-
-if ($option_input ne "") {
-    # 入力がファイルの場合
-    my $data_in;
-    open($data_in, '<', $option_input) or die "Cannot open file: $!";
-    open(STDIN, '<&=', fileno($data_in));
-}
-
-if ($option_output ne "") {
-    # 出力がファイルの場合
-    my $data_out;
-    open($data_out, '>', $option_output) or die "Cannot open file: $!";
-    open(STDOUT, '>&=', fileno($data_out));
 }
 
 ################################################################################
@@ -287,96 +330,143 @@ sub guess_charencoding {
     }
 }
 
-my $head_size = 100 * 4096;
-my $head_buf;
+sub prefetch_input {
+    my ($command_seq) = @_;
 
-sysread(STDIN, $head_buf, $head_size);
+    my $head_size = 100 * 4096;
+    my $head_buf;
 
-my $format;
-if (defined($option_format)) {
-    $format = $option_format;
-} else {
-    $format = guess_format($head_buf);
+    my $in;
+    if ($command_seq->{input} eq '') {
+        $in = *STDIN;
+    } else {
+        open($in, '<', $command_seq->{input}) or die $!;
+    }
+    $command_seq->{input_handle} = $in;
+
+    sysread($in, $head_buf, $head_size);
+
+    $command_seq->{head_buf} = $head_buf;
+
+    if ($command_seq->{format} eq '') {
+        $command_seq->{format} = guess_format($head_buf);
+    }
+
+    $command_seq->{charencoding} = guess_charencoding($head_buf);
 }
-my $charencoding = guess_charencoding($head_buf);
+
+prefetch_input($command_seq);
 
 ################################################################################
 # subcommand list to intermediate code
 ################################################################################
 
-my $ircode = [["cmd", "cat"]];
+sub build_ircode {
+    my ($command_seq, $isOutputTty) = @_;
 
-if ($charencoding ne "UTF-8") {
-    push(@$ircode, ["cmd", "iconv -f $charencoding -t UTF-8"]);
-}
+    my $ircode = [["cmd", "cat"]];
 
-if ($format eq "csv") {
-    push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
-}
+    if ($command_seq->{charencoding} ne "UTF-8") {
+        push(@$ircode, ["cmd", "iconv -f $command_seq->{charencoding} -t UTF-8"]);
+    }
 
-if (defined($option_input_headers)) {
-    my @headers = split(/,/, $option_input_headers);
-    for my $h (@headers) {
-        unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
-            die "Illegal header: $h\n";
+    if ($command_seq->{format} eq "csv") {
+        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+    }
+
+    if ($command_seq->{input_header} ne '') {
+        my @headers = split(/,/, $command_seq->{input_header});
+        for my $h (@headers) {
+            unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal header: $h\n";
+            }
         }
+        my $headers = escape_for_bash(join("\t", @headers));
+        $ircode = [["seq",
+                    [["cmd", "printf '%s' $headers"],
+                     ["cmd", "echo"],
+                     ["pipe", $ircode]]]];
     }
-    my $headers = escape_for_bash(join("\t", @headers));
-    $ircode = [["seq",
-                [["cmd", "printf '%s' $headers"],
-                 ["cmd", "echo"],
-                 ["pipe", $ircode]]]];
+
+    my $last_command = "";
+    foreach my $t (@{$command_seq->{commands}}) {
+        my $command = $t->[0];
+        if ($last_command eq "wcl") {
+            die "command `$last_command` must be last`\n";
+        } elsif ($last_command eq "summary") {
+            die "command `$last_command` must be last`\n";
+        } elsif ($last_command eq "countcols") {
+            die "command `$last_command` must be last`\n";
+        }
+        if ($command eq "range") {
+            my $num1 = $t->[1];
+            my $num2 = $t->[2];
+            if ($num1 eq "") {
+                if ($num2 eq "") {
+                    # nop
+                } else {
+                    my $arg = escape_for_bash('-n' . ($num2 + 1));
+                    push(@$ircode, ["cmd", "head $arg"]);
+                }
+            } else {
+                if ($num2 eq "") {
+                    my $arg = escape_for_bash(($num1 + 2) . ',$p');
+                    push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
+                } else {
+                    die; # TODO
+                }
+            }
+
+        } elsif ($command eq "cut") {
+            my $cols = escape_for_bash($t->[1]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
+
+        } elsif ($command eq "addcol") {
+            my $name  = escape_for_bash($t->[1]);
+            my $value = escape_for_bash($t->[2]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl --name $name --value $value"]);
+
+        } elsif ($command eq "wcl") {
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
+
+        } elsif ($command eq "summary") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
+
+        } elsif ($command eq "countcols") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);
+
+        } else {
+            die $command;
+        }
+        $last_command = $command;
+    }
+
+    my $isPager = '';
+    if ($last_command ne "wcl" && $isOutputTty && $command_seq->{output} eq "") {
+        $isPager = 1;
+    }
+
+    if ($isPager) {
+        my $table_option = "";
+        if ($last_command ne "countcols") {
+            $table_option .= " --col-number";
+            $table_option .= " --record-number";
+        }
+        if ($last_command eq "summary") {
+            $table_option .= " --max-width 500";
+        }
+        push(@$ircode, ["cmd", "perl \$TOOL_DIR/table.pl$table_option"]);
+        push(@$ircode, ["cmd", "less -SRX"]);
+    }
+
+    if ($last_command ne "wcl" && $command_seq->{output_header_flag} && !$isPager) {
+        push(@$ircode, ["cmd", "tail -n+2"]);
+    }
+
+    $command_seq->{ircode} = ["pipe", $ircode];
 }
 
-my $last_subcommand = undef;
-foreach my $t (@$subcommands) {
-    $subcommand = shift(@$t);
-    $subcommand_args = $t;
-    if (defined($last_subcommand) && $last_subcommand eq "wcl") {
-        die "subcommand `wcl` must be last`\n";
-    }
-    if ($subcommand eq "take") {
-        my $num = $subcommand_args->[0];
-        my $arg = escape_for_bash('-n' . ($num + 1));
-
-        push(@$ircode, ["cmd", "head $arg"]);
-    } elsif ($subcommand eq "drop") {
-        my $num = $subcommand_args->[0];
-        my $arg = escape_for_bash(($num + 2) . ',$p');
-
-        push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
-    } elsif ($subcommand eq "cut") {
-        push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl @$subcommand_args"]);
-    } elsif ($subcommand eq "wcl") {
-        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header @$subcommand_args"]);
-    } elsif ($subcommand eq "summary") {
-        push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl @$subcommand_args"]);
-    } elsif ($subcommand eq "countcols") {
-        push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl @$subcommand_args"]);
-    } elsif ($subcommand eq "addcol") {
-        push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl @$subcommand_args"]);
-    }
-    $last_subcommand = $subcommand;
-}
-
-if ($last_subcommand ne "wcl" && $option_output_format eq "tty") {
-    my $table_option = "";
-    if ($last_subcommand ne "countcols") {
-        $table_option .= " --col-number";
-        $table_option .= " --record-number";
-    }
-    if ($last_subcommand eq "summary") {
-        $table_option .= " --max-width 500";
-    }
-    push(@$ircode, ["cmd", "perl \$TOOL_DIR/table.pl$table_option"]);
-    push(@$ircode, ["cmd", "less -SRX"]);
-}
-
-if ($last_subcommand ne "wcl" && !$option_output_headers_flag && $option_output_format ne "tty") {
-    push(@$ircode, ["cmd", "tail -n+2"]);
-}
-
-$ircode = ["pipe", $ircode];
+build_ircode($command_seq, $isOutputTty);
 
 ################################################################################
 # intermediate code to shell script
@@ -401,7 +491,7 @@ sub irToShellscript {
         } elsif ((scalar @cs) == 1) {
             irToShellscript($cs[0]);
         } else {
-            joinShellscriptLines([map { irToShellscript($_) } @cs], "( ", "  ", ";", "  ", "  ", ";", "  ", "  ", ")");
+            joinShellscriptLines([map { irToShellscript($_) } @cs], "( ", "  ", ";", "  ", "  ", ";", "  ", "  ", " )");
         }
     } elsif ($type eq "cmd") {
         my $script = $code->[1];
@@ -448,16 +538,34 @@ sub joinShellscriptLinesSub {
     ];
 }
 
-my $main_1_source = join("\n", @{irToShellscript($ircode)}) . "\n";
-
-open(my $main_1_out, '>', "$WORKING_DIR/main-1.sh") or die $!;
-print $main_1_out $main_1_source;
-close($main_1_out);
+my $main_1_source = join("\n", @{irToShellscript($command_seq->{ircode})}) . "\n";
 
 if ($option_explain) {
     my $view = $main_1_source;
     $view =~ s/^/> /gm;
     print STDERR $view;
+}
+
+open(my $main_1_out, '>', "$WORKING_DIR/main-1.sh") or die $!;
+print $main_1_out $main_1_source;
+close($main_1_out);
+
+################################################################################
+# 入出力を stdin, stdout に統一
+################################################################################
+
+my $stdin = $command_seq->{input_handle};
+
+if ($stdin ne *STDIN) {
+    # 入力がファイルの場合
+    open(STDIN, '<&=', fileno($command_seq->{input_handle}));
+}
+
+if ($command_seq->{output} ne "") {
+    # 出力がファイルの場合
+    my $data_out;
+    open($data_out, '>', $command_seq->{output}) or die $!;
+    open(STDOUT, '>&=', fileno($data_out));
 }
 
 ################################################################################
@@ -484,8 +592,9 @@ if (!defined $pid1) {
     close $PARENT_READER;
     open(STDOUT, '>&=', fileno($CHILD_WRITER));
 
-    syswrite(STDOUT, $head_buf);
+    syswrite(STDOUT, $command_seq->{head_buf});
     exec("cat");
 }
 
 ################################################################################
+
