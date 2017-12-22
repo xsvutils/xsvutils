@@ -315,6 +315,21 @@ func FieldSort(
 		return err
 	}
 
+	if hasHeader {
+		i := 0
+		hlen := len(d.headers)
+		for k, _ := range d.headers {
+			i++
+			w.WriteString(k)
+			if i == hlen {
+				w.WriteByte(byte('\n'))
+				break
+			}
+			w.WriteByte(byte('\t'))
+		}
+		w.Flush()
+	}
+
 	if len(d.buffiles) == 0 {
 		for i, r := range d.buf {
 			r.writeRow(w)
