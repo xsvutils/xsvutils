@@ -81,6 +81,10 @@ sub parseOptionSequence {
             push(@$commands, $curr_command) if (defined($curr_command));
             $curr_command = ["cut", ""];
 
+        } elsif ($a eq "update") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["update", undef, undef, undef];
+
         } elsif ($a eq "addcol") {
             push(@$commands, $curr_command) if (defined($curr_command));
             $curr_command = ["addcol", undef, undef];
@@ -153,6 +157,35 @@ sub parseOptionSequence {
                     $curr_command->[1] = shift(@$argv);
                 } else {
                     $curr_command->[1] = $a;
+                }
+
+            } elsif ($curr_command->[0] eq "update") {
+                if ($a eq "--index") {
+                    die "option $a needs an argument" unless (@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --index";
+                    }
+                    $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "--col") {
+                    die "option $a needs an argument" unless (@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --col";
+                    }
+                    $curr_command->[2] = shift(@$argv);
+                } elsif ($a eq "--value") {
+                    die "option $a needs an argument" unless (@$argv);
+                    if (defined($curr_command->[3])) {
+                        die "duplicated option: --value";
+                    }
+                    $curr_command->[3] = shift(@$argv);
+                } elsif (!defined($curr_command->[1])) {
+                    $curr_command->[1] = $a;
+                } elsif (!defined($curr_command->[2])) {
+                    $curr_command->[2] = $a;
+                } elsif (!defined($curr_command->[3])) {
+                    $curr_command->[3] = $a;
+                } else {
+                    die "Unknown argument: $a";
                 }
 
             } elsif ($curr_command->[0] eq "addcol") {
@@ -228,6 +261,23 @@ sub parseOptionSequence {
                 die "subcommand \`cut\` needs --col option";
             }
             push(@$commands2, ["cut", $c->[1]]);
+        } elsif ($c->[0] eq "update") {
+            if (!defined($c->[1])) {
+                die "subcommand \`update\` needs --index option";
+            }
+            if (!defined($c->[2])) {
+                die "subcommand \`update\` needs --col option";
+            }
+            if (!defined($c->[3])) {
+                die "subcommand \`update\` needs --value option";
+            }
+            if ($curr_command->[1] !~ /\A(0|[1-9][0-9]*)\z/) {
+                die "option --index needs a number argument"
+            }
+            if ($curr_command->[2] !~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal column name: $curr_command->[2]\n";
+            }
+            push(@$commands2, ["update", $c->[1], $c->[2], $c->[3]]);
         } elsif ($c->[0] eq "addcol") {
             if (!defined($c->[1])) {
                 die "subcommand \`addcol\` needs --name option";
@@ -445,6 +495,12 @@ sub build_ircode {
         } elsif ($command eq "cut") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
+
+        } elsif ($command eq "update") {
+            my $index = escape_for_bash($t->[1]);
+            my $column = escape_for_bash($t->[2]);
+            my $value = escape_for_bash($t->[3]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
 
         } elsif ($command eq "addcol") {
             my $name  = escape_for_bash($t->[1]);
