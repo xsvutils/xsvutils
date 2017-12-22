@@ -10,12 +10,14 @@ import (
 )
 
 var (
-	sortQuery string
-	descSort  bool
+	sortQuery  string
+	descSort   bool
+	splitCount int
 )
 
 func init() {
 	RootCmd.AddCommand(fldsortCmd)
+	fldsortCmd.Flags().IntVarP(&splitCount, "split-count", "", 50000, "line count of intermediate files")
 	fldsortCmd.Flags().StringVarP(&sortQuery, "fields", "", "", "sort fields")
 	fldsortCmd.Flags().BoolVarP(&descSort, "desc", "", false, "sort desc")
 }
@@ -29,7 +31,7 @@ var fldsortCmd = &cobra.Command{
 			log.Println("--fields and --header option should be set together")
 			os.Exit(-1)
 		}
-		err := fldsort.FieldSort(os.Stdin, hasHeader, descSort, sortQuery, 10)
+		err := fldsort.FieldSort(os.Stdin, hasHeader, descSort, sortQuery, splitCount)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
