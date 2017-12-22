@@ -19,6 +19,7 @@ Subcommands:
     drop      Print all except first N records
     cut       Print specified columns
     wcl       レコード数を表示する
+    header    カラムの一覧を表示する
     summary   データのサマリを表示する
     countcols カラム数を集計する
     addcol    固定値のカラムを一番左に追加する
@@ -111,6 +112,11 @@ Subcommand `wcl`:
     レコード数を表示する。ヘッダ行は含まない。
 
     データが大きい場合には、進捗表示をする。
+
+
+Subcommand `header`:
+
+    カラムの一覧を表示する。
 
 
 Subcommand `summary`:

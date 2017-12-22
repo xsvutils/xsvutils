@@ -93,6 +93,10 @@ sub parseOptionSequence {
             push(@$commands, $curr_command) if (defined($curr_command));
             $curr_command = ["wcl"];
 
+        } elsif ($a eq "header") {
+            push(@$commands, $curr_command) if (defined($curr_command));
+            $curr_command = ["header"];
+
         } elsif ($a eq "summary") {
             push(@$commands, $curr_command) if (defined($curr_command));
             $curr_command = ["summary"];
@@ -239,6 +243,8 @@ sub parseOptionSequence {
             push(@$commands2, ["sort", $c->[1]]);
         } elsif ($c->[0] eq "wcl") {
             push(@$commands2, ["wcl"]);
+        } elsif ($c->[0] eq "header") {
+            push(@$commands2, ["header"]);
         } elsif ($c->[0] eq "summary") {
             push(@$commands2, ["summary"]);
         } elsif ($c->[0] eq "countcols") {
@@ -410,6 +416,8 @@ sub build_ircode {
         my $command = $t->[0];
         if ($last_command eq "wcl") {
             die "command `$last_command` must be last`\n";
+        } elsif ($last_command eq "header") {
+            die "command `$last_command` must be last`\n";
         } elsif ($last_command eq "summary") {
             die "command `$last_command` must be last`\n";
         } elsif ($last_command eq "countcols") {
@@ -449,6 +457,9 @@ sub build_ircode {
 
         } elsif ($command eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
+
+        } elsif ($command eq "header") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/header.pl"]);
 
         } elsif ($command eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
