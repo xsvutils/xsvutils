@@ -480,7 +480,7 @@ sub build_ircode {
         push(@$ircode, ["cmd", "less -SRX"]);
     }
 
-    if ($last_command ne "wcl" && $command_seq->{output_header_flag} && !$isPager) {
+    if ($last_command ne "wcl" && !$command_seq->{output_header_flag} && !$isPager) {
         push(@$ircode, ["cmd", "tail -n+2"]);
     }
 
