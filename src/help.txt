@@ -26,6 +26,23 @@ Subcommands:
     summary   データのサマリを表示する
     countcols カラム数を集計する
 
+    オプションやパラメータを受け付けるサブコマンドもある。
+
+    パラメータを受け付けるサブコマンドの多くは以下のように複数の書き方が可能。
+
+        $ xsvutils data.tsv cut title
+        $ xsvutils data.tsv cut --col title
+
+    都度コマンドラインからコマンドを入力する際には1つ目の書き方が短くて便利だが、
+    パラメータにどんな値が来るかわからない場合には別の解釈をされないようにオプションでの指定が必要。
+
+        $ xsvutils data.tsv cut --col $COLUMN
+
+    以下のように書いてしまうと、 $COLUMN が head という値の場合に、
+    それが cut のパラメータではなく head というサブコマンドになってしまう。
+
+        $ xsvutils data.tsv cut $COLUMN
+
 
 Common options:
 
@@ -57,6 +74,10 @@ Subcommand `cat`:
 
 
 Subcommand `take` and Subcommand `head`:
+
+    Print first N records.
+
+    2 subcommands `take` and `head` are the same subcommand.
 
     Options:
         -n <N>    Print first N records (default is 10)

@@ -39,14 +39,14 @@ $exists_args = 1 if (@ARGV);
 sub parseOptionSequence {
     # 2値を返す関数。
     # 1つ目の返り値の例
-    # { "commands" => [["head", "20"], ["cut", "id,name"]],
-    #   "input" => "", # 入力ファイル名、または空文字列は標準入力の意味
-    #   "output" => "", # 出力ファイル名、または空文字列は標準出力の意味
-    #   "format" => "", # 入力フォーマット、または空文字列は自動判定の意味
+    # { "commands" => [["range", "", "20"], ["cut", "id,name"]],
+    #   "input" => "",                    # 入力ファイル名、または空文字列は標準入力の意味
+    #   "output" => "",                   # 出力ファイル名、または空文字列は標準出力の意味
+    #   "format" => "",                   # 入力フォーマット、または空文字列は自動判定の意味
     #   "input_header" => "id,name,desc", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
-    #   "output_header_flag" => 1, # 出力にヘッダをつけるかどうか 1 or ''
-    #   "output_table" => 1, # TSV形式での出力かどうか 1 or ''
-    #   "last_command" => "head", # 最後のサブコマンド名
+    #   "output_header_flag" => 1,        # 出力にヘッダをつけるかどうか 1 or ''
+    #   "output_table" => 1,              # TSV形式での出力かどうか 1 or ''
+    #   "last_command" => "head",         # 最後のサブコマンド名
     # }
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
@@ -401,6 +401,8 @@ sub guess_format {
     }
 }
 
+# 文字コードを自動判別する。
+# いまのところ、 UTF-8 / SHIFT-JIS のみ
 sub guess_charencoding {
     my ($head_buf) = @_;
     my $len = length($head_buf);
