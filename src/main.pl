@@ -45,10 +45,16 @@ sub parseOptionSequence {
     #   "format" => "", # 入力フォーマット、または空文字列は自動判定の意味
     #   "input_header" => "id,name,desc", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
     #   "output_header_flag" => 1, # 出力にヘッダをつけるかどうか 1 or ''
+    #   "output_table" => 1, # TSV形式での出力かどうか 1 or ''
+    #   "last_command" => "head", # 最後のサブコマンド名
     # }
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
     my ($argv) = @_;
+
+    ################################
+    # オプション列からコマンド列を抽出する
+    ################################
 
     my $commands = [];
     my $curr_command = undef;
@@ -57,57 +63,68 @@ sub parseOptionSequence {
     my $format = undef;
     my $input_header = undef;
     my $output_header_flag = 1;
+    my $output_table = 1;
+
+    my $last_command = "cat";
 
     while (@$argv) {
         my $a = shift(@$argv);
+
+        my $next_command = undef;
+        my $next_output_table = 1;
+
         if ($a eq "--help") {
             $option_help = 1;
         } elsif ($a eq "--explain") {
             $option_explain = 1;
 
         } elsif ($a eq "cat") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = undef;
+            $next_command = ["cat"];
+            $last_command = $a;
 
         } elsif ($a eq "take" || $a eq "head") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["take", ""];
+            $next_command = ["take", ""];
+            $last_command = $a;
 
         } elsif ($a eq "drop") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["drop", ""];
+            $next_command = ["drop", ""];
+            $last_command = $a;
 
         } elsif ($a eq "cut") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["cut", ""];
+            $next_command = ["cut", ""];
+            $last_command = $a;
 
         } elsif ($a eq "update") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["update", undef, undef, undef];
+            $next_command = ["update", undef, undef, undef];
+            $last_command = $a;
 
         } elsif ($a eq "addcol") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["addcol", undef, undef];
+            $next_command = ["addcol", undef, undef];
+            $last_command = $a;
 
         } elsif ($a eq "sort") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["sort", ""];
+            $next_command = ["sort", ""];
+            $last_command = $a;
 
         } elsif ($a eq "wcl") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["wcl"];
+            $next_command = ["wcl"];
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "header") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["header"];
+            $next_command = ["header"];
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "summary") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["summary"];
+            $next_command = ["summary"];
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "countcols") {
-            push(@$commands, $curr_command) if (defined($curr_command));
-            $curr_command = ["countcols"];
+            $next_command = ["countcols"];
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "-i") {
             die "option -i needs an argument" unless (@$argv);
@@ -226,6 +243,18 @@ sub parseOptionSequence {
         } else {
             #die "Unknown argument: $a";
         }
+        if (defined($next_command)) {
+            if (defined($curr_command)) {
+                die "command `$curr_command->[0]` must be last\n" unless ($output_table);
+                push(@$commands, $curr_command);
+            }
+            if ($next_command->[0] eq "cat") {
+                $curr_command = undef;
+            } else {
+                $curr_command = $next_command;
+            }
+            $output_table = $next_output_table;
+        }
     }
 
     if (defined($curr_command)) {
@@ -243,6 +272,10 @@ sub parseOptionSequence {
     if (!defined($input_header)) {
         $input_header = "";
     }
+
+    ################################
+    # コマンド列を解釈して少し変換する
+    ################################
 
     my $commands2 = [];
     for my $c (@$commands) {
@@ -309,7 +342,9 @@ sub parseOptionSequence {
       "output" => $output,
       "format" => $format,
       "input_header" => $input_header,
-      "output_header_flag" => $output_header_flag},
+      "output_header_flag" => $output_header_flag,
+      "output_table" => $output_table,
+      "last_command" => $last_command},
      $argv);
 }
 
@@ -464,15 +499,6 @@ sub build_ircode {
     my $last_command = "";
     foreach my $t (@{$command_seq->{commands}}) {
         my $command = $t->[0];
-        if ($last_command eq "wcl") {
-            die "command `$last_command` must be last`\n";
-        } elsif ($last_command eq "header") {
-            die "command `$last_command` must be last`\n";
-        } elsif ($last_command eq "summary") {
-            die "command `$last_command` must be last`\n";
-        } elsif ($last_command eq "countcols") {
-            die "command `$last_command` must be last`\n";
-        }
         if ($command eq "range") {
             my $num1 = $t->[1];
             my $num2 = $t->[2];
