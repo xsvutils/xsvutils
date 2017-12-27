@@ -54,12 +54,12 @@ func printLineAsTsv(wr *bufio.Writer, line []string, nullText string) error {
 	return nil
 }
 
-func Convert(in *os.File, out *os.File, query string, defalutValue string, nullValue string) error {
+func Convert(in *os.File, out *os.File, query string, defalutValue string, nullValue string, fullUrl bool) error {
 	wr := bufio.NewWriter(out)
 	keys := strings.Split(query, ",")
 	header := make(map[string]int, len(keys))
 	for i, k := range keys {
-		header[k] = i + 1
+		header[k] = i
 	}
 	printHeaderAsTsv(wr, header)
 	err := wr.Flush()
@@ -70,25 +70,37 @@ func Convert(in *os.File, out *os.File, query string, defalutValue string, nullV
 	sc := bufio.NewScanner(in)
 	for i := 0; sc.Scan(); i++ {
 		line := make([]string, len(keys))
-		paramsline := strings.Split(sc.Text(), "?")
-		if len(paramsline) == 2 {
-			params := strings.Split(paramsline[1], "&")
-			for _, p := range params {
-				kv := strings.Split(p, "=")
-				if header[kv[0]] == 0 {
-					continue
-				}
-				if len(kv) == 2 {
-					line[header[kv[0]]-1] = kv[1]
-				} else {
-					line[header[kv[0]]-1] = defalutValue
-				}
+
+		var querystring = ""
+		if fullUrl {
+			line2 := strings.SplitN(sc.Text(), "?", 2);
+			if len(line2) == 2 {
+				querystring = line2[1];
+			}
+		} else {
+			querystring = sc.Text()
+		}
+		params := strings.Split(querystring, "&")
+		for _, p := range params {
+			kv := strings.SplitN(p, "=", 2)
+			index, ok := header[kv[0]]
+			if !ok {
+				continue
+			}
+			if len(kv) == 2 {
+				line[index] = kv[1]
+			} else {
+				line[index] = defalutValue
 			}
 		}
-		if i%100000 == 0 {
+
+		if i % 100000 == 0 {
 			wr.Flush()
 		}
-		printLineAsTsv(wr, line, nullValue)
+		err = printLineAsTsv(wr, line, nullValue)
+		if err != nil {
+			return err
+		}
 	}
 	err = wr.Flush()
 	if err != nil {
