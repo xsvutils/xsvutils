@@ -70,6 +70,8 @@ sub parseOptionSequence {
     while (@$argv) {
         my $a = shift(@$argv);
 
+        last if ($a eq ")");
+
         my $next_command = undef;
         my $next_output_table = 1;
 
@@ -104,6 +106,10 @@ sub parseOptionSequence {
 
         } elsif ($a eq "sort") {
             $next_command = ["sort", ""];
+            $last_command = $a;
+
+        } elsif ($a eq "union") {
+            $next_command = ["union", undef];
             $last_command = $a;
 
         } elsif ($a eq "wcl") {
@@ -238,10 +244,18 @@ sub parseOptionSequence {
                     $curr_command->[1] = $a;
                 }
 
+            } elsif ($curr_command->[0] eq "union") {
+                if ($a eq "--right") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } else {
+                    $curr_command->[1] = $a;
+                }
+
             }
 
         } else {
-            #die "Unknown argument: $a";
+            die "Unknown argument: $a\n";
         }
         if (defined($next_command)) {
             if (defined($curr_command)) {
@@ -324,6 +338,11 @@ sub parseOptionSequence {
                 die "subcommand \`sort\` needs --col option";
             }
             push(@$commands2, ["sort", $c->[1]]);
+        } elsif ($c->[0] eq "union") {
+            if (!defined($c->[1])) {
+                die "subcommand \`union\` needs --right option";
+            }
+            push(@$commands2, ["union", $c->[1]]);
         } elsif ($c->[0] eq "wcl") {
             push(@$commands2, ["wcl"]);
         } elsif ($c->[0] eq "header") {
@@ -386,6 +405,52 @@ if ($help_stdout || $help_stderr) {
 }
 
 ################################################################################
+# named pipe
+################################################################################
+
+my $named_pipe_prefix = "\$WORKING_DIR/pipe_";
+my $named_pipe_prefix2 = "$WORKING_DIR/pipe_";
+
+my $named_pipe_list = [{"source" => $command_seq->{input},
+                        "format" => $command_seq->{format},
+                        "header" => $command_seq->{input_header},
+                        "charencoding" => "",
+                       }];
+    # Sample
+    # [
+    #  {
+    #    "source" => "", # 入力ファイル名。0番以外で source が存在する場合に限って後に ircode が作成される
+    #    "format" => "", # 入力フォーマット、または空文字列は自動判定の意味
+    #    "header" => "", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
+    #    "charencoding" => ""
+    #  }
+    # ]
+
+my $statement_list = [];
+
+sub extractNamedPipe {
+    my ($command_seq) = @_;
+
+    for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
+        my $curr_command = $command_seq->{commands}->[$i];
+        if ($curr_command->[0] eq "union") {
+            my $pipe_id = scalar @$named_pipe_list;
+            if ( ! -e $curr_command->[1]) {
+                die "File not found: $curr_command->[1]";
+            }
+            push(@$named_pipe_list, {
+                "source" => $curr_command->[1],
+                "format" => "",
+                "header" => "",
+                "charencoding" => ""});
+            $curr_command->[1] = $pipe_id;
+        }
+    }
+}
+
+extractNamedPipe($command_seq);
+
+################################################################################
 # guess format ...
 ################################################################################
 
@@ -441,51 +506,101 @@ sub guess_charencoding {
 }
 
 sub prefetch_input {
-    my ($command_seq) = @_;
-
     my $head_size = 100 * 4096;
-    my $head_buf;
 
-    my $in;
-    if ($command_seq->{input} eq '') {
-        $in = *STDIN;
-    } else {
-        open($in, '<', $command_seq->{input}) or die $!;
+    for (my $i = 0; $i < @$named_pipe_list; $i++) {
+        my $input = $named_pipe_list->[$i];
+
+        my $head_buf;
+
+        my $in;
+        if ($input->{source} eq '') {
+            $in = *STDIN;
+        } else {
+            open($in, '<', $input->{source}) or die $!;
+        }
+        $input->{handle} = $in;
+
+        sysread($in, $head_buf, $head_size);
+
+        $input->{head_buf} = $head_buf;
+
+        if ($input->{format} eq '') {
+            $input->{format} = guess_format($head_buf);
+        }
+
+        if ($input->{charencoding} eq '') {
+            $input->{charencoding} = guess_charencoding($head_buf);
+        }
     }
-    $command_seq->{input_handle} = $in;
-
-    sysread($in, $head_buf, $head_size);
-
-    $command_seq->{head_buf} = $head_buf;
-
-    if ($command_seq->{format} eq '') {
-        $command_seq->{format} = guess_format($head_buf);
-    }
-
-    $command_seq->{charencoding} = guess_charencoding($head_buf);
 }
 
-prefetch_input($command_seq);
+prefetch_input();
 
 ################################################################################
 # subcommand list to intermediate code
 ################################################################################
 
 sub build_ircode {
+    foreach (my $pipe_id = 1; $pipe_id < @$named_pipe_list; $pipe_id++) {
+        my $s = $named_pipe_list->[$pipe_id];
+        next if ($s->{source} eq '');
+        build_ircode_input($s, $pipe_id);
+    }
+    foreach my $s (@$statement_list) {
+        build_ircode_command($s, '');
+    }
+    build_ircode_command($command_seq, $isOutputTty);
+}
+
+sub build_ircode_input {
+    my ($named_pipe, $pipe_id) = @_;
+
+    my $source = escape_for_bash($named_pipe->{source});
+    my $ircode = [["cmd", "cat $named_pipe_prefix${pipe_id}"]];
+
+    if ($named_pipe->{charencoding} ne "UTF-8") {
+        push(@$ircode, ["cmd", "iconv -f $named_pipe->{charencoding} -t UTF-8"]);
+    }
+
+    if ($named_pipe->{format} eq "csv") {
+        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+    }
+
+    if ($named_pipe->{header} ne '') {
+        my @headers = split(/,/, $named_pipe->{header});
+        for my $h (@headers) {
+            unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal header: $h\n";
+            }
+        }
+        my $headers = escape_for_bash(join("\t", @headers));
+        $ircode = [["seq",
+                    [["cmd", "printf '%s' $headers"],
+                     ["cmd", "echo"],
+                     ["pipe", $ircode]]]];
+    }
+
+    $named_pipe->{ircode} = ["pipe", $ircode];
+}
+
+sub build_ircode_command {
     my ($command_seq, $isOutputTty) = @_;
 
     my $ircode = [["cmd", "cat"]];
 
-    if ($command_seq->{charencoding} ne "UTF-8") {
-        push(@$ircode, ["cmd", "iconv -f $command_seq->{charencoding} -t UTF-8"]);
+    my $stdin_pipe = $named_pipe_list->[0];
+
+    if ($stdin_pipe->{charencoding} ne "UTF-8") {
+        push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8"]);
     }
 
-    if ($command_seq->{format} eq "csv") {
+    if ($stdin_pipe->{format} eq "csv") {
         push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
     }
 
-    if ($command_seq->{input_header} ne '') {
-        my @headers = split(/,/, $command_seq->{input_header});
+    if ($stdin_pipe->{header} ne '') {
+        my @headers = split(/,/, $stdin_pipe->{header});
         for my $h (@headers) {
             unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
                 die "Illegal header: $h\n";
@@ -539,6 +654,11 @@ sub build_ircode {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header --fields $cols"]);
 
+        } elsif ($command eq "union") {
+            my $right = escape_for_bash($t->[1]);
+            $right = "$named_pipe_prefix${right}_b";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $right"]);
+
         } elsif ($command eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
 
@@ -582,7 +702,7 @@ sub build_ircode {
     $command_seq->{ircode} = ["pipe", $ircode];
 }
 
-build_ircode($command_seq, $isOutputTty);
+build_ircode();
 
 ################################################################################
 # intermediate code to shell script
@@ -654,7 +774,35 @@ sub joinShellscriptLinesSub {
     ];
 }
 
-my $main_1_source = join("\n", @{irToShellscript($command_seq->{ircode})}) . "\n";
+my $main_1_source = "\n";
+
+my $exists_multijob = '';
+
+foreach (my $pipe_id = 0; $pipe_id < @$named_pipe_list; $pipe_id++) {
+    my $s = $named_pipe_list->[$pipe_id];
+    next unless (defined($s->{ircode}));
+    $exists_multijob = 1;
+
+    if ($s->{source} ne '') {
+        $main_1_source = $main_1_source . "# " . escape_for_bash($s->{source}) . "\n";
+    }
+    my $lines = irToShellscript($s->{ircode});
+
+    $main_1_source = $main_1_source . "mkfifo $named_pipe_prefix${pipe_id}_b\n";
+    $main_1_source = $main_1_source . join("\n", @$lines) . " > $named_pipe_prefix${pipe_id}_b &\n\n";
+}
+
+foreach my $s (@$statement_list) {
+    $exists_multijob = 1;
+    $main_1_source = $main_1_source . join("\n", @{irToShellscript($s->{ircode})}) . " &\n\n";
+}
+
+if ($exists_multijob) {
+    $main_1_source = $main_1_source . join("\n", @{irToShellscript($command_seq->{ircode})}) . " &\n";
+    $main_1_source = $main_1_source . "\nwait\n";
+} else {
+    $main_1_source = $main_1_source . join("\n", @{irToShellscript($command_seq->{ircode})}) . "\n";
+}
 
 if ($option_explain) {
     my $view = $main_1_source;
@@ -670,11 +818,11 @@ close($main_1_out);
 # 入出力を stdin, stdout に統一
 ################################################################################
 
-my $stdin = $command_seq->{input_handle};
+my $stdin = $named_pipe_list->[0]->{handle};
 
 if ($stdin ne *STDIN) {
     # 入力がファイルの場合
-    open(STDIN, '<&=', fileno($command_seq->{input_handle}));
+    open(STDIN, '<&=', fileno($named_pipe_list->[0]->{handle}));
 }
 
 if ($command_seq->{output} ne "") {
@@ -688,13 +836,40 @@ if ($command_seq->{output} ne "") {
 # exec script
 ################################################################################
 
+sub write_head_buf {
+    my ($named_pipe, $pipe_id) = @_;
+
+    my $pipe_path = "$named_pipe_prefix2${pipe_id}";
+    mkfifo($pipe_path, 0700) or die $!;
+
+    my $pid1 = fork;
+    if (!defined $pid1) {
+        die $!;
+    } elsif ($pid1) {
+        # parent process
+
+    } else {
+        # child process
+
+        open(my $fh, '>', $pipe_path) or die $!;
+        open(STDOUT, '>&=', fileno($fh));
+
+        syswrite(STDOUT, $named_pipe->{head_buf});
+        exec("cat");
+    }
+}
+
+for (my $i = 1; $i < @$named_pipe_list; $i++) {
+    write_head_buf($named_pipe_list->[$i], $i);
+}
+
 my $PARENT_READER;
 my $CHILD_WRITER;
 pipe($PARENT_READER, $CHILD_WRITER);
 
 my $pid1 = fork;
 if (!defined $pid1) {
-    die;
+    die $!;
 } elsif ($pid1) {
     # parent process
 
@@ -708,7 +883,7 @@ if (!defined $pid1) {
     close $PARENT_READER;
     open(STDOUT, '>&=', fileno($CHILD_WRITER));
 
-    syswrite(STDOUT, $command_seq->{head_buf});
+    syswrite(STDOUT, $named_pipe_list->[0]->{head_buf});
     exec("cat");
 }
 

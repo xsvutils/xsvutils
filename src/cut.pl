@@ -74,17 +74,20 @@ sub createSelectColumns {
 
 }
 
-while (my $line = <STDIN>) {
+{
+    my $line = <STDIN>;
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
 
-    if (!defined($headers)) {
-        $headers = \@cols;
-        $headerCount = @cols;
-        $selectColumns = createSelectColumns($headers);
-        print join("\t", (map { $cols[$_] } @$selectColumns)) . "\n";
-        next;
-    }
+    $headers = \@cols;
+    $headerCount = @cols;
+    $selectColumns = createSelectColumns($headers);
+    print join("\t", (map { $cols[$_] } @$selectColumns)) . "\n";
+}
+
+while (my $line = <STDIN>) {
+    $line =~ s/\n\z//g;
+    my @cols = split(/\t/, $line, -1);
 
     # 行にタブの数が少ない場合に列を付け足す
     for (my $i = $headerCount - @cols; $i > 0; $i--) {
