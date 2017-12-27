@@ -51,7 +51,7 @@ gobuild: target/golang.bin
 
 target/golang.bin: var/GOLANG_VERSION_HASH
 	go version
-	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd golang; go vet ./...; go get -u github.com/spf13/cobra; go run ./generator/generator.go && go build; fi
+	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd golang; go vet ./...; go get github.com/spf13/cobra; go run ./generator/generator.go && go build; fi
 	cp golang/golang target/golang.bin
 	chmod 777 target/golang.bin
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
