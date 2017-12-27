@@ -16,7 +16,9 @@ Subcommands:
     cat       Print data to the terminal
     take      Print first N records
     head      Print first N records
+    limit     Print first N records
     drop      Print all except first N records
+    offset    Print all except first N records
     cut       Print specified columns
     update    セルを指定して値を更新する
     addcol    固定値のカラムを一番左に追加する
@@ -73,11 +75,11 @@ Subcommand `cat`:
         $ xsvutils cat < FILENAME
 
 
-Subcommand `take` and Subcommand `head`:
+Subcommand `take` and Subcommand `head` and Subcommand `limit`:
 
     Print first N records.
 
-    2 subcommands `take` and `head` are the same subcommand.
+    3 subcommands `take`, `head` and `limit` are the same subcommand.
 
     Options:
         -n <N>    Print first N records (default is 10)
@@ -95,7 +97,11 @@ Subcommand `take` and Subcommand `head`:
         $ xsvutils FILENAME cut id,name head 20
 
 
-Subcommand `drop`:
+Subcommand `drop` and Subcommand `offset`:
+
+    先頭のNレコードを除く残りを出力する。
+
+    2 subcommands `drop` and `offset` are the same subcommand.
 
     Options:
         -n <N>    Print all except first N records (default is 10)

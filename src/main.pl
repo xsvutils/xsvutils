@@ -84,11 +84,11 @@ sub parseOptionSequence {
             $next_command = ["cat"];
             $last_command = $a;
 
-        } elsif ($a eq "take" || $a eq "head") {
+        } elsif ($a eq "take" || $a eq "head" || $a eq "limit") {
             $next_command = ["take", ""];
             $last_command = $a;
 
-        } elsif ($a eq "drop") {
+        } elsif ($a eq "drop" || $a eq "offset") {
             $next_command = ["drop", ""];
             $last_command = $a;
 
@@ -297,12 +297,38 @@ sub parseOptionSequence {
             if ($c->[1] eq "") {
                 $c->[1] = "10";
             }
-            push(@$commands2, ["range", "", $c->[1]]);
+            my $f = 1;
+            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+                # 直前のサブコマンドと結合
+                my $prev = $commands2->[@$commands2 - 1];
+                if ($prev->[1] ne "" && $prev->[2] eq "") {
+                    $f = '';
+                    $prev->[2] = $prev->[1] + $c->[1];
+                }
+            }
+            if ($f) {
+                push(@$commands2, ["range", "", $c->[1]]);
+            }
         } elsif ($c->[0] eq "drop") {
             if ($c->[1] eq "") {
                 $c->[1] = "10";
             }
-            push(@$commands2, ["range", $c->[1], ""]);
+            my $f = 1;
+            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+                # 直前のサブコマンドと結合
+                my $prev = $commands2->[@$commands2 - 1];
+                if ($prev->[1] eq "" && $prev->[2] ne "") {
+                    $f = '';
+                    if ($prev->[2] <= $c->[1]) {
+                        $prev->[2] = "0"; # drop all records
+                    } else {
+                        $prev->[1] = $c->[1];
+                    }
+                }
+            }
+            if ($f) {
+                push(@$commands2, ["range", $c->[1], ""]);
+            }
         } elsif ($c->[0] eq "cut") {
             if ($c->[1] eq "") {
                 die "subcommand \`cut\` needs --col option";
@@ -631,7 +657,8 @@ sub build_ircode_command {
                     my $arg = escape_for_bash(($num1 + 2) . ',$p');
                     push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
                 } else {
-                    die; # TODO
+                    my $arg = escape_for_bash(($num1 + 2) . ',' . ($num2 + 1) . 'p');
+                    push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
                 }
             }
 
