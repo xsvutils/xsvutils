@@ -127,7 +127,7 @@ func (d *data) SortToFile() error {
 	if err != nil {
 		return err
 	}
-	defer tmpf.Close()
+	defer tmpf.Close() // TODO 閉じれてない？ 分割ファイル数が多すぎると too many open files と言われてしまうので
 	out := bufio.NewWriter(tmpf)
 	//sort buffer
 	sort.Sort(d)
