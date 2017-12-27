@@ -2,7 +2,6 @@ package fldsort
 
 import (
 	"bufio"
-	"encoding/csv"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -170,16 +169,15 @@ func (d *data) setSortQuery() {
 func (d *data) readSource() error {
 	defer d.srcfile.Close()
 
-	r := csv.NewReader(d.srcfile)
-	r.Comma = '\t'
-	r.FieldsPerRecord = -1
+	sc := bufio.NewScanner(d.srcfile)
 
 	//initialize
 	if d.hasHeader {
-		record, err := r.Read()
-		if err != nil {
+		sc.Scan()
+		if err := sc.Err(); err != nil {
 			return err
 		}
+		record := strings.Split(sc.Text(), "\t")
 		d.headers = make(map[string]int, len(record))
 		for i, hf := range record {
 			d.headers[hf] = i
@@ -193,15 +191,12 @@ func (d *data) readSource() error {
 	//read data
 	b := make([]*row, d.splitRate)
 	for i := 0; ; {
-		r, err := r.Read()
-		if err == io.EOF {
+		if ! sc.Scan() {
 			d.buf = b[:i]
 			sort.Sort(d)
 			break
 		}
-		if err != nil {
-			return err
-		}
+		r := strings.Split(sc.Text(), "\t");
 		b[i] = &row{
 			column: r,
 		}
@@ -216,6 +211,11 @@ func (d *data) readSource() error {
 		}
 		i++
 	}
+
+	if err := sc.Err(); err != nil && err != io.EOF {
+		return err
+	}
+
 	if len(d.buffiles) > 0 {
 		if d.Len() > 0 {
 			err := d.SortToFile()
