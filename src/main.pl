@@ -104,6 +104,10 @@ sub parseOptionSequence {
             $next_command = ["addcol", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "parseuriparams") {
+            $next_command = ["parseuriparams", ""];
+            $last_command = $a;
+
         } elsif ($a eq "sort") {
             $next_command = ["sort", ""];
             $last_command = $a;
@@ -236,6 +240,14 @@ sub parseOptionSequence {
                     die "Unknown argument: $a";
                 }
 
+            } elsif ($curr_command->[0] eq "parseuriparams") {
+                if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } else {
+                    $curr_command->[1] = $a;
+                }
+
             } elsif ($curr_command->[0] eq "sort") {
                 if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
                     die "option $a needs an argument" unless (@$argv);
@@ -359,6 +371,11 @@ sub parseOptionSequence {
                 $c->[2] = "";
             }
             push(@$commands2, ["addcol", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "parseuriparams") {
+            if ($c->[1] eq "") {
+                die "subcommand \`parseuriparams\` needs --col option";
+            }
+            push(@$commands2, ["parseuriparams", $c->[1]]);
         } elsif ($c->[0] eq "sort") {
             if ($c->[1] eq "") {
                 die "subcommand \`sort\` needs --col option";
@@ -676,6 +693,12 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $value = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl --name $name --value $value"]);
+
+        } elsif ($command eq "parseuriparams") {
+            my $cols = escape_for_bash($t->[1]);
+            push(@$ircode, ["cmd", "tail -n+2"]);
+            push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv --fields $cols"]);
 
         } elsif ($command eq "sort") {
             my $cols = escape_for_bash($t->[1]);

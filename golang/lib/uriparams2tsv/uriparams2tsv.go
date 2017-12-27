@@ -8,7 +8,13 @@ import (
 
 func printHeaderAsTsv(wr *bufio.Writer, header map[string]int) error {
 	headerLength := len(header)
-	for i := 1; i <= headerLength; i++ {
+	for i := 0; i < headerLength; i++ {
+		if i > 0 {
+			err := wr.WriteByte(byte('\t'))
+			if err != nil {
+				return err
+			}
+		}
 		for k, v := range header {
 			if v != i {
 				continue
@@ -17,10 +23,7 @@ func printHeaderAsTsv(wr *bufio.Writer, header map[string]int) error {
 			if err != nil {
 				return err
 			}
-			err = wr.WriteByte(byte('\t'))
-			if err != nil {
-				return err
-			}
+			break
 		}
 	}
 	err := wr.WriteByte(byte('\n'))
