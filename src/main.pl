@@ -131,6 +131,11 @@ sub parseOptionSequence {
             $last_command = $a;
             $next_output_table = '';
 
+        } elsif ($a eq "facetcount") {
+            $next_command = ["facetcount"];
+            $last_command = $a;
+            $next_output_table = '';
+
         } elsif ($a eq "countcols") {
             $next_command = ["countcols"];
             $last_command = $a;
@@ -392,6 +397,8 @@ sub parseOptionSequence {
             push(@$commands2, ["header"]);
         } elsif ($c->[0] eq "summary") {
             push(@$commands2, ["summary"]);
+        } elsif ($c->[0] eq "facetcount") {
+            push(@$commands2, ["facetcount"]);
         } elsif ($c->[0] eq "countcols") {
             push(@$commands2, ["countcols"]);
         } else {
@@ -537,7 +544,9 @@ sub guess_charencoding {
         } else {
             if    ($b <= 0x7F)               { ; }
             elsif ($b >= 0x81 && $b <= 0x9F) { $sjis_multi = 1; }
+            elsif ($b >= 0xA0 && $b <= 0xDF) { ; }
             elsif ($b >= 0xE0 && $b <= 0xFC) { $sjis_multi = 1; }
+            elsif ($b >= 0xFD && $b <= 0xFF) { ; }
             else                             { $sjis_flag = ''; }
         }
     }
@@ -717,6 +726,9 @@ sub build_ircode_command {
 
         } elsif ($command eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
+
+        } elsif ($command eq "facetcount") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl"]);
 
         } elsif ($command eq "countcols") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);

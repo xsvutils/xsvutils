@@ -20,28 +20,35 @@ sub interrupt {
 }
 $SIG{INT} = \&interrupt;
 
+{
+    my $line = <STDIN>;
+    $line =~ s/\n\z//g;
+    my @cols = split(/\t/, $line, -1);
+
+    $record_count++;
+
+    $headers = \@cols;
+    $header_count = scalar @cols;
+    for (my $i = 0; $i < $header_count; $i++) {
+        push(@$header_indeces, $i);
+        push(@$col_counts, 0);
+        push(@$col_values, []);
+    }
+}
+
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
 
     $record_count++;
 
-    if (!defined($headers)) {
-        $headers = \@cols;
-        $header_count = scalar @cols;
-        for (my $i = 0; $i < $header_count; $i++) {
-            push(@$header_indeces, $i);
-            push(@$col_counts, 0);
-            push(@$col_values, []);
-        }
-        next;
+    # 行にタブの数が少ない場合に列を付け足す
+    for (my $i = $header_count - @cols; $i > 0; $i--) {
+        push(@cols, "");
     }
 
     for (my $i = 0; $i < $header_count; $i++) {
-        my $v = "";
-        if (defined($cols[$i])) {
-            $v = $cols[$i];
-        }
+        my $v = $cols[$i];
         if ($v ne "") {
             $col_counts->[$i]++;
         }
