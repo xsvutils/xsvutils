@@ -96,6 +96,10 @@ sub parseOptionSequence {
             $next_command = ["cut", ""];
             $last_command = $a;
 
+        } elsif ($a eq "filter") {
+            $next_command = ["filter"];
+            $last_command = $a;
+
         } elsif ($a eq "update") {
             $next_command = ["update", undef, undef, undef];
             $last_command = $a;
@@ -191,6 +195,21 @@ sub parseOptionSequence {
                     $curr_command->[1] = $a;
                 }
 
+            } elsif ($curr_command->[0] eq "filter") {
+                my $cond = undef;
+                if ($a eq "--cond") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $cond =  shift(@$argv);
+                } else {
+                    $cond = $a;
+                }
+                if (defined($cond)) {
+                    if ($cond =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*)=(.*)\z/) {
+                        push(@$curr_command, $a);
+                    } else {
+                        die "Unknown condition format: $a\n";
+                    }
+                }
             } elsif ($curr_command->[0] eq "update") {
                 if ($a eq "--index") {
                     die "option $a needs an argument" unless (@$argv);
@@ -351,6 +370,11 @@ sub parseOptionSequence {
                 die "subcommand \`cut\` needs --col option";
             }
             push(@$commands2, ["cut", $c->[1]]);
+        } elsif ($c->[0] eq "filter") {
+            if (@$c <= 1) {
+                die "subcommand \`filter\` needs --cond option";
+            }
+            push(@$commands2, $c);
         } elsif ($c->[0] eq "update") {
             if (!defined($c->[1])) {
                 die "subcommand \`update\` needs --index option";
@@ -691,6 +715,13 @@ sub build_ircode_command {
         } elsif ($command eq "cut") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
+
+        } elsif ($command eq "filter") {
+            my $conds = '';
+            for (my $i = 1; $i < @$t; $i++) {
+                $conds .= ' ' . escape_for_bash($t->[$i]);
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/filter.pl$conds"]);
 
         } elsif ($command eq "update") {
             my $index = escape_for_bash($t->[1]);
