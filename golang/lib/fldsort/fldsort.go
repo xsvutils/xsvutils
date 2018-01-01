@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -16,22 +14,8 @@ const (
 	source   = "/Users/yusuke/repo/xsvutils/golang/lib/fldsort/in.txt"
 )
 
-type row struct {
-	column []string
-}
-
-func (r *row) writeRow(w *bufio.Writer) error {
-	for _, c := range r.column[:len(r.column)-1] {
-		_, err := w.WriteString(c)
-		if err != nil {
-			return err
-		}
-		err = w.WriteByte(byte('\t'))
-		if err != nil {
-			return err
-		}
-	}
-	_, err := w.WriteString(r.column[len(r.column)-1])
+func writeRow(r string, w *bufio.Writer) error {
+	_, err := w.WriteString(r)
 	if err != nil {
 		return err
 	}
@@ -42,44 +26,31 @@ func (r *row) writeRow(w *bufio.Writer) error {
 	return nil
 }
 
-type query struct {
-	field string
-	mode  string
-}
-
 type data struct {
 	hasHeader   bool
-	headers     map[string]int
+	header      *string
 	srcfile     *os.File
-	buf         []*row
+	buf         []string
 	buffiles    []*os.File
 	tmpdir      string
 	splitRate   int
 	printRate   int
-	orderDesc   bool
-	sortQuery   []*query
-	querystring string
 }
 
 func newData(
 	srcfile *os.File,
 	hasHeader bool,
-	orderDesc bool,
-	querystring string,
 	splitRate int) *data {
 
 	return &data{
 		hasHeader:   hasHeader,
-		headers:     nil,
+		header:      nil,
 		srcfile:     srcfile,
 		buf:         nil,
 		buffiles:    make([]*os.File, 0),
 		tmpdir:      "",
 		splitRate:   splitRate,
 		printRate:   10000,
-		orderDesc:   orderDesc,
-		sortQuery:   nil,
-		querystring: querystring,
 	}
 }
 
@@ -88,38 +59,11 @@ func (d data) Swap(i, j int) {
 }
 
 func (d data) Less(i, j int) bool {
-	if d.orderDesc {
-		return !d.fieldLess(i, j, 0)
-	} else {
-		return d.fieldLess(i, j, 0)
-	}
+	return d.buf[i] < d.buf[j]
 }
 
 func (d data) Len() int {
 	return len(d.buf)
-}
-
-func (d *data) fieldLess(i, j, fi int) bool {
-	if fi == len(d.sortQuery) {
-		return false
-	}
-	ival := d.buf[i].column[d.headers[d.sortQuery[fi].field]]
-	jval := d.buf[j].column[d.headers[d.sortQuery[fi].field]]
-	if ival == jval {
-		return d.fieldLess(i, j, fi+1)
-	} else {
-		//numeric mode
-		if d.sortQuery[fi].mode == "n" {
-			ivalint, err := strconv.Atoi(ival)
-			if err == nil {
-				jvalint, err := strconv.Atoi(jval)
-				if err == nil {
-					return ivalint < jvalint
-				}
-			}
-		}
-		return ival < jval
-	}
 }
 
 func (d *data) SortToFile() error {
@@ -127,12 +71,12 @@ func (d *data) SortToFile() error {
 	if err != nil {
 		return err
 	}
-	defer tmpf.Close() // TODO 閉じれてない？ 分割ファイル数が多すぎると too many open files と言われてしまうので
+	defer tmpf.Close()
 	out := bufio.NewWriter(tmpf)
 	//sort buffer
 	sort.Sort(d)
 	for _, r := range d.buf {
-		err := r.writeRow(out)
+		err := writeRow(r, out)
 		if err != nil {
 			return err
 		}
@@ -146,26 +90,6 @@ func (d *data) SortToFile() error {
 	return nil
 }
 
-func (d *data) setSortQuery() {
-	commasep := strings.Split(d.querystring, ",")
-	sq := make([]*query, len(commasep))
-	for i, csq := range commasep {
-		colonsep := strings.Split(csq, ":")
-		if len(colonsep) == 2 && colonsep[1] == "n" {
-			sq[i] = &query{
-				field: colonsep[0],
-				mode:  colonsep[1],
-			}
-		} else {
-			sq[i] = &query{
-				field: csq,
-				mode:  "",
-			}
-		}
-	}
-	d.sortQuery = sq
-}
-
 func (d *data) readSource() error {
 	defer d.srcfile.Close()
 
@@ -177,29 +101,19 @@ func (d *data) readSource() error {
 		if err := sc.Err(); err != nil {
 			return err
 		}
-		record := strings.Split(sc.Text(), "\t")
-		d.headers = make(map[string]int, len(record))
-		for i, hf := range record {
-			d.headers[hf] = i
-		}
-		if d.querystring == "" {
-			d.querystring = record[0]
-		}
-		d.setSortQuery()
+		t := sc.Text()
+		d.header = &t
 	}
 
 	//read data
-	b := make([]*row, d.splitRate)
+	b := make([]string, d.splitRate)
 	for i := 0; ; {
 		if ! sc.Scan() {
 			d.buf = b[:i]
 			sort.Sort(d)
 			break
 		}
-		r := strings.Split(sc.Text(), "\t");
-		b[i] = &row{
-			column: r,
-		}
+		b[i] = sc.Text()
 		if i == d.splitRate-1 {
 			d.buf = b
 			err := d.SortToFile()
@@ -245,7 +159,7 @@ func (d *data) merge() (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f1.Close()
+	defer f1.Close() // TODO mergeが再帰呼び出しなので、不要なタイミングで閉じれてない。分割ファイル数が多すぎると too many open files と言われてしまう。
 	defer f2.Close()
 	sc1 := bufio.NewScanner(f1)
 	sc2 := bufio.NewScanner(f2)
@@ -300,11 +214,9 @@ func (d *data) merge() (*os.File, error) {
 func FieldSort(
 	srcfile *os.File,
 	hasHeader bool,
-	orderDesc bool,
-	querystring string,
 	splitRate int) error {
 
-	d := newData(srcfile, hasHeader, orderDesc, querystring, splitRate)
+	d := newData(srcfile, hasHeader, splitRate)
 	err := d.readSource()
 	if err != nil {
 		return err
@@ -316,23 +228,13 @@ func FieldSort(
 	}
 
 	if hasHeader {
-		i := 0
-		hlen := len(d.headers)
-		for k, _ := range d.headers {
-			i++
-			w.WriteString(k)
-			if i == hlen {
-				w.WriteByte(byte('\n'))
-				break
-			}
-			w.WriteByte(byte('\t'))
-		}
+		writeRow(*d.header, w)
 		w.Flush()
 	}
 
 	if len(d.buffiles) == 0 {
 		for i, r := range d.buf {
-			r.writeRow(w)
+			writeRow(r, w)
 			if (i % d.printRate) == 0 {
 				w.Flush()
 			}

@@ -826,7 +826,7 @@ sub build_ircode_command {
 
         } elsif ($command eq "sort") {
             my $cols = escape_for_bash($t->[1]);
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header --fields $cols"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
         } elsif ($command eq "union") {
             my $right = escape_for_bash($t->[1]);
