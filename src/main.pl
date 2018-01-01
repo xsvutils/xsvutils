@@ -108,6 +108,10 @@ sub parseOptionSequence {
             $next_command = ["addconst", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "addcopy") {
+            $next_command = ["addcopy", undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "addlinenum") {
             $next_command = ["addlinenum", undef, undef];
             $last_command = $a;
@@ -250,24 +254,49 @@ sub parseOptionSequence {
             } elsif ($curr_command->[0] eq "addconst") {
                 if ($a eq "--name") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addconst_name = shift(@$argv);
+                    my $name = shift(@$argv);
                     if (defined($curr_command->[1])) {
                         die "duplicated option: --name";
                     }
-                    $curr_command->[1] = $addconst_name;
+                    $curr_command->[1] = $name;
                 } elsif ($a eq "--value") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addconst_value = shift(@$argv);
+                    my $value = shift(@$argv);
                     if (defined($curr_command->[2])) {
                         die "duplicated option: --value";
                     }
-                    $curr_command->[2] = $addconst_value;
+                    $curr_command->[2] = $value;
                 } elsif (!defined($curr_command->[1])) {
-                    my $addconst_name = $a;
-                    $curr_command->[1] = $addconst_name;
+                    my $name = $a;
+                    $curr_command->[1] = $name;
                 } elsif (!defined($curr_command->[2])) {
-                    my $addconst_value = $a;
-                    $curr_command->[2] = $addconst_value;
+                    my $value = $a;
+                    $curr_command->[2] = $value;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
+            } elsif ($curr_command->[0] eq "addcopy") {
+                if ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $name;
+                } elsif ($a eq "--src") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $src = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --src";
+                    }
+                    $curr_command->[2] = $src;
+                } elsif (!defined($curr_command->[1])) {
+                    my $name = $a;
+                    $curr_command->[1] = $name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $src = $a;
+                    $curr_command->[2] = $src;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -275,24 +304,24 @@ sub parseOptionSequence {
             } elsif ($curr_command->[0] eq "addlinenum") {
                 if ($a eq "--name") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addlinenum_name = shift(@$argv);
+                    my $name = shift(@$argv);
                     if (defined($curr_command->[1])) {
                         die "duplicated option: --name";
                     }
-                    $curr_command->[1] = $addlinenum_name;
+                    $curr_command->[1] = $name;
                 } elsif ($a eq "--value") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addlinenum_value = shift(@$argv);
+                    my $value = shift(@$argv);
                     if (defined($curr_command->[2])) {
                         die "duplicated option: --value";
                     }
-                    $curr_command->[2] = $addlinenum_value;
+                    $curr_command->[2] = $value;
                 } elsif (!defined($curr_command->[1])) {
-                    my $addlinenum_name = $a;
-                    $curr_command->[1] = $addlinenum_name;
+                    my $name = $a;
+                    $curr_command->[1] = $name;
                 } elsif (!defined($curr_command->[2])) {
-                    my $addlinenum_value = $a;
-                    $curr_command->[2] = $addlinenum_value;
+                    my $value = $a;
+                    $curr_command->[2] = $value;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -300,24 +329,24 @@ sub parseOptionSequence {
             } elsif ($curr_command->[0] eq "addnumsortable") {
                 if ($a eq "--name") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addnumsortable_name = shift(@$argv);
+                    my $name = shift(@$argv);
                     if (defined($curr_command->[1])) {
                         die "duplicated option: --name";
                     }
-                    $curr_command->[1] = $addnumsortable_name;
+                    $curr_command->[1] = $name;
                 } elsif ($a eq "--col") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addnumsortable_col = shift(@$argv);
+                    my $col = shift(@$argv);
                     if (defined($curr_command->[2])) {
                         die "duplicated option: --col";
                     }
-                    $curr_command->[2] = $addnumsortable_col;
+                    $curr_command->[2] = $col;
                 } elsif (!defined($curr_command->[1])) {
-                    my $addnumsortable_name = $a;
-                    $curr_command->[1] = $addnumsortable_name;
+                    my $name = $a;
+                    $curr_command->[1] = $name;
                 } elsif (!defined($curr_command->[2])) {
-                    my $addnumsortable_col = $a;
-                    $curr_command->[2] = $addnumsortable_col;
+                    my $col = $a;
+                    $curr_command->[2] = $col;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -458,6 +487,14 @@ sub parseOptionSequence {
                 $c->[2] = "";
             }
             push(@$commands2, ["addconst", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "addcopy") {
+            if (!defined($c->[1])) {
+                die "subcommand \`addcopy\` needs --name option";
+            }
+            if (!defined($c->[2])) {
+                die "subcommand \`addcopy\` needs --src option";
+            }
+            push(@$commands2, ["addcopy", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "addlinenum") {
             if (!defined($c->[1])) {
                 die "subcommand \`addlinenum\` needs --name option";
@@ -807,6 +844,11 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $value = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addconst.pl --name $name --value $value"]);
+
+        } elsif ($command eq "addcopy") {
+            my $name  = escape_for_bash($t->[1]);
+            my $src = escape_for_bash($t->[2]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $name --src $src"]);
 
         } elsif ($command eq "addlinenum") {
             my $name  = escape_for_bash($t->[1]);
