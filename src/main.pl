@@ -108,6 +108,10 @@ sub parseOptionSequence {
             $next_command = ["addcol", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "addnumsortable") {
+            $next_command = ["addnumsortable", undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "parseuriparams") {
             $next_command = ["parseuriparams", ""];
             $last_command = $a;
@@ -250,7 +254,7 @@ sub parseOptionSequence {
                 } elsif ($a eq "--value") {
                     die "option $a needs an argument" unless (@$argv);
                     my $addcol_value = shift(@$argv);
-                    if (defined($curr_command->[1])) {
+                    if (defined($curr_command->[2])) {
                         die "duplicated option: --value";
                     }
                     $curr_command->[2] = $addcol_value;
@@ -260,6 +264,31 @@ sub parseOptionSequence {
                 } elsif (!defined($curr_command->[2])) {
                     my $addcol_value = $a;
                     $curr_command->[2] = $addcol_value;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
+            } elsif ($curr_command->[0] eq "addnumsortable") {
+                if ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $addnumsortable_name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $addnumsortable_name;
+                } elsif ($a eq "--col") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $addnumsortable_col = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --col";
+                    }
+                    $curr_command->[2] = $addnumsortable_col;
+                } elsif (!defined($curr_command->[1])) {
+                    my $addnumsortable_name = $a;
+                    $curr_command->[1] = $addnumsortable_name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $addnumsortable_col = $a;
+                    $curr_command->[2] = $addnumsortable_col;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -400,6 +429,14 @@ sub parseOptionSequence {
                 $c->[2] = "";
             }
             push(@$commands2, ["addcol", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "addnumsortable") {
+            if (!defined($c->[1])) {
+                die "subcommand \`addnumsortable\` needs --name option";
+            }
+            if (!defined($c->[2])) {
+                die "subcommand \`addnumsortable\` needs --col option";
+            }
+            push(@$commands2, ["addnumsortable", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "parseuriparams") {
             if ($c->[1] eq "") {
                 die "subcommand \`parseuriparams\` needs --col option";
@@ -733,6 +770,11 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $value = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl --name $name --value $value"]);
+
+        } elsif ($command eq "addnumsortable") {
+            my $name  = escape_for_bash($t->[1]);
+            my $col = escape_for_bash($t->[2]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
 
         } elsif ($command eq "parseuriparams") {
             my $cols = escape_for_bash($t->[1]);
