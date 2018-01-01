@@ -108,6 +108,10 @@ sub parseOptionSequence {
             $next_command = ["addcol", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "addlinenum") {
+            $next_command = ["addlinenum", undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "addnumsortable") {
             $next_command = ["addnumsortable", undef, undef];
             $last_command = $a;
@@ -264,6 +268,31 @@ sub parseOptionSequence {
                 } elsif (!defined($curr_command->[2])) {
                     my $addcol_value = $a;
                     $curr_command->[2] = $addcol_value;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
+            } elsif ($curr_command->[0] eq "addlinenum") {
+                if ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $addlinenum_name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $addlinenum_name;
+                } elsif ($a eq "--value") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $addlinenum_value = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --value";
+                    }
+                    $curr_command->[2] = $addlinenum_value;
+                } elsif (!defined($curr_command->[1])) {
+                    my $addlinenum_name = $a;
+                    $curr_command->[1] = $addlinenum_name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $addlinenum_value = $a;
+                    $curr_command->[2] = $addlinenum_value;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -429,6 +458,14 @@ sub parseOptionSequence {
                 $c->[2] = "";
             }
             push(@$commands2, ["addcol", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "addlinenum") {
+            if (!defined($c->[1])) {
+                die "subcommand \`addlinenum\` needs --name option";
+            }
+            if (!defined($c->[2])) {
+                $c->[2] = 1;
+            }
+            push(@$commands2, ["addlinenum", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "addnumsortable") {
             if (!defined($c->[1])) {
                 die "subcommand \`addnumsortable\` needs --name option";
@@ -770,6 +807,11 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $value = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl --name $name --value $value"]);
+
+        } elsif ($command eq "addlinenum") {
+            my $name  = escape_for_bash($t->[1]);
+            my $value = escape_for_bash($t->[2]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $name --value $value"]);
 
         } elsif ($command eq "addnumsortable") {
             my $name  = escape_for_bash($t->[1]);

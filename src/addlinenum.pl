@@ -3,7 +3,7 @@ use warnings;
 use utf8;
 
 my $name = "-";
-my $value = "";
+my $value = 1;
 
 while (@ARGV) {
     my $a = shift(@ARGV);
@@ -25,5 +25,6 @@ print "$name\t$line";
 
 while (my $line = <STDIN>) {
     print "$value\t$line";
+    $value++;
 }
 
