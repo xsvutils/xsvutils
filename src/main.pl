@@ -104,8 +104,8 @@ sub parseOptionSequence {
             $next_command = ["update", undef, undef, undef];
             $last_command = $a;
 
-        } elsif ($a eq "addcol") {
-            $next_command = ["addcol", undef, undef];
+        } elsif ($a eq "addconst") {
+            $next_command = ["addconst", undef, undef];
             $last_command = $a;
 
         } elsif ($a eq "addlinenum") {
@@ -247,27 +247,27 @@ sub parseOptionSequence {
                     die "Unknown argument: $a";
                 }
 
-            } elsif ($curr_command->[0] eq "addcol") {
+            } elsif ($curr_command->[0] eq "addconst") {
                 if ($a eq "--name") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addcol_name = shift(@$argv);
+                    my $addconst_name = shift(@$argv);
                     if (defined($curr_command->[1])) {
                         die "duplicated option: --name";
                     }
-                    $curr_command->[1] = $addcol_name;
+                    $curr_command->[1] = $addconst_name;
                 } elsif ($a eq "--value") {
                     die "option $a needs an argument" unless (@$argv);
-                    my $addcol_value = shift(@$argv);
+                    my $addconst_value = shift(@$argv);
                     if (defined($curr_command->[2])) {
                         die "duplicated option: --value";
                     }
-                    $curr_command->[2] = $addcol_value;
+                    $curr_command->[2] = $addconst_value;
                 } elsif (!defined($curr_command->[1])) {
-                    my $addcol_name = $a;
-                    $curr_command->[1] = $addcol_name;
+                    my $addconst_name = $a;
+                    $curr_command->[1] = $addconst_name;
                 } elsif (!defined($curr_command->[2])) {
-                    my $addcol_value = $a;
-                    $curr_command->[2] = $addcol_value;
+                    my $addconst_value = $a;
+                    $curr_command->[2] = $addconst_value;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -450,14 +450,14 @@ sub parseOptionSequence {
                 die "Illegal column name: $curr_command->[2]\n";
             }
             push(@$commands2, ["update", $c->[1], $c->[2], $c->[3]]);
-        } elsif ($c->[0] eq "addcol") {
+        } elsif ($c->[0] eq "addconst") {
             if (!defined($c->[1])) {
-                die "subcommand \`addcol\` needs --name option";
+                die "subcommand \`addconst\` needs --name option";
             }
             if (!defined($c->[2])) {
                 $c->[2] = "";
             }
-            push(@$commands2, ["addcol", $c->[1], $c->[2]]);
+            push(@$commands2, ["addconst", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "addlinenum") {
             if (!defined($c->[1])) {
                 die "subcommand \`addlinenum\` needs --name option";
@@ -803,10 +803,10 @@ sub build_ircode_command {
             my $value = escape_for_bash($t->[3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
 
-        } elsif ($command eq "addcol") {
+        } elsif ($command eq "addconst") {
             my $name  = escape_for_bash($t->[1]);
             my $value = escape_for_bash($t->[2]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcol.pl --name $name --value $value"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addconst.pl --name $name --value $value"]);
 
         } elsif ($command eq "addlinenum") {
             my $name  = escape_for_bash($t->[1]);

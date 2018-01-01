@@ -21,7 +21,7 @@ Subcommands:
     offset    Print all except first N records
     cut       Print specified columns
     update    セルを指定して値を更新する
-    addcol    固定値のカラムを一番左に追加する
+    addconst  固定値のカラムを一番左に追加する
     sort      ソートする
     wcl       レコード数を表示する
     header    カラムの一覧を表示する
@@ -146,7 +146,7 @@ Subcommand `update`:
         --value <VALUE>
 
 
-Subcommand `addcol`:
+Subcommand `addconst`:
 
     固定値のカラムを一番左に追加する
 
@@ -156,14 +156,14 @@ Subcommand `addcol`:
 
     以下は同じ意味である。
 
-        $ xsvutils FILENAME addcol --name col21 --value 0
-        $ xsvutils FILENAME addcol --value 0 --name col21
-        $ xsvutils FILENAME addcol col21 0
+        $ xsvutils FILENAME addconst --name col21 --value 0
+        $ xsvutils FILENAME addconst --value 0 --name col21
+        $ xsvutils FILENAME addconst col21 0
 
     他のサブコマンドと組み合わせることも可能。
     以下の例では、FILENAME の id カラムと固定値 0 のカラム col0 の2カラムを表示する。
 
-        $ xsvutils FILENAME addcol col0 dummy cut id,col0
+        $ xsvutils FILENAME addconst col0 dummy cut id,col0
 
 
 Subcommand `sort`:
