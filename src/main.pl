@@ -36,6 +36,27 @@ my $option_explain = undef;
 my $exists_args = '';
 $exists_args = 1 if (@ARGV);
 
+sub parseSortParams {
+    my ($arg) = @_;
+    my @args = split(/,/, $arg);
+    my $commands = [];
+    push(@$commands, ["addlinenum", '_sort_$_linenum', "1"]);
+    push(@$commands, ["addnumsortable", '', '_sort_$_linenum']);
+    my $c = 2;
+    while (@args) {
+        my $a = pop(@args);
+        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
+            push(@$commands, ["addnumsortable", "", $1]);
+        } else {
+            push(@$commands, ["addcopy", "", $a]);
+        }
+        $c++;
+    }
+    push(@$commands, ["sort"]);
+    push(@$commands, ["removecol", $c]);
+    $commands;
+}
+
 sub parseOptionSequence {
     # 2値を返す関数。
     # 1つ目の返り値の例
@@ -511,6 +532,11 @@ sub parseOptionSequence {
                 die "subcommand \`addnumsortable\` needs --col option";
             }
             push(@$commands2, ["addnumsortable", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "removecol") {
+            if (!defined($c->[1])) {
+                die "subcommand \`removecol\` needs --count option";
+            }
+            push(@$commands2, ["removecol", $c->[1]]);
         } elsif ($c->[0] eq "parseuriparams") {
             if ($c->[1] eq "") {
                 die "subcommand \`parseuriparams\` needs --col option";
@@ -520,7 +546,7 @@ sub parseOptionSequence {
             if ($c->[1] eq "") {
                 die "subcommand \`sort\` needs --col option";
             }
-            push(@$commands2, ["sort", $c->[1]]);
+            push(@$commands2, @{parseSortParams($c->[1])});
         } elsif ($c->[0] eq "union") {
             if (!defined($c->[1])) {
                 die "subcommand \`union\` needs --right option";
@@ -860,6 +886,11 @@ sub build_ircode_command {
             my $col = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
 
+        } elsif ($command eq "removecol") {
+            my $count  = escape_for_bash($t->[1]);
+            my $arg = '-f' . ($count + 1) . '-';
+            push(@$ircode, ["cmd", "cut $arg"]);
+
         } elsif ($command eq "parseuriparams") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "tail -n+2"]);
@@ -867,7 +898,6 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv --fields $cols"]);
 
         } elsif ($command eq "sort") {
-            my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
         } elsif ($command eq "union") {
