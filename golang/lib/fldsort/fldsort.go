@@ -33,6 +33,7 @@ type data struct {
 	buf         []string
 	buffiles    []*os.File
 	tmpdir      string
+	tmpdir_num  int
 	splitRate   int
 	printRate   int
 }
@@ -49,6 +50,7 @@ func newData(
 		buf:         nil,
 		buffiles:    make([]*os.File, 0),
 		tmpdir:      "",
+		tmpdir_num:  0,
 		splitRate:   splitRate,
 		printRate:   10000,
 	}
@@ -67,12 +69,14 @@ func (d data) Len() int {
 }
 
 func (d *data) SortToFile() error {
-	tmpf, err := ioutil.TempFile(d.tmpdir, fmt.Sprintf("%s_", toolname))
+	tmpf, err := ioutil.TempFile(d.tmpdir, fmt.Sprintf("%s_%d_", toolname, d.tmpdir_num))
 	if err != nil {
 		return err
 	}
 	defer tmpf.Close()
+	d.tmpdir_num = d.tmpdir_num + 1
 	out := bufio.NewWriter(tmpf)
+
 	//sort buffer
 	sort.Sort(d)
 	for _, r := range d.buf {
@@ -109,10 +113,20 @@ func (d *data) readSource() error {
 	b := make([]string, d.splitRate)
 	for i := 0; ; {
 		if ! sc.Scan() {
-			d.buf = b[:i]
-			sort.Sort(d)
+			d.buf = b[:i] // splitRate に満たない残りレコード
+			if len(d.buffiles) == 0 {
+				// トータルのレコード数が splitRate に満たない場合
+				sort.Sort(d)
+			} else if d.Len() > 0 {
+				// トータルのレコード数が splitRate を超える場合
+				err := d.SortToFile()
+				if err != nil {
+					return err
+				}
+			}
 			break
 		}
+
 		b[i] = sc.Text()
 		if i == d.splitRate-1 {
 			d.buf = b
@@ -130,37 +144,48 @@ func (d *data) readSource() error {
 		return err
 	}
 
-	if len(d.buffiles) > 0 {
-		if d.Len() > 0 {
-			err := d.SortToFile()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	return nil
 }
 
 func (d *data) merge() (*os.File, error) {
-	if len(d.buffiles) == 1 {
-		return d.buffiles[0], nil
+	for {
+		if len(d.buffiles) == 1 {
+			return d.buffiles[0], nil
+		}
+
+		f1name := d.buffiles[0].Name()
+		f2name := d.buffiles[1].Name()
+		d.buffiles = d.buffiles[2:]
+
+		err := d.mergeSub(f1name, f2name)
+		if err != nil {
+			return nil, err
+		}
 	}
-	tmpf, err := ioutil.TempFile(d.tmpdir, fmt.Sprintf("%s_m%d_", toolname, len(d.buffiles)))
+}
+
+func (d *data) mergeSub(f1name, f2name string) error {
+	tmpf, err := ioutil.TempFile(d.tmpdir, fmt.Sprintf("%s_%d_", toolname, d.tmpdir_num))
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer tmpf.Close()
+	d.tmpdir_num = d.tmpdir_num + 1
 	out := bufio.NewWriter(tmpf)
-	f1, err := os.Open(d.buffiles[0].Name())
+
+	f1, err := os.Open(f1name)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	f2, err := os.Open(d.buffiles[1].Name())
+	f2, err := os.Open(f2name)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer f1.Close() // TODO mergeが再帰呼び出しなので、不要なタイミングで閉じれてない。分割ファイル数が多すぎると too many open files と言われてしまう。
+	defer f1.Close()
+	defer os.Remove(f1name)
 	defer f2.Close()
+	defer os.Remove(f2name)
+
 	sc1 := bufio.NewScanner(f1)
 	sc2 := bufio.NewScanner(f2)
 
@@ -207,8 +232,9 @@ func (d *data) merge() (*os.File, error) {
 		}
 	}
 
-	d.buffiles = append(d.buffiles[2:], tmpf)
-	return d.merge()
+	d.buffiles = append(d.buffiles, tmpf)
+
+	return nil
 }
 
 func FieldSort(
@@ -233,6 +259,7 @@ func FieldSort(
 	}
 
 	if len(d.buffiles) == 0 {
+		// トータルのレコード数が splitRate に満たない場合
 		for i, r := range d.buf {
 			writeRow(r, w)
 			if (i % d.printRate) == 0 {
@@ -240,28 +267,30 @@ func FieldSort(
 			}
 		}
 		w.Flush()
-	} else {
-		file, err := d.merge()
-		if err != nil {
-			return err
-		}
-		f, err := os.Open(file.Name())
-		if err != nil {
-			return err
-		}
-		sc := bufio.NewScanner(f)
-		defer file.Close()
-
-		i := 0
-		for sc.Scan() {
-			w.WriteString(sc.Text())
-			w.WriteByte(byte('\n'))
-			if (i % d.printRate) == 0 {
-				w.Flush()
-			}
-			i++
-		}
-		w.Flush()
+		return nil
 	}
+
+	file, err := d.merge()
+	if err != nil {
+		return err
+	}
+	f, err := os.Open(file.Name())
+	if err != nil {
+		return err
+	}
+	sc := bufio.NewScanner(f)
+	defer file.Close()
+
+	i := 0
+	for sc.Scan() {
+		w.WriteString(sc.Text())
+		w.WriteByte(byte('\n'))
+		if (i % d.printRate) == 0 {
+			w.Flush()
+		}
+		i++
+	}
+	w.Flush()
+
 	return nil
 }
