@@ -13,20 +13,45 @@ Usage:
 
 Subcommands:
 
-    cat       Print data to the terminal
-    take      Print first N records
-    head      Print first N records
-    limit     Print first N records
-    drop      Print all except first N records
-    offset    Print all except first N records
-    cut       Print specified columns
-    update    セルを指定して値を更新する
-    addconst  固定値のカラムを一番左に追加する
-    sort      ソートする
-    wcl       レコード数を表示する
-    header    カラムの一覧を表示する
-    summary   データのサマリを表示する
-    countcols カラム数を集計する
+    なにもしないサブコマンド
+
+        cat                             Print data to the terminal
+
+    レコード選択に関するサブコマンド
+
+        take [<N>]                      Print first N records
+        head [<N>]                      Print first N records
+        limit [<N>]                     Print first N records
+        drop [<N>]                      Print all except first N records
+        offset [<N>]                    Print all except first N records
+        filter <CONDITION>
+
+    列の選択に関するサブコマンド
+
+        cut <COLUMNS>                   Print specified columns
+
+    列を追加するサブコマンド
+
+        addconst <NEW_NAME> <VALUE      固定値のカラムを一番左に追加する
+        addcopy <NEW_NAME> <SOURCE>
+        addlinenum <NEW_NAME> [<START_VALUE>]
+        addlinenum2 <NEW_NAME>
+        addnumsortable <NEW_NAME> <TARGET_COLUMN>
+
+    その他のデータを加工するコマンド
+
+        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+        sort [<COLUMNS>]                ソートする
+        paste <OTHER_FILE>
+        union <OTHER_FILE>
+
+    集計するコマンド
+
+        wcl                             レコード数を表示する
+        header                          カラムの一覧を表示する
+        summary                         データのサマリを表示する
+        facetcount
+        countcols                       カラム数を集計する
 
     オプションやパラメータを受け付けるサブコマンドもある。
 
