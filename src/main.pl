@@ -56,7 +56,7 @@ sub parseSortParams {
     $commands;
 }
 
-sub parseOptionSequence {
+sub parseQuery {
     # 2値を返す関数。
     # 1つ目の返り値の例
     # { "commands" => [["range", "", "20"], ["cut", "id,name"]],
@@ -414,6 +414,8 @@ sub parseOptionSequence {
                 if ($a eq "--right") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "(") {
+                    ($curr_command->[1], $argv) = parseQuery($argv);
                 } else {
                     $curr_command->[1] = $a;
                 }
@@ -422,6 +424,8 @@ sub parseOptionSequence {
                 if ($a eq "--right") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "(") {
+                    ($curr_command->[1], $argv) = parseQuery($argv);
                 } else {
                     $curr_command->[1] = $a;
                 }
@@ -619,7 +623,7 @@ sub parseOptionSequence {
      $argv);
 }
 
-my ($command_seq, $tail_argv) = parseOptionSequence(\@ARGV);
+my ($command_seq, $tail_argv) = parseQuery(\@ARGV);
 
 ################################################################################
 # help
@@ -660,10 +664,11 @@ if ($help_stdout || $help_stderr) {
 # named pipe
 ################################################################################
 
-my $named_pipe_prefix = "\$WORKING_DIR/pipe_";
-my $named_pipe_prefix2 = "$WORKING_DIR/pipe_";
+my $input_pipe_prefix = "\$WORKING_DIR/pipe_input_";
+my $input_pipe_prefix2 = "$WORKING_DIR/pipe_input_";
 
-my $named_pipe_list = [{"source" => $command_seq->{input},
+my $input_pipe_list = [{"prefetch" => 1,
+                        "source" => $command_seq->{input},
                         "format" => $command_seq->{format},
                         "header" => $command_seq->{input_header},
                         "charencoding" => "",
@@ -671,6 +676,7 @@ my $named_pipe_list = [{"source" => $command_seq->{input},
     # Sample
     # [
     #  {
+    #    "prefetch" => 1, # prefetchするかどうか 1 or ''
     #    "source" => "", # 入力ファイル名。0番以外で source が存在する場合に限って後に ircode が作成される
     #    "format" => "", # 入力フォーマット、または空文字列は自動判定の意味
     #    "header" => "", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
@@ -679,34 +685,69 @@ my $named_pipe_list = [{"source" => $command_seq->{input},
     # ]
 
 my $statement_list = [];
+    # Sample
+    # [
+    #  {
+    #   "input_pipe_id"  => 3,
+    #   "output_pipe_id" => 4,
+    #   "query" => { "commands" => ... },
+    #  }
+    # ]
 
 sub extractNamedPipe {
     my ($command_seq) = @_;
 
     for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
         my $curr_command = $command_seq->{commands}->[$i];
-        if ($curr_command->[0] eq "paste") {
-            my $pipe_id = scalar @$named_pipe_list;
-            if ( ! -e $curr_command->[1]) {
-                die "File not found: $curr_command->[1]";
+        if ($curr_command->[0] eq "paste" || $curr_command->[0] eq "union") {
+            if (ref($curr_command->[1]) eq "HASH") {
+                my $subquery = $curr_command->[1];
+                if ($subquery->{output} ne "") {
+                    die "sub query of subcommand `$curr_command->[0]` must not have output";
+                }
+                if ($subquery->{output_table} eq "") {
+                    die "sub query of subcommand `$curr_command->[0]` must not have a command `$subquery->{last_command}`";
+                }
+                if ($subquery->{output_header_flag} eq "") {
+                    die "sub query of subcommand `$curr_command->[0]` must not have an option --o-no-header";
+                }
+                if ($subquery->{input} eq "") {
+                    die "TODO";
+                } else {
+                    my $input_pipe_id = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => 1,
+                        "source" => $subquery->{input},
+                        "format" => $subquery->{format},
+                        "header" => $subquery->{input_header},
+                        "charencoding" => ""});
+
+                    my $output_pipe_id = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => "",
+                        "source" => "",
+                        "format" => "tsv",
+                        "header" => "",
+                        "charencoding" => "UTF-8"});
+
+                    push(@$statement_list, {
+                        "input_pipe_id" => $input_pipe_id,
+                        "output_pipe_id" => $output_pipe_id,
+                        "query" => $subquery});
+                    $curr_command->[1] = $output_pipe_id;
+                }
+            } else {
+                if ( ! -e $curr_command->[1]) {
+                    die "File not found: $curr_command->[1]";
+                }
+                my $pipe_id = scalar @$input_pipe_list;
+                push(@$input_pipe_list, {
+                    "source" => $curr_command->[1],
+                    "format" => "",
+                    "header" => "",
+                    "charencoding" => ""});
+                $curr_command->[1] = $pipe_id;
             }
-            push(@$named_pipe_list, {
-                "source" => $curr_command->[1],
-                "format" => "",
-                "header" => "",
-                "charencoding" => ""});
-            $curr_command->[1] = $pipe_id;
-        } elsif ($curr_command->[0] eq "union") {
-            my $pipe_id = scalar @$named_pipe_list;
-            if ( ! -e $curr_command->[1]) {
-                die "File not found: $curr_command->[1]";
-            }
-            push(@$named_pipe_list, {
-                "source" => $curr_command->[1],
-                "format" => "",
-                "header" => "",
-                "charencoding" => ""});
-            $curr_command->[1] = $pipe_id;
         }
     }
 }
@@ -773,8 +814,10 @@ sub guess_charencoding {
 sub prefetch_input {
     my $head_size = 100 * 4096;
 
-    for (my $i = 0; $i < @$named_pipe_list; $i++) {
-        my $input = $named_pipe_list->[$i];
+    for (my $i = 0; $i < @$input_pipe_list; $i++) {
+        my $input = $input_pipe_list->[$i];
+
+        next unless $input->{prefetch};
 
         my $head_buf;
 
@@ -807,33 +850,33 @@ prefetch_input();
 ################################################################################
 
 sub build_ircode {
-    foreach (my $pipe_id = 1; $pipe_id < @$named_pipe_list; $pipe_id++) {
-        my $s = $named_pipe_list->[$pipe_id];
+    foreach (my $pipe_id = 1; $pipe_id < @$input_pipe_list; $pipe_id++) {
+        my $s = $input_pipe_list->[$pipe_id];
         next if ($s->{source} eq '');
         build_ircode_input($s, $pipe_id);
     }
     foreach my $s (@$statement_list) {
-        build_ircode_command($s, '');
+        build_ircode_command($s->{query}, $s->{input_pipe_id}, '');
     }
-    build_ircode_command($command_seq, $isOutputTty);
+    build_ircode_command($command_seq, '', $isOutputTty);
 }
 
 sub build_ircode_input {
-    my ($named_pipe, $pipe_id) = @_;
+    my ($input_pipe, $pipe_id) = @_;
 
-    my $source = escape_for_bash($named_pipe->{source});
-    my $ircode = [["cmd", "cat $named_pipe_prefix${pipe_id}"]];
+    my $source = escape_for_bash($input_pipe->{source});
+    my $ircode = [["cmd", "cat $input_pipe_prefix${pipe_id}_0"]];
 
-    if ($named_pipe->{charencoding} ne "UTF-8") {
-        push(@$ircode, ["cmd", "iconv -f $named_pipe->{charencoding} -t UTF-8"]);
+    if ($input_pipe->{charencoding} ne "UTF-8") {
+        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8"]);
     }
 
-    if ($named_pipe->{format} eq "csv") {
+    if ($input_pipe->{format} eq "csv") {
         push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
     }
 
-    if ($named_pipe->{header} ne '') {
-        my @headers = split(/,/, $named_pipe->{header});
+    if ($input_pipe->{header} ne '') {
+        my @headers = split(/,/, $input_pipe->{header});
         for my $h (@headers) {
             unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
                 die "Illegal header: $h\n";
@@ -846,15 +889,20 @@ sub build_ircode_input {
                      ["pipe", $ircode]]]];
     }
 
-    $named_pipe->{ircode} = ["pipe", $ircode];
+    $input_pipe->{ircode} = ["pipe", $ircode];
 }
 
 sub build_ircode_command {
-    my ($command_seq, $isOutputTty) = @_;
+    my ($command_seq, $input_pipe_id, $isOutputTty) = @_;
 
-    my $ircode = [["cmd", "cat"]];
+    my $ircode;
+    if ($input_pipe_id eq "") {
+        $ircode = [["cmd", "cat"]];
+    } else {
+        $ircode = [["cmd", "cat ${input_pipe_prefix}$input_pipe_id"]];
+    }
 
-    my $stdin_pipe = $named_pipe_list->[0];
+    my $stdin_pipe = $input_pipe_list->[0];
 
     if ($stdin_pipe->{charencoding} ne "UTF-8") {
         push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8"]);
@@ -958,12 +1006,12 @@ sub build_ircode_command {
 
         } elsif ($command eq "paste") {
             my $right = escape_for_bash($t->[1]);
-            $right = "$named_pipe_prefix${right}_b";
+            $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $right"]);
 
         } elsif ($command eq "union") {
             my $right = escape_for_bash($t->[1]);
-            $right = "$named_pipe_prefix${right}_b";
+            $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $right"]);
 
         } elsif ($command eq "wcl") {
@@ -1088,23 +1136,27 @@ my $main_1_source = "\n";
 
 my $exists_multijob = '';
 
-foreach (my $pipe_id = 0; $pipe_id < @$named_pipe_list; $pipe_id++) {
-    my $s = $named_pipe_list->[$pipe_id];
-    next unless (defined($s->{ircode}));
-    $exists_multijob = 1;
+foreach (my $pipe_id = 0; $pipe_id < @$input_pipe_list; $pipe_id++) {
+    my $s = $input_pipe_list->[$pipe_id];
+    if (defined($s->{ircode})) {
+        if ($s->{source} ne '') {
+            $main_1_source = $main_1_source . "# " . escape_for_bash($s->{source}) . "\n";
+        }
+        my $lines = irToShellscript($s->{ircode});
 
-    if ($s->{source} ne '') {
-        $main_1_source = $main_1_source . "# " . escape_for_bash($s->{source}) . "\n";
+        $main_1_source = $main_1_source . "mkfifo $input_pipe_prefix${pipe_id}\n";
+        $main_1_source = $main_1_source . join("\n", @$lines) . " > $input_pipe_prefix${pipe_id} &\n\n";
+
+        $exists_multijob = 1;
+    } elsif ($pipe_id > 0) {
+        $main_1_source = $main_1_source . "mkfifo $input_pipe_prefix${pipe_id}\n\n";
     }
-    my $lines = irToShellscript($s->{ircode});
-
-    $main_1_source = $main_1_source . "mkfifo $named_pipe_prefix${pipe_id}_b\n";
-    $main_1_source = $main_1_source . join("\n", @$lines) . " > $named_pipe_prefix${pipe_id}_b &\n\n";
 }
 
 foreach my $s (@$statement_list) {
+    my $output_pipe_id = $s->{output_pipe_id};
+    $main_1_source = $main_1_source . join("\n", @{irToShellscript($s->{query}->{ircode})}) . " > $input_pipe_prefix${output_pipe_id} &\n\n";
     $exists_multijob = 1;
-    $main_1_source = $main_1_source . join("\n", @{irToShellscript($s->{ircode})}) . " &\n\n";
 }
 
 if ($exists_multijob) {
@@ -1128,11 +1180,11 @@ close($main_1_out);
 # 入出力を stdin, stdout に統一
 ################################################################################
 
-my $stdin = $named_pipe_list->[0]->{handle};
+my $stdin = $input_pipe_list->[0]->{handle};
 
 if ($stdin ne *STDIN) {
     # 入力がファイルの場合
-    open(STDIN, '<&=', fileno($named_pipe_list->[0]->{handle}));
+    open(STDIN, '<&=', fileno($input_pipe_list->[0]->{handle}));
 }
 
 if ($command_seq->{output} ne "") {
@@ -1147,9 +1199,9 @@ if ($command_seq->{output} ne "") {
 ################################################################################
 
 sub write_head_buf {
-    my ($named_pipe, $pipe_id) = @_;
+    my ($input_pipe, $pipe_id) = @_;
 
-    my $pipe_path = "$named_pipe_prefix2${pipe_id}";
+    my $pipe_path = "$input_pipe_prefix2${pipe_id}_0";
     mkfifo($pipe_path, 0700) or die $!;
 
     my $pid1 = fork;
@@ -1164,15 +1216,16 @@ sub write_head_buf {
         open(my $fh, '>', $pipe_path) or die $!;
         open(STDOUT, '>&=', fileno($fh));
 
-        open(STDIN, '<&=', fileno($named_pipe->{handle}));
+        open(STDIN, '<&=', fileno($input_pipe->{handle}));
 
-        syswrite(STDOUT, $named_pipe->{head_buf});
+        syswrite(STDOUT, $input_pipe->{head_buf});
         exec("cat");
     }
 }
 
-for (my $i = 1; $i < @$named_pipe_list; $i++) {
-    write_head_buf($named_pipe_list->[$i], $i);
+for (my $i = 1; $i < @$input_pipe_list; $i++) {
+    next unless $input_pipe_list->[$i]->{prefetch};
+    write_head_buf($input_pipe_list->[$i], $i);
 }
 
 my $PARENT_READER;
@@ -1195,7 +1248,7 @@ if (!defined $pid1) {
     close $PARENT_READER;
     open(STDOUT, '>&=', fileno($CHILD_WRITER));
 
-    syswrite(STDOUT, $named_pipe_list->[0]->{head_buf});
+    syswrite(STDOUT, $input_pipe_list->[0]->{head_buf});
     exec("cat");
 }
 
