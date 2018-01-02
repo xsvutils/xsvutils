@@ -150,7 +150,7 @@ sub parseOptionSequence {
             $last_command = $a;
 
         } elsif ($a eq "sort") {
-            $next_command = ["sort", ""];
+            $next_command = ["sort", undef];
             $last_command = $a;
 
         } elsif ($a eq "union") {
@@ -560,10 +560,11 @@ sub parseOptionSequence {
             }
             push(@$commands2, ["parseuriparams", $c->[1]]);
         } elsif ($c->[0] eq "sort") {
-            if ($c->[1] eq "") {
-                die "subcommand \`sort\` needs --col option";
+            if (defined($c->[1])) {
+                push(@$commands2, @{parseSortParams($c->[1])});
+            } else {
+                push(@$commands2, ["sort"]);
             }
-            push(@$commands2, @{parseSortParams($c->[1])});
         } elsif ($c->[0] eq "union") {
             if (!defined($c->[1])) {
                 die "subcommand \`union\` needs --right option";
