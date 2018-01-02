@@ -141,6 +141,10 @@ sub parseOptionSequence {
             $next_command = ["addnumsortable", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "paste") {
+            $next_command = ["paste", undef];
+            $last_command = $a;
+
         } elsif ($a eq "parseuriparams") {
             $next_command = ["parseuriparams", ""];
             $last_command = $a;
@@ -372,6 +376,14 @@ sub parseOptionSequence {
                     die "Unknown argument: $a";
                 }
 
+            } elsif ($curr_command->[0] eq "paste") {
+                if ($a eq "--right") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } else {
+                    $curr_command->[1] = $a;
+                }
+
             } elsif ($curr_command->[0] eq "parseuriparams") {
                 if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
                     die "option $a needs an argument" unless (@$argv);
@@ -537,6 +549,11 @@ sub parseOptionSequence {
                 die "subcommand \`removecol\` needs --count option";
             }
             push(@$commands2, ["removecol", $c->[1]]);
+        } elsif ($c->[0] eq "paste") {
+            if (!defined($c->[1])) {
+                die "subcommand \`paste\` needs --right option";
+            }
+            push(@$commands2, ["paste", $c->[1]]);
         } elsif ($c->[0] eq "parseuriparams") {
             if ($c->[1] eq "") {
                 die "subcommand \`parseuriparams\` needs --col option";
@@ -644,7 +661,18 @@ sub extractNamedPipe {
 
     for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
         my $curr_command = $command_seq->{commands}->[$i];
-        if ($curr_command->[0] eq "union") {
+        if ($curr_command->[0] eq "paste") {
+            my $pipe_id = scalar @$named_pipe_list;
+            if ( ! -e $curr_command->[1]) {
+                die "File not found: $curr_command->[1]";
+            }
+            push(@$named_pipe_list, {
+                "source" => $curr_command->[1],
+                "format" => "",
+                "header" => "",
+                "charencoding" => ""});
+            $curr_command->[1] = $pipe_id;
+        } elsif ($curr_command->[0] eq "union") {
             my $pipe_id = scalar @$named_pipe_list;
             if ( ! -e $curr_command->[1]) {
                 die "File not found: $curr_command->[1]";
@@ -891,6 +919,11 @@ sub build_ircode_command {
             my $arg = '-f' . ($count + 1) . '-';
             push(@$ircode, ["cmd", "cut $arg"]);
 
+        } elsif ($command eq "paste") {
+            my $right = escape_for_bash($t->[1]);
+            $right = "$named_pipe_prefix${right}_b";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $right"]);
+
         } elsif ($command eq "parseuriparams") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "tail -n+2"]);
@@ -1102,6 +1135,8 @@ sub write_head_buf {
 
         open(my $fh, '>', $pipe_path) or die $!;
         open(STDOUT, '>&=', fileno($fh));
+
+        open(STDIN, '<&=', fileno($named_pipe->{handle}));
 
         syswrite(STDOUT, $named_pipe->{head_buf});
         exec("cat");

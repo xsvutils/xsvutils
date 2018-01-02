@@ -18,7 +18,7 @@ while (@ARGV) {
     }
 }
 
-die "option --name required" unless defined $name;
+die "subcommand `addconst` requires option --name" unless defined $name;
 
 my $line = <STDIN>;
 print "$name\t$line";

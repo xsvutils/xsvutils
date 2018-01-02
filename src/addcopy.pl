@@ -18,8 +18,8 @@ while (@ARGV) {
     }
 }
 
-die "option --name required" unless defined $name;
-die "option --src required" unless defined $target_name;
+die "subcommand `addcopy` requires option --name" unless defined $name;
+die "subcommand `addcopy` requires option --src" unless defined $target_name;
 
 
 my $headers = undef;
