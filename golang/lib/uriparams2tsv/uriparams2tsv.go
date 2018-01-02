@@ -37,21 +37,27 @@ func printLineAsTsv(wr *bufio.Writer, line []string, nullText string) error {
 	lineLength := len(line)
 	for i, l := range line {
 		if l == "" {
-			wr.WriteString(nullText)
+			_, err := wr.WriteString(nullText)
+			if err != nil {
+				os.Exit(0); // 出力先がなくなった場合はそのまま終了する
+			}
 		} else {
-			wr.WriteString(l)
+			_, err := wr.WriteString(l)
+			if err != nil {
+				os.Exit(0); // 出力先がなくなった場合はそのまま終了する
+			}
 		}
-		if i == lineLength-1 {
+		if i == lineLength - 1 {
 			break
 		}
 		err := wr.WriteByte(byte('\t'))
 		if err != nil {
-			return err
+			os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 		}
 	}
 	err := wr.WriteByte(byte('\n'))
 	if err != nil {
-		return err
+		os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 	}
 
 	return nil
