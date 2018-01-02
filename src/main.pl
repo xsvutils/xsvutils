@@ -697,11 +697,13 @@ my $statement_list = [];
 sub extractNamedPipe {
     my ($command_seq) = @_;
 
+    my $commands2 = [];
     for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
         my $curr_command = $command_seq->{commands}->[$i];
         if ($curr_command->[0] eq "paste" || $curr_command->[0] eq "union") {
             if (ref($curr_command->[1]) eq "HASH") {
                 my $subquery = $curr_command->[1];
+
                 if ($subquery->{output} ne "") {
                     die "sub query of subcommand `$curr_command->[0]` must not have output";
                 }
@@ -711,18 +713,19 @@ sub extractNamedPipe {
                 if ($subquery->{output_header_flag} eq "") {
                     die "sub query of subcommand `$curr_command->[0]` must not have an option --o-no-header";
                 }
-                if ($subquery->{input} eq "") {
-                    die "TODO";
-                } else {
-                    my $input_pipe_id = scalar @$input_pipe_list;
-                    push(@$input_pipe_list, {
-                        "prefetch" => 1,
-                        "source" => $subquery->{input},
-                        "format" => $subquery->{format},
-                        "header" => $subquery->{input_header},
-                        "charencoding" => ""});
 
-                    my $output_pipe_id = scalar @$input_pipe_list;
+                extractNamedPipe($subquery);
+
+                if ($subquery->{input} eq "") {
+                    my $pipe_id_1 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => "",
+                        "source" => "",
+                        "format" => "tsv",
+                        "header" => "",
+                        "charencoding" => "UTF-8"});
+
+                    my $pipe_id_2 = scalar @$input_pipe_list;
                     push(@$input_pipe_list, {
                         "prefetch" => "",
                         "source" => "",
@@ -731,10 +734,42 @@ sub extractNamedPipe {
                         "charencoding" => "UTF-8"});
 
                     push(@$statement_list, {
-                        "input_pipe_id" => $input_pipe_id,
-                        "output_pipe_id" => $output_pipe_id,
+                        "input_pipe_id" => $pipe_id_1,
+                        "output_pipe_id" => $pipe_id_2,
                         "query" => $subquery});
-                    $curr_command->[1] = $output_pipe_id;
+
+                    $curr_command->[1] = $pipe_id_2;
+
+                    push(@{$subquery->{commands}}, ["buffer"]);
+
+                    push(@$commands2, ["tee", $pipe_id_1]);
+                    push(@$commands2, ["buffer"]);
+                    push(@$commands2, $curr_command);
+                } else {
+                    my $pipe_id_1 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => 1,
+                        "source" => $subquery->{input},
+                        "format" => $subquery->{format},
+                        "header" => $subquery->{input_header},
+                        "charencoding" => ""});
+
+                    my $pipe_id_2 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => "",
+                        "source" => "",
+                        "format" => "tsv",
+                        "header" => "",
+                        "charencoding" => "UTF-8"});
+
+                    push(@$statement_list, {
+                        "input_pipe_id" => $pipe_id_1,
+                        "output_pipe_id" => $pipe_id_2,
+                        "query" => $subquery});
+
+                    $curr_command->[1] = $pipe_id_2;
+
+                    push(@$commands2, $curr_command);
                 }
             } else {
                 if ( ! -e $curr_command->[1]) {
@@ -747,9 +782,15 @@ sub extractNamedPipe {
                     "header" => "",
                     "charencoding" => ""});
                 $curr_command->[1] = $pipe_id;
+
+                push(@$commands2, $curr_command);
             }
+        } else {
+            push(@$commands2, $curr_command);
         }
     }
+
+    $command_seq->{commands} = $commands2;
 }
 
 extractNamedPipe($command_seq);
@@ -902,28 +943,30 @@ sub build_ircode_command {
         $ircode = [["cmd", "cat ${input_pipe_prefix}$input_pipe_id"]];
     }
 
-    my $stdin_pipe = $input_pipe_list->[0];
+    if ($input_pipe_id eq "") {
+        my $stdin_pipe = $input_pipe_list->[0];
 
-    if ($stdin_pipe->{charencoding} ne "UTF-8") {
-        push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8"]);
-    }
-
-    if ($stdin_pipe->{format} eq "csv") {
-        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
-    }
-
-    if ($stdin_pipe->{header} ne '') {
-        my @headers = split(/,/, $stdin_pipe->{header});
-        for my $h (@headers) {
-            unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
-                die "Illegal header: $h\n";
-            }
+        if ($stdin_pipe->{charencoding} ne "UTF-8") {
+            push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8"]);
         }
-        my $headers = escape_for_bash(join("\t", @headers));
-        $ircode = [["seq",
-                    [["cmd", "printf '%s' $headers"],
-                     ["cmd", "echo"],
-                     ["pipe", $ircode]]]];
+
+        if ($stdin_pipe->{format} eq "csv") {
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+        }
+
+        if ($stdin_pipe->{header} ne '') {
+            my @headers = split(/,/, $stdin_pipe->{header});
+            for my $h (@headers) {
+                unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                    die "Illegal header: $h\n";
+                }
+            }
+            my $headers = escape_for_bash(join("\t", @headers));
+            $ircode = [["seq",
+                        [["cmd", "printf '%s' $headers"],
+                         ["cmd", "echo"],
+                         ["pipe", $ircode]]]];
+        }
     }
 
     my $last_command = "";
@@ -1003,6 +1046,14 @@ sub build_ircode_command {
 
         } elsif ($command eq "sort") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
+
+        } elsif ($command eq "tee") {
+            my $branch = escape_for_bash($t->[1]);
+            $branch = "$input_pipe_prefix${branch}";
+            push(@$ircode, ["cmd", "tee $branch"]);
+
+        } elsif ($command eq "buffer") {
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer"]);
 
         } elsif ($command eq "paste") {
             my $right = escape_for_bash($t->[1]);
