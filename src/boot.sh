@@ -10,13 +10,12 @@ if [ ! -e $TOOL_DIR ]; then
         mkdir -p $tool_parent_dir
     fi
 
-    mkdir $TOOL_DIR.tmp
+    mkdir $TOOL_DIR.tmp 2>/dev/null
     cat $0 | (
         cd $TOOL_DIR.tmp
-        perl -ne 'print $_ if $f; $f=1 if /^#SOURCE_IMAGE$/' | tar xzf -
+        perl -ne 'print $_ if $f; $f=1 if /^#SOURCE_IMAGE$/' | tar xzf - 2>/dev/null
     )
-    mkdir $TOOL_DIR 2>/dev/null && mv $TOOL_DIR.tmp/* $TOOL_DIR/
-    rm -rf $TOOL_DIR.tmp
+    mkdir $TOOL_DIR 2>/dev/null && mv $TOOL_DIR.tmp/* $TOOL_DIR/ && rm -rf $TOOL_DIR.tmp
 fi
 
 if [ ! -e $TOOL_DIR ]; then
