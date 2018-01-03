@@ -33,24 +33,17 @@ func printHeaderAsTsv(wr *bufio.Writer, header map[string]int) error {
 	return nil
 }
 
-func printLineAsTsv(wr *bufio.Writer, line []string, nullText string) error {
+func printLineAsTsv(wr *bufio.Writer, line []string) error {
 	lineLength := len(line)
 	for i, l := range line {
-		if l == "" {
-			_, err := wr.WriteString(nullText)
-			if err != nil {
-				os.Exit(0); // 出力先がなくなった場合はそのまま終了する
-			}
-		} else {
-			_, err := wr.WriteString(l)
-			if err != nil {
-				os.Exit(0); // 出力先がなくなった場合はそのまま終了する
-			}
+		_, err := wr.WriteString(l)
+		if err != nil {
+			os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 		}
 		if i == lineLength - 1 {
 			break
 		}
-		err := wr.WriteByte(byte('\t'))
+		err = wr.WriteByte(byte('\t'))
 		if err != nil {
 			os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 		}
@@ -63,7 +56,7 @@ func printLineAsTsv(wr *bufio.Writer, line []string, nullText string) error {
 	return nil
 }
 
-func Convert(in *os.File, out *os.File, query string, defalutValue string, nullValue string, fullUrl bool) error {
+func Convert(in *os.File, out *os.File, query string, fullUrl bool) error {
 	wr := bufio.NewWriter(out)
 	keys := strings.Split(query, ",")
 	header := make(map[string]int, len(keys))
@@ -92,21 +85,24 @@ func Convert(in *os.File, out *os.File, query string, defalutValue string, nullV
 		params := strings.Split(querystring, "&")
 		for _, p := range params {
 			kv := strings.SplitN(p, "=", 2)
+			if strings.HasSuffix(kv[0], "[]") {
+				kv[0] = kv[0][:len(kv[0])-2]
+			}
 			index, ok := header[kv[0]]
 			if !ok {
 				continue
 			}
 			if len(kv) == 2 {
-				line[index] = kv[1]
+				line[index] += kv[1] + ";";
 			} else {
-				line[index] = defalutValue
+				line[index] += ";";
 			}
 		}
 
-		if i % 100000 == 0 {
+		if i % 1000 == 0 {
 			wr.Flush()
 		}
-		err = printLineAsTsv(wr, line, nullValue)
+		err = printLineAsTsv(wr, line)
 		if err != nil {
 			return err
 		}

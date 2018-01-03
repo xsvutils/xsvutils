@@ -36,7 +36,7 @@ func Buffer() {
 	var stdin_closed bool = false;
 	var stdout_closed bool = false;
 
-	var buffer []byte = make([]byte, 4096 * 1000);
+	var buffer []byte = make([]byte, 40 * 1024 * 1024);
 	var offset1 int = 0;
 	var offset2 int = 0;
 
