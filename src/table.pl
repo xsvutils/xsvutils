@@ -71,7 +71,7 @@ sub stringViewLength {
 }
 
 sub stringViewPadding {
-    my ($str, $viewLength) = @_;
+    my ($str, $viewLength, $overflowFlag) = @_;
     if (!defined($str)) {
         $str = "";
     }
@@ -82,12 +82,16 @@ sub stringViewPadding {
     for (my $i = 0; $i < $len; $i++) {
         my $ch = substr($str2, $i, 1);
         my $resultLength2 = $resultLength + charWidth($ch);
-        if ($resultLength2 > $viewLength || $resultLength2 == $viewLength && $i < $len1) {
+        if (!$overflowFlag && ($resultLength2 > $viewLength || $resultLength2 == $viewLength && $i < $len1)) {
             return " " . encode_utf8(substr($str2, 0, $i)) . ("." x ($viewLength - $resultLength + 1));
         }
         $resultLength = $resultLength2;
     }
-    return " " . $str . (" " x ($viewLength - $resultLength + 1));
+    if ($resultLength >= $viewLength) {
+        return " " . $str . " ";
+    } else {
+        return " " . $str . (" " x ($viewLength - $resultLength + 1));
+    }
 }
 
 my $printed_line_count = 0;
@@ -104,13 +108,14 @@ sub printRecord {
 
     my @colViews = ();
     my $col_count = scalar @$col_lengths;
+    my $col_count1 = $col_count - 1;
     for (my $i = 0; $i < $col_count; $i++) {
         my $viewLength = $col_lengths->[$i];
         if ($viewLength > $max_width) {
             $viewLength = $max_width;
         }
         my $col = $cols->[$i];
-        push(@colViews, stringViewPadding($col, $viewLength));
+        push(@colViews, stringViewPadding($col, $viewLength, $i == $col_count1));
     }
     print "|" . join("|", @colViews) . "|\n";
 }
