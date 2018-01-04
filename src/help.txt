@@ -10,6 +10,14 @@ Usage:
     SUBCOMMAND は内容により複数を組み合わせることも可能。
     SUBCOMMAND 省略時はcatになる。
 
+    以下は同じ意味になる。
+
+        $ xsvutils FILENAME
+        $ xsvutils FILENAME cat
+        $ xsvutils -i FILENAME
+        $ xsvutils -i FILENAME cat
+        $ xsvutils < FILENAME
+        $ xsvutils cat < FILENAME
 
 Subcommands:
 
@@ -19,38 +27,24 @@ Subcommands:
 
     レコード選択に関するサブコマンド
 
-        take [<N>]                      Print first N records
         head [<N>]                      Print first N records
         limit [<N>]                     Print first N records
-        drop [<N>]                      Print all except first N records
         offset [<N>]                    Print all except first N records
-        filter <CONDITION>
 
     列の選択に関するサブコマンド
 
         cut <COLUMNS>                   Print specified columns
 
-    列を追加するサブコマンド
-
-        addconst <NEW_NAME> <VALUE      固定値のカラムを一番左に追加する
-        addcopy <NEW_NAME> <SOURCE>
-        addlinenum <NEW_NAME> [<START_VALUE>]
-        addlinenum2 <NEW_NAME>
-        addnumsortable <NEW_NAME> <TARGET_COLUMN>
-
     その他のデータを加工するコマンド
 
         update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                ソートする
-        paste <OTHER_FILE>
-        union <OTHER_FILE>
 
     集計するコマンド
 
         wcl                             レコード数を表示する
         header                          カラムの一覧を表示する
         summary                         データのサマリを表示する
-        facetcount
         countcols                       カラム数を集計する
 
     オプションやパラメータを受け付けるサブコマンドもある。
@@ -90,14 +84,7 @@ Common options:
 
 Subcommand `cat`:
 
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME
-        $ xsvutils FILENAME cat
-        $ xsvutils -i FILENAME
-        $ xsvutils -i FILENAME cat
-        $ xsvutils < FILENAME
-        $ xsvutils cat < FILENAME
+     入力ファイルを単に出力する。
 
 
 Subcommand `take` and Subcommand `head` and Subcommand `limit`:
@@ -169,26 +156,6 @@ Subcommand `update`:
         --index <RECORD_INDEX>
         --col <COLUMN>
         --value <VALUE>
-
-
-Subcommand `addconst`:
-
-    固定値のカラムを一番左に追加する
-
-    Options:
-        --name <COLUMN>
-        --value <VALUE>
-
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME addconst --name col21 --value 0
-        $ xsvutils FILENAME addconst --value 0 --name col21
-        $ xsvutils FILENAME addconst col21 0
-
-    他のサブコマンドと組み合わせることも可能。
-    以下の例では、FILENAME の id カラムと固定値 0 のカラム col0 の2カラムを表示する。
-
-        $ xsvutils FILENAME addconst col0 dummy cut id,col0
 
 
 Subcommand `sort`:
