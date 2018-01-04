@@ -969,7 +969,6 @@ sub build_ircode_command {
         }
     }
 
-    my $last_command = "";
     foreach my $t (@{$command_seq->{commands}}) {
         my $command = $t->[0];
         if ($command eq "range") {
@@ -1083,29 +1082,6 @@ sub build_ircode_command {
         } else {
             die $command;
         }
-        $last_command = $command;
-    }
-
-    my $isPager = '';
-    if ($isOutputTty && $command_seq->{output} eq "") {
-        $isPager = 1;
-    }
-
-    if ($isPager) {
-        my $table_option = "";
-        if ($last_command ne "countcols") {
-            $table_option .= " --col-number";
-            $table_option .= " --record-number";
-        }
-        if ($last_command eq "summary") {
-            $table_option .= " --max-width 500";
-        }
-        push(@$ircode, ["cmd", "perl \$TOOL_DIR/table.pl$table_option"]);
-        push(@$ircode, ["cmd", "less -SRX"]);
-    }
-
-    if (!$command_seq->{output_header_flag} && !$isPager) {
-        push(@$ircode, ["cmd", "tail -n+2"]);
     }
 
     $command_seq->{ircode} = ["pipe", $ircode];
@@ -1183,7 +1159,12 @@ sub joinShellscriptLinesSub {
     ];
 }
 
-my $main_1_source = "\n";
+my $main_1_source = "(\n";
+
+my $isPager = '';
+if ($isOutputTty && $command_seq->{output} eq "") {
+    $isPager = 1;
+}
 
 my $exists_multijob = '';
 
@@ -1191,31 +1172,53 @@ foreach (my $pipe_id = 0; $pipe_id < @$input_pipe_list; $pipe_id++) {
     my $s = $input_pipe_list->[$pipe_id];
     if (defined($s->{ircode})) {
         if ($s->{source} ne '') {
-            $main_1_source = $main_1_source . "# " . escape_for_bash($s->{source}) . "\n";
+            $main_1_source = $main_1_source . "    # " . escape_for_bash($s->{source}) . "\n";
         }
         my $lines = irToShellscript($s->{ircode});
 
-        $main_1_source = $main_1_source . "mkfifo $input_pipe_prefix${pipe_id}\n";
-        $main_1_source = $main_1_source . join("\n", @$lines) . " > $input_pipe_prefix${pipe_id} &\n\n";
+        $main_1_source = $main_1_source . "    mkfifo $input_pipe_prefix${pipe_id}\n";
+        $main_1_source = $main_1_source . "    " . join("\n    ", @$lines) . " > $input_pipe_prefix${pipe_id} &\n\n";
 
         $exists_multijob = 1;
     } elsif ($pipe_id > 0) {
-        $main_1_source = $main_1_source . "mkfifo $input_pipe_prefix${pipe_id}\n\n";
+        $main_1_source = $main_1_source . "    mkfifo $input_pipe_prefix${pipe_id}\n\n";
     }
 }
 
 foreach my $s (@$statement_list) {
     my $output_pipe_id = $s->{output_pipe_id};
-    $main_1_source = $main_1_source . join("\n", @{irToShellscript($s->{query}->{ircode})}) . " > $input_pipe_prefix${output_pipe_id} &\n\n";
+    $main_1_source = $main_1_source . "    " . join("\n    ", @{irToShellscript($s->{query}->{ircode})}) . " > $input_pipe_prefix${output_pipe_id} &\n\n";
     $exists_multijob = 1;
 }
 
 if ($exists_multijob) {
-    $main_1_source = $main_1_source . join("\n", @{irToShellscript($command_seq->{ircode})}) . " &\n";
-    $main_1_source = $main_1_source . "\nwait\n";
+    $main_1_source = $main_1_source . "    " . join("\n    ", @{irToShellscript($command_seq->{ircode})}) . " &\n";
+    $main_1_source = $main_1_source . "\n    wait\n";
 } else {
-    $main_1_source = $main_1_source . join("\n", @{irToShellscript($command_seq->{ircode})}) . "\n";
+    $main_1_source = $main_1_source . "    " . join("\n    ", @{irToShellscript($command_seq->{ircode})}) . "\n";
 }
+
+$main_1_source = $main_1_source . ")";
+{
+    if ($isPager) {
+        my $last_command = $command_seq->{last_command};
+        my $table_option = "";
+        if ($last_command ne "countcols") {
+            $table_option .= " --col-number";
+            $table_option .= " --record-number";
+        }
+        if ($last_command eq "summary") {
+            $table_option .= " --max-width 500";
+        }
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+        $main_1_source = $main_1_source . " | less -SRX";
+    }
+
+    if (!$command_seq->{output_header_flag} && !$isPager) {
+        $main_1_source = $main_1_source . " | tail -n+2";
+    }
+}
+$main_1_source = $main_1_source . "\n";
 
 if ($option_explain) {
     my $view = $main_1_source;
