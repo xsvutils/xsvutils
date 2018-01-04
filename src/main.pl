@@ -1087,7 +1087,7 @@ sub build_ircode_command {
     }
 
     my $isPager = '';
-    if ($last_command ne "wcl" && $isOutputTty && $command_seq->{output} eq "") {
+    if ($isOutputTty && $command_seq->{output} eq "") {
         $isPager = 1;
     }
 
@@ -1104,7 +1104,7 @@ sub build_ircode_command {
         push(@$ircode, ["cmd", "less -SRX"]);
     }
 
-    if ($last_command ne "wcl" && !$command_seq->{output_header_flag} && !$isPager) {
+    if (!$command_seq->{output_header_flag} && !$isPager) {
         push(@$ircode, ["cmd", "tail -n+2"]);
     }
 

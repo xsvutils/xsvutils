@@ -43,6 +43,7 @@ func Count(rd io.Reader, hasHeader bool) {
 		lineCount--;
 	}
 
+	fmt.Println("count")
 	fmt.Println(lineCount)
 	os.Exit(0)
 }
