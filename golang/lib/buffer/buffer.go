@@ -1,148 +1,122 @@
 package buffer
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
+	"math"
 	"os"
-	"syscall"
+	"sync"
 )
 
-func Buffer() {
+const (
+	toolname = "xsvutils_buffer"
+)
 
-	epfd, err := syscall.EpollCreate1(0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "epoll_create:", err)
-		os.Exit(1)
-	}
-	epfd1, err := syscall.EpollCreate1(0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "epoll_create:", err)
-		os.Exit(1)
-	}
-	epfd2, err := syscall.EpollCreate1(0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "epoll_create:", err)
-		os.Exit(1)
-	}
+var (
+	bufsize int
+	buf     chan string
+	bufFile chan *os.File
+	bwg     *sync.WaitGroup
+	fwg     *sync.WaitGroup
+)
 
-	{
-		var event syscall.EpollEvent
-		event.Events = syscall.EPOLLIN
-		err := syscall.EpollCtl(epfd, syscall.EPOLL_CTL_ADD, 0, &event);
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		err = syscall.EpollCtl(epfd1, syscall.EPOLL_CTL_ADD, 0, &event);
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	}
-	{
-		var event syscall.EpollEvent
-		event.Events = syscall.EPOLLOUT
-		err := syscall.EpollCtl(epfd, syscall.EPOLL_CTL_ADD, 1, &event);
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		err = syscall.EpollCtl(epfd2, syscall.EPOLL_CTL_ADD, 1, &event);
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-	}
-
-	var stdin_closed bool = false;
-	var stdout_closed bool = false;
-	var stdin_ok bool = false;
-	var stdout_ok bool = false;
-
-	var buffer []byte = make([]byte, 40 * 1024 * 1024);
-	var offset1 int = 0;
-	var offset2 int = 0;
-
-	for {
-		if stdin_closed && stdout_closed {
+func read() {
+	sc := bufio.NewScanner(os.Stdin)
+	// bufsizeに達するまでメモリで処理する
+	for sc.Scan() {
+		buf <- sc.Text()
+		if cap(buf)-len(buf) == 0 {
 			break
 		}
+	}
+	close(buf)
 
-		var events [2]syscall.EpollEvent
-		var nevents int
-		var err error
-		if stdin_ok {
-			nevents, err = syscall.EpollWait(epfd2, events[:], -1)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
+	// bufsize以上のデータを読み込む場合はtmpファイルに出力
+	maxFileRow := bufsize
+	var (
+		tmpf      *os.File
+		wr        *bufio.Writer
+		err       error
+		fileCount = 0
+	)
+	for i := 0; ; {
+		if !sc.Scan() {
+			if wr != nil {
+				wr.Flush()
 			}
-		} else if stdout_ok {
-			nevents, err = syscall.EpollWait(epfd1, events[:], -1)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-		} else {
-			nevents, err = syscall.EpollWait(epfd, events[:], -1)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			break
 		}
-
-		for i := 0; i < nevents; i++ {
-			if (events[i].Events & syscall.EPOLLIN) != 0 {
-				if offset1 == len(buffer) {
-					stdin_ok = true
-				} else {
-					stdout_ok = false
-
-					nbytes, err := syscall.Read(0, buffer[offset1:])
-					if err != nil {
-						fmt.Fprintln(os.Stderr, "syscall.Read:", err)
-						os.Exit(1)
-					}
-					offset1 += nbytes
-				}
-
-			} else if (events[i].Events & syscall.EPOLLOUT) != 0 {
-				if offset2 == offset1 {
-					stdout_ok = true
-				} else {
-					stdin_ok = false
-
-					nbytes, err := syscall.Write(1, buffer[offset2:offset1])
-					if err != nil {
-						os.Exit(0) // 出力先がなくなった場合はそのまま終了する
-					}
-					offset2 += nbytes
-
-					if offset1 == offset2 {
-						offset1 = 0
-						offset2 = 0
-						if stdin_closed {
-							stdout_closed = true
-						}
-					}
-				}
-
-			} else if events[i].Events == syscall.EPOLLHUP {
-				if events[i].Fd == 0 {
-					stdin_closed = true;
-				} else {
-					stdout_closed = true;
-				}
-
-				{
-					var event syscall.EpollEvent
-					err := syscall.EpollCtl(epfd, syscall.EPOLL_CTL_DEL, int(events[i].Fd), &event);
-					if err != nil {
-						fmt.Fprintln(os.Stderr, err)
-						os.Exit(1)
-					}
-				}
+		if i == 0 {
+			fileCount++
+			tmpf, err = ioutil.TempFile("", fmt.Sprintf("%s_%d_", toolname, fileCount))
+			if err != nil {
+				panic(err)
 			}
+			wr = bufio.NewWriter(tmpf)
+			bufFile <- tmpf
+		}
+		wr.WriteString(sc.Text())
+		wr.WriteByte(byte('\n'))
+		i++
+		if maxFileRow == i {
+			wr.Flush()
+			maxFileRow = int(math.Pow(float64(maxFileRow), 2.0))
+			i = 0
 		}
 	}
+	close(bufFile)
+}
 
+func write() {
+	wr := bufio.NewWriter(os.Stdout)
+	// バッファーに乗っているものを書き出し
+	for {
+		b, more := <-buf
+		if !more {
+			break
+		}
+		wr.WriteString(b)
+		wr.WriteByte(byte('\n'))
+	}
+	wr.Flush()
+
+	// tmpファイルに保存されたものを書き出し
+	for {
+		f, more := <-bufFile
+		if !more {
+			break
+		}
+		defer func() {
+			f.Close()
+			os.Remove(f.Name())
+		}()
+		rf, err := os.Open(f.Name())
+		if err != nil {
+			panic(err)
+		}
+		sc := bufio.NewScanner(rf)
+		for sc.Scan() {
+			wr.WriteString(sc.Text())
+			wr.WriteByte(byte('\n'))
+			wr.Flush()
+		}
+	}
+	wr.Flush()
+	bwg.Done()
+	fwg.Done()
+}
+
+func Buffer(bufferSize int, maxFileNum int) {
+	bufsize = bufferSize
+	buf = make(chan string, bufsize)
+	bufFile = make(chan *os.File, maxFileNum)
+	bwg = new(sync.WaitGroup)
+	fwg = new(sync.WaitGroup)
+	bwg.Add(1)
+	fwg.Add(1)
+	go read()
+	go write()
+	bwg.Wait()
+	fwg.Wait()
 }

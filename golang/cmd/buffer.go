@@ -6,8 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	bufferSize int
+	maxFileNum int
+)
+
 func init() {
 	RootCmd.AddCommand(bufferCmd)
+	bufferCmd.Flags().IntVarP(&bufferSize, "buffer-size", "", 100000, "Buffer Size(line count)")
+	bufferCmd.Flags().IntVarP(&maxFileNum, "tmp-file-limit", "", 4096, "tmp file limit")
 }
 
 var bufferCmd = &cobra.Command{
@@ -15,6 +22,6 @@ var bufferCmd = &cobra.Command{
 	Short: "buffer pipe",
 	Long:  "buffer pipe",
 	Run: func(cmd *cobra.Command, args []string) {
-		buffer.Buffer()
+		buffer.Buffer(bufferSize, maxFileNum)
 	},
 }
