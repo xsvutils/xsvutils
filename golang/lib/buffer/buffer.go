@@ -3,6 +3,7 @@ package buffer
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 	"os"
@@ -14,18 +15,27 @@ const (
 )
 
 var (
-	bufsize int
-	buf     chan string
-	bufFile chan *os.File
-	bwg     *sync.WaitGroup
-	fwg     *sync.WaitGroup
+	bufsize        int
+	readBufferSize int
+	buf            chan []byte
+	bufFile        chan *os.File
+	bwg            *sync.WaitGroup
+	fwg            *sync.WaitGroup
 )
 
 func read() {
-	sc := bufio.NewScanner(os.Stdin)
+	rd := bufio.NewReader(os.Stdin)
 	// bufsizeに達するまでメモリで処理する
-	for sc.Scan() {
-		buf <- sc.Text()
+	for {
+		readbuf := make([]byte, readBufferSize)
+		_, err := rd.Read(readbuf)
+		if err == io.EOF {
+			buf <- readbuf
+			break
+		} else if err != nil {
+			panic(err)
+		}
+		buf <- readbuf
 		if cap(buf)-len(buf) == 0 {
 			break
 		}
@@ -33,35 +43,38 @@ func read() {
 	close(buf)
 
 	// bufsize以上のデータを読み込む場合はtmpファイルに出力
-	maxFileRow := bufsize
+	maxFileSize := bufsize
 	var (
 		tmpf      *os.File
 		wr        *bufio.Writer
-		err       error
 		fileCount = 0
 	)
 	for i := 0; ; {
-		if !sc.Scan() {
+		readbuf := make([]byte, readBufferSize)
+		_, err := rd.Read(readbuf)
+		if err == io.EOF {
 			if wr != nil {
 				wr.Flush()
 			}
 			break
+		} else if err != nil {
+			panic(err)
 		}
 		if i == 0 {
 			fileCount++
 			tmpf, err = ioutil.TempFile("", fmt.Sprintf("%s_%d_", toolname, fileCount))
+			fmt.Println(tmpf.Name())
 			if err != nil {
 				panic(err)
 			}
 			wr = bufio.NewWriter(tmpf)
 			bufFile <- tmpf
 		}
-		wr.WriteString(sc.Text())
-		wr.WriteByte(byte('\n'))
+		wr.Write(readbuf)
 		i++
-		if maxFileRow == i {
+		if maxFileSize == i {
 			wr.Flush()
-			maxFileRow = int(math.Pow(float64(maxFileRow), 2.0))
+			maxFileSize = int(math.Pow(float64(maxFileSize), 2.0))
 			i = 0
 		}
 	}
@@ -76,10 +89,12 @@ func write() {
 		if !more {
 			break
 		}
-		wr.WriteString(b)
-		wr.WriteByte(byte('\n'))
+		_, err := wr.Write(b)
+		if err != nil {
+			panic(err)
+		}
+		wr.Flush()
 	}
-	wr.Flush()
 
 	// tmpファイルに保存されたものを書き出し
 	for {
@@ -87,18 +102,26 @@ func write() {
 		if !more {
 			break
 		}
-		defer func() {
-			f.Close()
-			os.Remove(f.Name())
-		}()
 		rf, err := os.Open(f.Name())
 		if err != nil {
 			panic(err)
 		}
-		sc := bufio.NewScanner(rf)
-		for sc.Scan() {
-			wr.WriteString(sc.Text())
-			wr.WriteByte(byte('\n'))
+		defer func() {
+			f.Close()
+			os.Remove(f.Name())
+		}()
+		rd := bufio.NewReader(rf)
+		readbuf := make([]byte, readBufferSize)
+		for {
+			_, err := rd.Read(readbuf)
+			if err == io.EOF {
+				wr.Write(readbuf)
+				wr.Flush()
+				break
+			} else if err != nil {
+				panic(err)
+			}
+			wr.Write(readbuf)
 			wr.Flush()
 		}
 	}
@@ -109,7 +132,8 @@ func write() {
 
 func Buffer(bufferSize int, maxFileNum int) {
 	bufsize = bufferSize
-	buf = make(chan string, bufsize)
+	readBufferSize = 1024
+	buf = make(chan []byte, bufsize)
 	bufFile = make(chan *os.File, maxFileNum)
 	bwg = new(sync.WaitGroup)
 	fwg = new(sync.WaitGroup)

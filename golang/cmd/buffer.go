@@ -13,7 +13,7 @@ var (
 
 func init() {
 	RootCmd.AddCommand(bufferCmd)
-	bufferCmd.Flags().IntVarP(&bufferSize, "buffer-size", "", 100000, "Buffer Size(line count)")
+	bufferCmd.Flags().IntVarP(&bufferSize, "buffer-size", "", 100000, "Buffer Size(KB)")
 	bufferCmd.Flags().IntVarP(&maxFileNum, "tmp-file-limit", "", 4096, "tmp file limit")
 }
 
