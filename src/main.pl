@@ -141,7 +141,7 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "parseuriparams") {
-            $next_command = ["parseuriparams", ""];
+            $next_command = ["parseuriparams", "", "decode"];
             $last_command = $a;
 
         } elsif ($a eq "update") {
@@ -369,6 +369,8 @@ sub parseQuery {
                 if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "--no-decode") {
+                    $curr_command->[2] = "no-decode";
                 } else {
                     $curr_command->[1] = $a;
                 }
@@ -563,7 +565,7 @@ sub parseQuery {
             if ($c->[1] eq "") {
                 die "subcommand \`parseuriparams\` needs --col option";
             }
-            push(@$commands2, ["parseuriparams", $c->[1]]);
+            push(@$commands2, ["parseuriparams", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "update") {
             if (!defined($c->[1])) {
                 die "subcommand \`update\` needs --index option";
@@ -1034,7 +1036,11 @@ sub build_ircode_command {
         } elsif ($command eq "parseuriparams") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "tail -n+2"]);
-            push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]);
+            if ($t->[2] eq "no-decode") {
+                push(@$ircode, ["cmd", "bash \$TOOL_DIR/no-decode-percent.sh"]);
+            } else {
+                push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]);
+            }
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv --fields $cols"]);
 
         } elsif ($command eq "update") {
