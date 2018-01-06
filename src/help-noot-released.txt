@@ -47,3 +47,8 @@ Subcommand `addconst`:
         $ xsvutils FILENAME addconst col0 dummy cut id,col0
 
 
+Subcommand `parseuriparams`:
+
+    Options:
+        --no-decode  パーセントエンコーディングのデコード処理を行わない
+

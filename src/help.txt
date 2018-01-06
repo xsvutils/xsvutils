@@ -10,14 +10,6 @@ Usage:
     SUBCOMMAND は内容により複数を組み合わせることも可能。
     SUBCOMMAND 省略時はcatになる。
 
-    以下は同じ意味になる。
-
-        $ xsvutils FILENAME
-        $ xsvutils FILENAME cat
-        $ xsvutils -i FILENAME
-        $ xsvutils -i FILENAME cat
-        $ xsvutils < FILENAME
-        $ xsvutils cat < FILENAME
 
 Subcommands:
 
@@ -81,10 +73,21 @@ Common options:
     これらのオプションは FILENAME, SUBCOMMAND の前に置くことも可能。
     サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
 
+    以下は同じ意味になる。
+
+        $ xsvutils FILENAME
+        $ xsvutils FILENAME cat
+        $ xsvutils -i FILENAME
+        $ xsvutils -i FILENAME cat
+        $ xsvutils < FILENAME
+        $ xsvutils cat < FILENAME
+
 
 Subcommand `cat`:
 
      入力ファイルを単に出力する。
+
+     `cat` は省略可能なサブコマンドであり、省略してはいけないケースはない。
 
 
 Subcommand `take` and Subcommand `head` and Subcommand `limit`:
@@ -165,12 +168,22 @@ Subcommand `sort`:
     Options:
         --col <COLUMNS>
 
+    <COLUMNS> にはカンマ区切りで複数のカラム名を書くことができる。
+    カラム名の後に `:n` と書くと数値としてのソートをする。
+
+    以下は、第1ソートとして hitnum カラムを数値の昇順、
+    第2ソートとして date カラムをテキストの昇順にソートする例。
+
+        $ xsvutils data.tsv sort hitnum:n,date
+
+    指定したソートキーがすべて同じ値のレコードがあれば、もとのファイルに現れた順番を維持する(安定ソート)。
+
 
 Subcommand `wcl`:
 
     レコード数を表示する。ヘッダ行は含まない。
 
-    データが大きい場合には、進捗表示をする。
+    データが大きい場合には、標準エラー出力に進捗表示をする。
 
 
 Subcommand `header`:
@@ -184,7 +197,8 @@ Subcommand `summary`:
 
     出力は右から、カラムの位置、カラム名、データが含まれている割合、値の例の列挙である。
 
-    データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+    データが大きい場合には、標準エラー出力に進捗表示をする。
+    Ctrl-C で集計処理を中止し、集計したところまでを表示する。
 
 
 Subcommand `countcols`:
@@ -205,7 +219,8 @@ Subcommand `countcols`:
         | 58   | 846     | 0.70%  |        |
         | 59   | 96      | 0.08%  | *      |
 
-    データが大きい場合には、進捗表示をする。 Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+    データが大きい場合には、標準エラー出力に進捗表示をする。
+    Ctrl-C で集計処理を中止し、集計したところまでを表示する。
 
 
 Common options for developer:
