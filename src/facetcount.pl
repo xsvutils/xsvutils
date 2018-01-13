@@ -34,6 +34,8 @@ while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
 
+    $record_count++;
+
     # 行にタブの数が少ない場合に列を付け足す
     for (my $i = $header_count - @cols; $i > 0; $i--) {
         push(@cols, "");
@@ -49,7 +51,7 @@ while (my $line = <STDIN>) {
     }
 
     if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count\n";
+        print STDERR "Record: $record_count ...\n";
     }
 
     if ($interrupted) {

@@ -74,7 +74,7 @@ while (my $line = <STDIN>) {
     }
 
     if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count\n";
+        print STDERR "Record: $record_count ...\n";
     }
 
     if (!@$header_indeces || $interrupted) {
