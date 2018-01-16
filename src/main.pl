@@ -576,11 +576,11 @@ sub parseQuery {
             if (!defined($c->[3])) {
                 die "subcommand \`update\` needs --value option";
             }
-            if ($curr_command->[1] !~ /\A(0|[1-9][0-9]*)\z/) {
-                die "option --index needs a number argument"
+            if ($c->[1] !~ /\A(0|[1-9][0-9]*)\z/) {
+                die "option --index needs a number argument: '$c->[1]'";
             }
-            if ($curr_command->[2] !~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
-                die "Illegal column name: $curr_command->[2]\n";
+            if ($c->[2] !~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal column name: $c->[2]\n";
             }
             push(@$commands2, ["update", $c->[1], $c->[2], $c->[3]]);
         } elsif ($c->[0] eq "sort") {
@@ -860,7 +860,15 @@ sub prefetch_input {
     for (my $i = 0; $i < @$input_pipe_list; $i++) {
         my $input = $input_pipe_list->[$i];
 
-        next unless $input->{prefetch};
+        unless ($input->{prefetch}) {
+            if ($input->{format} eq '') {
+                $input->{format} = 'tsv';
+            }
+            if ($input->{charencoding} eq '') {
+                $input->{charencoding} = 'UTF-8';
+            }
+            next;
+        }
 
         my $head_buf;
 
@@ -907,11 +915,17 @@ sub build_ircode {
 sub build_ircode_input {
     my ($input_pipe, $pipe_id) = @_;
 
-    my $source = escape_for_bash($input_pipe->{source});
-    my $ircode = [["cmd", "cat $input_pipe_prefix${pipe_id}_0"]];
+    my $ircode;
+    if ($input_pipe->{prefetch}) {
+        my $source = escape_for_bash($input_pipe->{source});
+        $ircode = [["cmd", "cat $input_pipe_prefix${pipe_id}_0"]];
+    } else {
+        my $source = escape_for_bash($input_pipe->{source});
+        $ircode = [["cmd", "cat $source"]];
+    }
 
     if ($input_pipe->{charencoding} ne "UTF-8") {
-        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8"]);
+        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
     }
 
     if ($input_pipe->{format} eq "csv") {
@@ -949,7 +963,7 @@ sub build_ircode_command {
         my $stdin_pipe = $input_pipe_list->[0];
 
         if ($stdin_pipe->{charencoding} ne "UTF-8") {
-            push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8"]);
+            push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
         }
 
         if ($stdin_pipe->{format} eq "csv") {
