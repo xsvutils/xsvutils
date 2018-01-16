@@ -59,3 +59,10 @@ Subcommand `parseuriparams`:
     Options:
         --no-decode  パーセントエンコーディングのデコード処理を行わない
 
+
+まったく未実装だけど作りたいサブコマンド:
+
+    rmemptycols すべてのレコードでデータが空のカラムを削除
+    checkheader カラム名の重複や空のカラム名や命名規則をチェック
+
+
