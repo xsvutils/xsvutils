@@ -25,7 +25,14 @@ sub update {
     my ($cols) = @_;
     while (@$commands && $commands->[0]->[0] == $record_count) {
         my $t = pop(@$commands);
-        my $colIndex = $headerIndexMap->{$t->[1]};
+        my $colIndex;
+        if (defined($headerIndexMap->{$t->[1]})) {
+            $colIndex = $headerIndexMap->{$t->[1]};
+        } elsif ($t->[1] =~ /\A[1-9][0-9]*\z/) {
+            $colIndex = $t->[1] - 1;
+        } else {
+            die "Unknown column: $t->[1]\n";
+        }
         if (defined($colIndex)) {
 
             # 行にタブの数が少ない場合に列を付け足す
