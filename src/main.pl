@@ -746,6 +746,7 @@ sub extractNamedPipe {
 
                     push(@$commands2, ["tee", $pipe_id_1]);
                     push(@$commands2, ["buffer"]);
+                    #push(@$commands2, ["buffer-debug"]);
                     push(@$commands2, $curr_command);
                 } else {
                     my $pipe_id_1 = scalar @$input_pipe_list;
@@ -1073,6 +1074,8 @@ sub build_ircode_command {
 
         } elsif ($command eq "buffer") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer"]);
+        } elsif ($command eq "buffer-debug") {
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer --debug"]);
 
         } elsif ($command eq "paste") {
             my $right = escape_for_bash($t->[1]);
