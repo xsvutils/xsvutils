@@ -140,6 +140,10 @@ sub parseQuery {
             $next_command = ["addnumsortable", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "addcross") {
+            $next_command = ["addcross", undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "parseuriparams") {
             $next_command = ["parseuriparams", "", "decode"];
             $last_command = $a;
@@ -365,6 +369,31 @@ sub parseQuery {
                     die "Unknown argument: $a";
                 }
 
+            } elsif ($curr_command->[0] eq "addcross") {
+                if ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $name;
+                } elsif ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $src = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --cols";
+                    }
+                    $curr_command->[2] = $src;
+                } elsif (!defined($curr_command->[1])) {
+                    my $name = $a;
+                    $curr_command->[1] = $name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $cols = $a;
+                    $curr_command->[2] = $cols;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
             } elsif ($curr_command->[0] eq "parseuriparams") {
                 if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
                     die "option $a needs an argument" unless (@$argv);
@@ -561,6 +590,14 @@ sub parseQuery {
                 die "subcommand \`removecol\` needs --count option";
             }
             push(@$commands2, ["removecol", $c->[1]]);
+        } elsif ($c->[0] eq "addcross") {
+            if (!defined($c->[1])) {
+                die "subcommand \`addccross\` needs --name option";
+            }
+            if (!defined($c->[2])) {
+                die "subcommand \`addcross\` needs --cols option";
+            }
+            push(@$commands2, ["addcross", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "parseuriparams") {
             if ($c->[1] eq "") {
                 die "subcommand \`parseuriparams\` needs --col option";
@@ -1042,6 +1079,11 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $col = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
+
+        } elsif ($command eq "addcross") {
+            my $name  = escape_for_bash($t->[1]);
+            my $cols = escape_for_bash($t->[2]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcross.pl --name $name --col $cols"]);
 
         } elsif ($command eq "removecol") {
             my $count  = escape_for_bash($t->[1]);

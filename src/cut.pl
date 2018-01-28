@@ -14,13 +14,9 @@ while (@ARGV) {
     }
 }
 
-my $headers = undef;
-my $headerCount = 0;
-
-my $selectColumns = undef;
-
-sub createSelectColumns {
+sub createColumnIndeces {
     my ($headers) = @_;
+    my $headerCount = @$headers;
     my @columns2 = split(/,/, $option_columns);
     my @columns3 = ();
     foreach my $f (@columns2) {
@@ -52,7 +48,6 @@ sub createSelectColumns {
         push(@columns3, $f);
     }
 
-    my $headerCount = @$headers;
     my @columns4 = ();
     foreach my $f (@columns3) {
         my $g = '';
@@ -74,6 +69,10 @@ sub createSelectColumns {
 
 }
 
+my $headers = undef;
+my $headerCount = 0;
+my $columnIndeces = undef;
+
 {
     my $line = <STDIN>;
     $line =~ s/\n\z//g;
@@ -81,8 +80,8 @@ sub createSelectColumns {
 
     $headers = \@cols;
     $headerCount = @cols;
-    $selectColumns = createSelectColumns($headers);
-    print join("\t", (map { $cols[$_] } @$selectColumns)) . "\n";
+    $columnIndeces = createColumnIndeces($headers);
+    print join("\t", (map { $cols[$_] } @$columnIndeces)) . "\n";
 }
 
 while (my $line = <STDIN>) {
@@ -94,6 +93,6 @@ while (my $line = <STDIN>) {
         push(@cols, "");
     }
 
-    print join("\t", (map { $cols[$_] } @$selectColumns)) . "\n";
+    print join("\t", (map { $cols[$_] } @$columnIndeces)) . "\n";
 }
 

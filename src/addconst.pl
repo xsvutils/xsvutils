@@ -20,8 +20,10 @@ while (@ARGV) {
 
 die "subcommand `addconst` requires option --name" unless defined $name;
 
-my $line = <STDIN>;
-print "$name\t$line";
+{
+    my $line = <STDIN>;
+    print "$name\t$line";
+}
 
 while (my $line = <STDIN>) {
     print "$value\t$line";
