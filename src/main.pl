@@ -192,6 +192,10 @@ sub parseQuery {
             die "duplicated option: $a" if defined($output_format);
             $output_format = "csv";
 
+        } elsif ($a eq "--o-table") {
+            die "duplicated option: $a" if defined($output_format);
+            $output_format = "table";
+
         } elsif ($a eq "-i") {
             die "option -i needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input);
@@ -1314,28 +1318,35 @@ if ($exists_multijob) {
 }
 
 $main_1_source = $main_1_source . ")";
+
 {
-    if ($isPager) {
-        my $last_command = $command_seq->{last_command};
-        my $table_option = "";
-        if ($last_command ne "countcols") {
-            $table_option .= " --col-number";
-            $table_option .= " --record-number";
-        }
-        if ($last_command eq "summary") {
-            $table_option .= " --max-width 500";
-        }
-        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
-        $main_1_source = $main_1_source . " | less -SRX";
+    my $table_option = "";
+    my $last_command = $command_seq->{last_command};
+    if ($last_command ne "countcols") {
+        $table_option .= " --col-number";
+        $table_option .= " --record-number";
+    }
+    if ($last_command eq "summary") {
+        $table_option .= " --max-width 500";
     }
 
-    if (!$command_seq->{output_header_flag} && !$isPager) {
-        $main_1_source = $main_1_source . " | tail -n+2";
-    }
-    if ($command_seq->{output_format} eq "csv" && !$isPager) {
-        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
+    if ($isPager) {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+        $main_1_source = $main_1_source . " | less -SRX";
+
+    } else {
+        if (!$command_seq->{output_header_flag}) {
+            $main_1_source = $main_1_source . " | tail -n+2";
+        }
+        if ($command_seq->{output_format} eq "csv") {
+            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
+        } elsif ($command_seq->{output_format} eq "table") {
+            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+        }
+
     }
 }
+
 $main_1_source = $main_1_source . "\n";
 
 if ($option_explain) {

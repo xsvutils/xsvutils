@@ -112,6 +112,7 @@ Common options:
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
     --o-tsv          出力はTSVフォーマット (default)
     --o-csv          出力はCSVフォーマット (default is TSV format)
+    --o-table        出力は縦揃えのテキストフォーマット (default)
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
