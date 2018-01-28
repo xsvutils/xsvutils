@@ -97,10 +97,12 @@ Common options:
 
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
+    --o-tsv          出力はTSVフォーマット (default)
+    --o-csv          出力はCSVフォーマット (default is TSV format)
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
-    --i-header <HEADERS> 入力にはヘッダーがなくヘッダーをオプションで指定。HEADERS はコンマ区切り
+    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り (--i-header でも可)
     --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。

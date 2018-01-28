@@ -45,7 +45,8 @@ sub parseQuery {
     #   "format" => "",                   # 入力フォーマット、または空文字列は自動判定の意味
     #   "input_header" => "id,name,desc", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
     #   "output_header_flag" => 1,        # 出力にヘッダをつけるかどうか 1 or ''
-    #   "output_table" => 1,              # TSV形式での出力かどうか 1 or ''
+    #   "output_table" => 1,              # 表形式での出力かどうか 1 or ''
+    #   "output_format" => "tsv",         # 出力フォーマット
     #   "last_command" => "head",         # 最後のサブコマンド名
     # }
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
@@ -64,6 +65,7 @@ sub parseQuery {
     my $input_header = undef;
     my $output_header_flag = 1;
     my $output_table = 1;
+    my $output_format = undef;
 
     my $last_command = "cat";
 
@@ -182,6 +184,14 @@ sub parseQuery {
             die "duplicated option: $a" if defined($format);
             $format = "csv";
 
+        } elsif ($a eq "--o-tsv") {
+            die "duplicated option: $a" if defined($output_format);
+            $output_format = "tsv";
+
+        } elsif ($a eq "--o-csv") {
+            die "duplicated option: $a" if defined($output_format);
+            $output_format = "csv";
+
         } elsif ($a eq "-i") {
             die "option -i needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input);
@@ -192,8 +202,8 @@ sub parseQuery {
             die "duplicated option: $a" if defined($output);
             $output = shift(@$argv);
 
-        } elsif ($a eq "--i-header") {
-            die "option --i-header needs an argument" unless (@$argv);
+        } elsif ($a eq "--i-header" || $a eq "--header") {
+            die "option $a needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input_header);
             $input_header = shift(@$argv);
 
@@ -496,6 +506,9 @@ sub parseQuery {
     if (!defined($input_header)) {
         $input_header = "";
     }
+    if (!defined($output_format)) {
+        $output_format = "tsv";
+    }
 
     ################################
     # コマンド列を解釈して少し変換する
@@ -664,6 +677,7 @@ sub parseQuery {
       "input_header" => $input_header,
       "output_header_flag" => $output_header_flag,
       "output_table" => $output_table,
+      "output_format" => $output_format,
       "last_command" => $last_command},
      $argv);
 }
@@ -777,6 +791,9 @@ sub extractNamedPipe {
                 }
                 if ($subquery->{output_header_flag} eq "") {
                     die "sub query of subcommand `$curr_command->[0]` must not have an option --o-no-header";
+                }
+                if ($subquery->{output_format} eq "") {
+                    die "sub query of subcommand `$curr_command->[0]` must not have an option --o-tsv or --o-csv";
                 }
 
                 extractNamedPipe($subquery);
@@ -1314,6 +1331,9 @@ $main_1_source = $main_1_source . ")";
 
     if (!$command_seq->{output_header_flag} && !$isPager) {
         $main_1_source = $main_1_source . " | tail -n+2";
+    }
+    if ($command_seq->{output_format} eq "csv" && !$isPager) {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
     }
 }
 $main_1_source = $main_1_source . "\n";
