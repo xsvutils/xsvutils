@@ -6,8 +6,8 @@ my $queries = [];
 
 while (@ARGV) {
     my $a = shift(@ARGV);
-    if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*)=(.*)\z/) {
-        push(@$queries, [$1, '=', $2]);
+    if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*)(!?=)(.*)\z/) {
+        push(@$queries, [$1, $2, $3]);
     } else {
         die "Unknown argument: $a";
     }
@@ -56,6 +56,11 @@ while (my $line = <STDIN>) {
         my $q = $queries->[$i];
         if ($q->[1] eq '=') {
             if ($cols[$q->[0]] eq $q->[2]) {
+                $f = 1;
+                last;
+            }
+        } elsif ($q->[1] eq '!=') {
+            if ($cols[$q->[0]] ne $q->[2]) {
                 $f = 1;
                 last;
             }

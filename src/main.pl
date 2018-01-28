@@ -245,7 +245,7 @@ sub parseQuery {
                     $cond = $a;
                 }
                 if (defined($cond)) {
-                    if ($cond =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*)=(.*)\z/) {
+                    if ($cond =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*)!?=(.*)\z/) {
                         push(@$curr_command, $a);
                     } else {
                         die "Unknown condition format: $a\n";
