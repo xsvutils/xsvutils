@@ -67,43 +67,38 @@ Subcommands:
     レコード選択に関するサブコマンド
         head [<N>]                      Print first N records
         limit [<N>]                     Print first N records
-        take [<N>]                      Print first N records
         offset [<N>]                    Print all except first N records
-        drop [<N>]                      Print all except first N records
-
-        [EXPERIMENTAL]
-            filter <CONDITION>
+        take [<N>]                      [OBSOLETE] Print first N records
+        drop [<N>]                      [OBSOLETE] Print all except first N records
+        where <CONDITION>               [EXPERIMENTAL]
+        filter <CONDITION>              [EXPERIMENTAL]
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                   Print specified columns
 
     列を追加するサブコマンド
-        [EXPERIMENTAL]
-            addconst <NEW_NAME> <VALUE>      固定値のカラムを一番左に追加する
-            addcopy <NEW_NAME> <SOURCE>
-            addlinenum <NEW_NAME> [<START_VALUE>]
-            addlinenum2 <NEW_NAME>
-            addnumsortable <NEW_NAME> <TARGET_COLUMN>
-            addcross <NEW_NAME> <TARGET_COLUMNS>
-            parseuriparams <NAMES>
+        addconst <NEW_NAME> <VALUE>                [EXPERIMENTAL] 固定値のカラムを一番左に追加する
+        addcopy <NEW_NAME> <SOURCE>                [EXPERIMENTAL]
+        addlinenum <NEW_NAME> [<START_VALUE>]      [EXPERIMENTAL]
+        addlinenum2 <NEW_NAME>                     [EXPERIMENTAL]
+        addnumsortable <NEW_NAME> <TARGET_COLUMN>  [EXPERIMENTAL]
+        addcross <NEW_NAME> <TARGET_COLUMNS>       [EXPERIMENTAL]
+        uriparams <NAMES>                          [EXPERIMENTAL]
+        parseuriparams <NAMES>                     [OBSOLETE]
 
     その他のデータを加工するコマンド
         update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                ソートする
-
-        [EXPERIMENTAL]
-            paste <OTHER_FILE>
-            union <OTHER_FILE>
+        paste <OTHER_FILE>              [EXPERIMENTAL]
+        union <OTHER_FILE>              [EXPERIMENTAL]
 
     集計するコマンド
         wcl                             レコード数を表示する
         header                          カラムの一覧を表示する
         summary                         データのサマリを表示する
         countcols                       カラム数を集計する
-
-        [EXPERIMENTAL]
-            facetcount
-            wordsflags
+        facetcount                      [EXPERIMENTAL]
+        wordsflags                      [EXPERIMENTAL]
 
 
 Common options:
@@ -116,7 +111,8 @@ Common options:
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
-    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り (--i-header でも可)
+    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
+                     ([OBSOLETE] --i-header も同じ)
     --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
@@ -149,7 +145,7 @@ Subcommand `cat`:
      `cat` は省略可能なサブコマンドであり、省略してはいけないケースはない。
 
 
-Subcommand `take` and Subcommand `head` and Subcommand `limit`:
+Subcommand `head` and Subcommand `limit`:
 
     Print first N records.
 
@@ -171,7 +167,7 @@ Subcommand `take` and Subcommand `head` and Subcommand `limit`:
         $ xsvutils FILENAME cut id,name head 20
 
 
-Subcommand `drop` and Subcommand `offset`:
+Subcommand `offset`:
 
     先頭のNレコードを除く残りを出力する。
 
@@ -231,7 +227,7 @@ Subcommand `addconst`:
         $ xsvutils FILENAME addconst col0 dummy cut id,col0
 
 
-Subcommand `parseuriparams`:
+Subcommand `uriparams`:
     [EXPERIMENTAL]
 
     Options:
@@ -324,5 +320,7 @@ Common options for developer:
 注意:
     このヘルプに EXPERIMENTAL と書かれている箇所は
     まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
+    また、 OBSOLETE と書かれている箇所は
+    廃止予定で互換性のためだけに残してある機能である。
 
 

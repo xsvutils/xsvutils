@@ -94,8 +94,8 @@ sub parseQuery {
             $next_command = ["drop", ""];
             $last_command = $a;
 
-        } elsif ($a eq "filter") {
-            $next_command = ["filter"];
+        } elsif ($a eq "where" || $a eq "filter") {
+            $next_command = ["where"];
             $last_command = $a;
 
         } elsif ($a eq "cut") {
@@ -126,8 +126,8 @@ sub parseQuery {
             $next_command = ["addcross", undef, undef];
             $last_command = $a;
 
-        } elsif ($a eq "parseuriparams") {
-            $next_command = ["parseuriparams", "", "decode"];
+        } elsif ($a eq "uriparams" || $a eq "parseuriparams") {
+            $next_command = ["uriparams", "", "decode"];
             $last_command = $a;
 
         } elsif ($a eq "update") {
@@ -238,7 +238,7 @@ sub parseQuery {
                     $curr_command->[1] = $num;
                 }
 
-            } elsif ($curr_command->[0] eq "filter") {
+            } elsif ($curr_command->[0] eq "where") {
                 my $cond = undef;
                 if ($a eq "--cond") {
                     die "option $a needs an argument" unless (@$argv);
@@ -401,7 +401,7 @@ sub parseQuery {
                     die "Unknown argument: $a";
                 }
 
-            } elsif ($curr_command->[0] eq "parseuriparams") {
+            } elsif ($curr_command->[0] eq "uriparams") {
                 if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
@@ -556,9 +556,9 @@ sub parseQuery {
             if ($f) {
                 push(@$commands2, ["range", $c->[1], ""]);
             }
-        } elsif ($c->[0] eq "filter") {
+        } elsif ($c->[0] eq "where") {
             if (@$c <= 1) {
-                die "subcommand \`filter\` needs --cond option";
+                die "subcommand \`where\` needs --cond option";
             }
             push(@$commands2, $c);
         } elsif ($c->[0] eq "cut") {
@@ -616,11 +616,11 @@ sub parseQuery {
                 die "subcommand \`addcross\` needs --cols option";
             }
             push(@$commands2, ["addcross", $c->[1], $c->[2]]);
-        } elsif ($c->[0] eq "parseuriparams") {
+        } elsif ($c->[0] eq "uriparams") {
             if ($c->[1] eq "") {
-                die "subcommand \`parseuriparams\` needs --col option";
+                die "subcommand \`uriparams\` needs --col option";
             }
-            push(@$commands2, ["parseuriparams", $c->[1], $c->[2]]);
+            push(@$commands2, ["uriparams", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "update") {
             if (!defined($c->[1])) {
                 die "subcommand \`update\` needs --index option";
@@ -1092,12 +1092,12 @@ sub build_ircode_command {
                 }
             }
 
-        } elsif ($command eq "filter") {
+        } elsif ($command eq "where") {
             my $conds = '';
             for (my $i = 1; $i < @$t; $i++) {
                 $conds .= ' ' . escape_for_bash($t->[$i]);
             }
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/filter.pl$conds"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
 
         } elsif ($command eq "cut") {
             my $cols = escape_for_bash($t->[1]);
@@ -1137,7 +1137,7 @@ sub build_ircode_command {
             my $arg = '-f' . ($count + 1) . '-';
             push(@$ircode, ["cmd", "cut $arg"]);
 
-        } elsif ($command eq "parseuriparams") {
+        } elsif ($command eq "uriparams") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "tail -n+2"]);
             if ($t->[2] eq "no-decode") {
