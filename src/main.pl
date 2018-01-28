@@ -36,26 +36,6 @@ my $option_explain = undef;
 my $exists_args = '';
 $exists_args = 1 if (@ARGV);
 
-sub parseSortParams {
-    my ($arg) = @_;
-    my @args = split(/,/, $arg);
-    my $commands = [];
-    push(@$commands, ["addlinenum2", ""]);
-    my $c = 1;
-    while (@args) {
-        my $a = pop(@args);
-        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
-            push(@$commands, ["addnumsortable", "", $1]);
-        } else {
-            push(@$commands, ["addcopy", "", $a]);
-        }
-        $c++;
-    }
-    push(@$commands, ["sort"]);
-    push(@$commands, ["removecol", $c]);
-    $commands;
-}
-
 sub parseQuery {
     # 2値を返す関数。
     # 1つ目の返り値の例
@@ -193,6 +173,14 @@ sub parseQuery {
             $next_command = ["countcols"];
             $last_command = $a;
             $next_output_table = '';
+
+        } elsif ($a eq "--tsv") {
+            die "duplicated option: $a" if defined($format);
+            $format = "tsv";
+
+        } elsif ($a eq "--csv") {
+            die "duplicated option: $a" if defined($format);
+            $format = "csv";
 
         } elsif ($a eq "-i") {
             die "option -i needs an argument" unless (@$argv);
@@ -678,6 +666,26 @@ sub parseQuery {
       "output_table" => $output_table,
       "last_command" => $last_command},
      $argv);
+}
+
+sub parseSortParams {
+    my ($arg) = @_;
+    my @args = split(/,/, $arg);
+    my $commands = [];
+    push(@$commands, ["addlinenum2", ""]);
+    my $c = 1;
+    while (@args) {
+        my $a = pop(@args);
+        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
+            push(@$commands, ["addnumsortable", "", $1]);
+        } else {
+            push(@$commands, ["addcopy", "", $a]);
+        }
+        $c++;
+    }
+    push(@$commands, ["sort"]);
+    push(@$commands, ["removecol", $c]);
+    $commands;
 }
 
 my ($command_seq, $tail_argv) = parseQuery(\@ARGV);
