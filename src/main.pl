@@ -439,7 +439,7 @@ sub parseQuery {
         }
         if (defined($next_command)) {
             if (defined($curr_command)) {
-                die "command `$curr_command->[0]` must be last\n" unless ($output_table);
+                #die "command `$curr_command->[0]` must be last\n" unless ($output_table);
                 push(@$commands, $curr_command);
             }
             if ($next_command->[0] eq "cat") {
