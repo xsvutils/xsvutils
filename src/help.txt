@@ -12,65 +12,30 @@ EXAMPLES:
 
 USAGE:
 
-    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>...] ...
+    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
+
+    SUBCOMMAND には cut, limit などがある。(後述)
 
     SUBCOMMAND は内容により複数を組み合わせることも可能。
 
-    SUBCOMMAND 省略時はcatが指定されたものと扱われ、
+    以下の例では cut がサブコマンド、 id,name がcutサブコマンドのパラメータである。
+
+        $ xsvutils data.tsv cut id,name
+
+    以下の例では cut がサブコマンド、 id がcutサブコマンドのパラメータであり、
+    limit が次のサブコマンド、 100 がlimitサブコマンドのパラメータである。
+
+        $ xsvutils data.tsv cut id limit 100
+
     標準出力が端末であれば端末に見やすく表示し、
     標準出力がファイル等であればTSVフォーマットで出力する。
+    --o-csv オプションを指定し、標準出力が端末でない場合はCSVフォーマットで出力する。
 
-DESCRIPTION
+    SUBCOMMAND 省略時はcatが指定されたものと同じで、入力データの中身を加工せずにそのまま出力する。
 
-    Subcommands:
+    サブコマンドによってはオプションやパラメータを受け付ける。
 
-        なにもしないサブコマンド
-            cat                             Print data to the terminal
-
-        レコード選択に関するサブコマンド
-            head [<N>]                      Print first N records
-            limit [<N>]                     Print first N records
-            take [<N>]                      Print first N records
-            offset [<N>]                    Print all except first N records
-            drop [<N>]                      Print all except first N records
-
-            [EXPERIMENTAL]
-                filter <CONDITION>
-
-        列の選択に関するサブコマンド
-            cut <COLUMNS>                   Print specified columns
-
-        列を追加するサブコマンド
-            [EXPERIMENTAL]
-                addconst <NEW_NAME> <VALUE>      固定値のカラムを一番左に追加する
-                addcopy <NEW_NAME> <SOURCE>
-                addlinenum <NEW_NAME> [<START_VALUE>]
-                addlinenum2 <NEW_NAME>
-                addnumsortable <NEW_NAME> <TARGET_COLUMN>
-                addcross <NEW_NAME> <TARGET_COLUMNS>
-                parseuriparams <NAMES>
-
-        その他のデータを加工するコマンド
-            update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
-            sort [<COLUMNS>]                ソートする
-
-            [EXPERIMENTAL]
-                paste <OTHER_FILE>
-                union <OTHER_FILE>
-
-        集計するコマンド
-            wcl                             レコード数を表示する
-            header                          カラムの一覧を表示する
-            summary                         データのサマリを表示する
-            countcols                       カラム数を集計する
-
-            [EXPERIMENTAL]
-                facetcount
-                wordsflags
-
-    オプションやパラメータを受け付けるサブコマンドもある。
-
-    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った書き方も可能。
+    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った同等の書き方も可能。
 
         $ xsvutils data.tsv cut title
         $ xsvutils data.tsv cut --col title
@@ -86,11 +51,59 @@ DESCRIPTION
         $ xsvutils data.tsv cut $COLUMN
 
     Character encoding:
+
         入力の文字コードは UTF-8 が原則。
 
         [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
         オプションによる文字コード指定は未実装。
         SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
+
+
+Subcommands:
+
+    なにもしないサブコマンド
+        cat                             Print data to the terminal
+
+    レコード選択に関するサブコマンド
+        head [<N>]                      Print first N records
+        limit [<N>]                     Print first N records
+        take [<N>]                      Print first N records
+        offset [<N>]                    Print all except first N records
+        drop [<N>]                      Print all except first N records
+
+        [EXPERIMENTAL]
+            filter <CONDITION>
+
+    列の選択に関するサブコマンド
+        cut <COLUMNS>                   Print specified columns
+
+    列を追加するサブコマンド
+        [EXPERIMENTAL]
+            addconst <NEW_NAME> <VALUE>      固定値のカラムを一番左に追加する
+            addcopy <NEW_NAME> <SOURCE>
+            addlinenum <NEW_NAME> [<START_VALUE>]
+            addlinenum2 <NEW_NAME>
+            addnumsortable <NEW_NAME> <TARGET_COLUMN>
+            addcross <NEW_NAME> <TARGET_COLUMNS>
+            parseuriparams <NAMES>
+
+    その他のデータを加工するコマンド
+        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+        sort [<COLUMNS>]                ソートする
+
+        [EXPERIMENTAL]
+            paste <OTHER_FILE>
+            union <OTHER_FILE>
+
+    集計するコマンド
+        wcl                             レコード数を表示する
+        header                          カラムの一覧を表示する
+        summary                         データのサマリを表示する
+        countcols                       カラム数を集計する
+
+        [EXPERIMENTAL]
+            facetcount
+            wordsflags
 
 
 Common options:
