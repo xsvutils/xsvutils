@@ -184,6 +184,11 @@ sub parseQuery {
             $last_command = $a;
             $next_output_table = '';
 
+        } elsif ($a eq "wordsflags") {
+            $next_command = ["wordsflags"];
+            $last_command = $a;
+            $next_output_table = '';
+
         } elsif ($a eq "countcols") {
             $next_command = ["countcols"];
             $last_command = $a;
@@ -461,6 +466,14 @@ sub parseQuery {
                     $curr_command->[1] = $a;
                 }
 
+            } elsif ($curr_command->[0] eq "wordsflags") {
+                if ($a eq "--flag") {
+                    die "option $a needs an argument" unless (@$argv);
+                    push(@$curr_command, shift(@$argv));
+                } else {
+                    push(@$curr_command, $a);
+                }
+
             }
 
         } else {
@@ -644,6 +657,11 @@ sub parseQuery {
             push(@$commands2, ["summary"]);
         } elsif ($c->[0] eq "facetcount") {
             push(@$commands2, ["facetcount"]);
+        } elsif ($c->[0] eq "wordsflags") {
+            if (@$c <= 1) {
+                die "subcommand \`wordsflags\` needs --flag option";
+            }
+            push(@$commands2, $c);
         } elsif ($c->[0] eq "countcols") {
             push(@$commands2, ["countcols"]);
         } else {
@@ -1140,6 +1158,13 @@ sub build_ircode_command {
 
         } elsif ($command eq "facetcount") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl"]);
+
+        } elsif ($command eq "wordsflags") {
+            my $flags = '';
+            for (my $i = 1; $i < @$t; $i++) {
+                $flags .= ' ' . escape_for_bash($t->[$i]);
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/wordsflags.pl$flags"]);
 
         } elsif ($command eq "countcols") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);

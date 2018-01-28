@@ -66,6 +66,7 @@ DESCRIPTION
 
             [EXPERIMENTAL]
                 facetcount
+                wordsflags
 
     オプションやパラメータを受け付けるサブコマンドもある。
 
