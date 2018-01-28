@@ -1,47 +1,74 @@
 Utilities for handling separated value data
 
-Usage:
+EXAMPLES:
 
-    $ xsvutils [<FILENAME>] [<SUBCOMMAND>] [<OPTIONS>...]
+    $ xsvutils data.tsv                   # Print data to the terminal
+    $ xsvutils data.csv                   # xsvutils can handle not only tsv format but csv format
+    $ xsvutils data.tsv cut id,name       # Print only columns `id,name` to the terminal
+    $ xsvutils data.tsv wcl               # Count records
+    $ xsvutils data.tsv limit 100         # Print only first 100 records
+    $ xsvutils data.tsv cut id limit 100  # Print only column `id` of first 100 records
+    $ xsvutils data.csv > data.tsv        # Convert to tsv format
 
-    FILENAME と SUBCOMMAND は順番が逆でも可能。
-    SUBCOMMAND と解釈されうる FILENAME は -i オプションでの指定が必要。
+USAGE:
+
+    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>...] ...
 
     SUBCOMMAND は内容により複数を組み合わせることも可能。
-    SUBCOMMAND 省略時はcatになる。
 
+    SUBCOMMAND 省略時はcatが指定されたものと扱われ、
+    標準出力が端末であれば端末に見やすく表示し、
+    標準出力がファイル等であればTSVフォーマットで出力する。
 
-Subcommands:
+DESCRIPTION
 
-    なにもしないサブコマンド
+    Subcommands:
 
-        cat                             Print data to the terminal
+        なにもしないサブコマンド
+            cat                             Print data to the terminal
 
-    レコード選択に関するサブコマンド
+        レコード選択に関するサブコマンド
+            head [<N>]                      Print first N records
+            limit [<N>]                     Print first N records
+            take [<N>]                      Print first N records
+            offset [<N>]                    Print all except first N records
+            drop [<N>]                      Print all except first N records
 
-        head [<N>]                      Print first N records
-        limit [<N>]                     Print first N records
-        offset [<N>]                    Print all except first N records
+            [EXPERIMENTAL]
+                filter <CONDITION>
 
-    列の選択に関するサブコマンド
+        列の選択に関するサブコマンド
+            cut <COLUMNS>                   Print specified columns
 
-        cut <COLUMNS>                   Print specified columns
+        列を追加するサブコマンド
+            [EXPERIMENTAL]
+                addconst <NEW_NAME> <VALUE      固定値のカラムを一番左に追加する
+                addcopy <NEW_NAME> <SOURCE>
+                addlinenum <NEW_NAME> [<START_VALUE>]
+                addlinenum2 <NEW_NAME>
+                addnumsortable <NEW_NAME> <TARGET_COLUMN>
+                parseuriparams <NAMES>
 
-    その他のデータを加工するコマンド
+        その他のデータを加工するコマンド
+            update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+            sort [<COLUMNS>]                ソートする
 
-        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
-        sort [<COLUMNS>]                ソートする
+            [EXPERIMENTAL]
+                paste <OTHER_FILE>
+                union <OTHER_FILE>
 
-    集計するコマンド
+        集計するコマンド
+            wcl                             レコード数を表示する
+            header                          カラムの一覧を表示する
+            summary                         データのサマリを表示する
+            countcols                       カラム数を集計する
 
-        wcl                             レコード数を表示する
-        header                          カラムの一覧を表示する
-        summary                         データのサマリを表示する
-        countcols                       カラム数を集計する
+            [EXPERIMENTAL]
+                facetcount
 
     オプションやパラメータを受け付けるサブコマンドもある。
 
-    パラメータを受け付けるサブコマンドの多くは以下のように複数の書き方が可能。
+    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った書き方も可能。
 
         $ xsvutils data.tsv cut title
         $ xsvutils data.tsv cut --col title
@@ -56,6 +83,13 @@ Subcommands:
 
         $ xsvutils data.tsv cut $COLUMN
 
+    Character encoding:
+        入力の文字コードは UTF-8 が原則。
+
+        [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
+        オプションによる文字コード指定は未実装。
+        SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
+
 
 Common options:
 
@@ -69,8 +103,15 @@ Common options:
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。
+    入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。
 
-    これらのオプションは FILENAME, SUBCOMMAND の前に置くことも可能。
+    以下の2つの例では $INPUT が `head` などのサブコマンド名と偶然同じだった場合に、
+    1つ目ではエラーとなってしまうが、2つ目では意図したとおりに動く。
+
+        $ xsvutils $INPUT cut title
+        $ xsvutils -i $INPUT cut --col title
+
+    これら共通オプションは FILENAME, SUBCOMMAND の前に置くことも可能だが、
     サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
 
     以下は同じ意味になる。
@@ -151,6 +192,34 @@ Subcommand `cut`:
         $ xsvutils data.tsv cut --col foo,col1..col20
 
 
+Subcommand `addconst`:
+    [EXPERIMENTAL]
+
+    固定値のカラムを一番左に追加する
+
+    Options:
+        --name <COLUMN>
+        --value <VALUE>
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME addconst --name col21 --value 0
+        $ xsvutils FILENAME addconst --value 0 --name col21
+        $ xsvutils FILENAME addconst col21 0
+
+    他のサブコマンドと組み合わせることも可能。
+    以下の例では、FILENAME の id カラムと固定値 0 のカラム col0 の2カラムを表示する。
+
+        $ xsvutils FILENAME addconst col0 dummy cut id,col0
+
+
+Subcommand `parseuriparams`:
+    [EXPERIMENTAL]
+
+    Options:
+        --no-decode  パーセントエンコーディングのデコード処理を行わない
+
+
 Subcommand `update`:
 
     セルを指定して値を更新する
@@ -221,6 +290,12 @@ Subcommand `countcols`:
 
     データが大きい場合には、標準エラー出力に進捗表示をする。
     Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+
+
+未実装だけど作りたいサブコマンド:
+
+    rmemptycols すべてのレコードでデータが空のカラムを削除
+    checkheader カラム名の重複や空のカラム名や命名規則をチェック
 
 
 Common options for developer:
