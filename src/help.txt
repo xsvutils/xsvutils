@@ -98,6 +98,7 @@ Subcommands:
         summary                         データのサマリを表示する
         countcols                       カラム数を集計する
         facetcount                      [EXPERIMENTAL]
+        multifacetcount                 [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
 
 
@@ -317,6 +318,24 @@ Subcommand `countcols`:
 
     データが大きい場合には、標準エラー出力に進捗表示をする。
     Ctrl-C で集計処理を中止し、集計したところまでを表示する。
+
+
+Subcommand `facetcount`:
+    [EXPERIMENTAL]
+
+    カラムそれぞれのファセットカウントを集計する。
+
+
+Subcommand `multifacetcount`:
+    [EXPERIMENTAL]
+
+    左のカラムから順番にカラム組み合わせのファセットカウントを集計する。
+
+
+Subcommand `wordsflags`:
+    [EXPERIMENTAL]
+
+    1列目の各値に対する、2列目の値のファセットカウントを集計する。
 
 
 未実装だけど作りたいサブコマンド:
