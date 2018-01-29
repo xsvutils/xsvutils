@@ -69,10 +69,26 @@ sub parseQuery {
 
     my $last_command = "cat";
 
-    while (@$argv) {
-        my $a = shift(@$argv);
+    while () {
+        my $a;
+        if (@$argv) {
+            $a = shift(@$argv);
+        } else {
+            if (defined($curr_command)) {
+                $a = "cat";
+            } else {
+                last;
+            }
+        }
 
-        last if ($a eq ")");
+        if ($a eq ")") {
+            if (defined($curr_command)) {
+                unshift(@$argv, $a);
+                $a = "cat";
+            } else {
+                last;
+            }
+        }
 
         my $next_command = undef;
         my $next_output_table = 1;
@@ -126,8 +142,12 @@ sub parseQuery {
             $next_command = ["addcross", undef, undef];
             $last_command = $a;
 
-        } elsif ($a eq "uriparams" || $a eq "parseuriparams") {
-            $next_command = ["uriparams", "", "decode"];
+        } elsif ($a eq "uriparams") {
+            $next_command = ["uriparams", "", "decode", undef];
+            $last_command = $a;
+
+        } elsif ($a eq "parseuriparams") {
+            $next_command = ["parseuriparams", "", "decode", undef];
             $last_command = $a;
 
         } elsif ($a eq "update") {
@@ -402,6 +422,19 @@ sub parseQuery {
                 }
 
             } elsif ($curr_command->[0] eq "uriparams") {
+                if ($a eq "--name" || $a eq "--names") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "--col") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[3] = shift(@$argv);
+                } elsif ($a eq "--no-decode") {
+                    $curr_command->[2] = "no-decode";
+                } else {
+                    die "Unknown argument: $a";
+                }
+
+            } elsif ($curr_command->[0] eq "parseuriparams") {
                 if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
@@ -484,6 +517,26 @@ sub parseQuery {
         if (defined($next_command)) {
             if (defined($curr_command)) {
                 #die "command `$curr_command->[0]` must be last\n" unless ($output_table);
+                if ($curr_command->[0] eq "parseuriparams") {
+                    $curr_command->[0] = "uriparams";
+                }
+                if ($curr_command->[0] eq "uriparams" && defined($curr_command->[3])) {
+                    unshift(@$argv, $a);
+                    unshift(@$argv, ")");
+                    if ($curr_command->[2] eq "no-decode") {
+                        unshift(@$argv, "--no-decode");
+                    }
+                    unshift(@$argv, $curr_command->[1]);
+                    unshift(@$argv, "--name");
+                    unshift(@$argv, "uriparams");
+                    unshift(@$argv, $curr_command->[3]);
+                    unshift(@$argv, "--col");
+                    unshift(@$argv, "cut");
+                    unshift(@$argv, "(");
+                    unshift(@$argv, "paste");
+                    $curr_command = undef;
+                    next;
+                }
                 push(@$commands, $curr_command);
             }
             if ($next_command->[0] eq "cat") {
@@ -495,9 +548,6 @@ sub parseQuery {
         }
     }
 
-    if (defined($curr_command)) {
-        push(@$commands, $curr_command);
-    }
     if (!defined($input)) {
         $input = '';
     }

@@ -231,6 +231,19 @@ Subcommand `uriparams`:
     [EXPERIMENTAL]
 
     Options:
+        --name  <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
+        --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
+        --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
+        --no-decode  パーセントエンコーディングのデコード処理を行わない
+
+
+Subcommand `parseuriparams`:
+    [OBSOLETE]
+
+    Options:
+        --col     <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
+        --cols    <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
+        --columns <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
         --no-decode  パーセントエンコーディングのデコード処理を行わない
 
 
