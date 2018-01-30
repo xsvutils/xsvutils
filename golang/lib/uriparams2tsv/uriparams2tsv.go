@@ -56,7 +56,7 @@ func printLineAsTsv(wr *bufio.Writer, line []string) error {
 	return nil
 }
 
-func Convert(in *os.File, out *os.File, query string, fullUrl bool) error {
+func Convert(in *os.File, out *os.File, query string, fullUrl bool, formB bool) error {
 	wr := bufio.NewWriter(out)
 	keys := strings.Split(query, ",")
 	header := make(map[string]int, len(keys))
@@ -85,17 +85,34 @@ func Convert(in *os.File, out *os.File, query string, fullUrl bool) error {
 		params := strings.Split(querystring, "&")
 		for _, p := range params {
 			kv := strings.SplitN(p, "=", 2)
-			if strings.HasSuffix(kv[0], "[]") {
-				kv[0] = kv[0][:len(kv[0])-2]
+			name := kv[0]
+			if strings.HasSuffix(name, "[]") {
+				name = name[:len(name)-2]
 			}
-			index, ok := header[kv[0]]
+			index, ok := header[name]
 			if !ok {
 				continue
 			}
+			var value string
 			if len(kv) == 2 {
-				line[index] += kv[1] + ";";
+				value = kv[1]
 			} else {
-				line[index] += ";";
+				value = ""
+			}
+			if formB {
+				if len(value) > 0 {
+					if len(line[index]) == 0 {
+						line[index] = value
+					} else {
+						li := line[index]
+						if li[len(li) - 1] != ';' {
+							line[index] += ";"
+						}
+						line[index] += value + ";"
+					}
+				}
+			} else {
+				line[index] += value + ";";
 			}
 		}
 

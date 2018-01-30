@@ -236,6 +236,36 @@ Subcommand `uriparams`:
         --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
         --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
         --no-decode  パーセントエンコーディングのデコード処理を行わない
+        --form-b     出力形式をB形式とする
+
+    パラメータは同じ名前で複数の可能性があり、また指定のパラメータが存在しない場合もあり、
+    値も空文字列がありえるため、それらのケースを区別できるよう、セミコロン(;)を使って値を出力する。
+    以下は --name q というオプションを指定した場合の例である。
+    1行目の例では抽出結果は空文字列になる。
+
+        query string       result
+        ---------------------------
+        r=xxx              
+        q=&r=xxx           ;
+        q=aaa&r=xxx        aaa;
+        q=aaa&q=bbb&r=xxx  aaa;bbb;
+        q=&q=bbb&r=xxx     ;bbb;
+        q=aaa&q=&r=xxx     aaa;;
+        q=&q=&r=xxx        ;;
+
+    B形式: --form-b オプションを付けた場合は、パラメータが存在しない、または1つの場合にセミコロンを使用しない。
+    パラメータが存在しない場合と値が空文字列のパラメータは区別できない。
+    抽出結果は以下のようになる。
+
+        query string       result
+        ---------------------------
+        r=xxx              
+        q=&r=xxx           
+        q=aaa&r=xxx        aaa
+        q=aaa&q=bbb&r=xxx  aaa;bbb;
+        q=&q=bbb&r=xxx     bbb
+        q=aaa&q=&r=xxx     aaa
+        q=&q=&r=xxx        
 
 
 Subcommand `parseuriparams`:

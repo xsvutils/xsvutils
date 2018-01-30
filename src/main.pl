@@ -143,11 +143,11 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "uriparams") {
-            $next_command = ["uriparams", "", "decode", undef];
+            $next_command = ["uriparams", "", undef, "decode", "form-a"];
             $last_command = $a;
 
         } elsif ($a eq "parseuriparams") {
-            $next_command = ["parseuriparams", "", "decode", undef];
+            $next_command = ["parseuriparams", "", undef, "decode", "form-a"];
             $last_command = $a;
 
         } elsif ($a eq "update") {
@@ -432,9 +432,11 @@ sub parseQuery {
                     $curr_command->[1] = shift(@$argv);
                 } elsif ($a eq "--col") {
                     die "option $a needs an argument" unless (@$argv);
-                    $curr_command->[3] = shift(@$argv);
+                    $curr_command->[2] = shift(@$argv);
                 } elsif ($a eq "--no-decode") {
-                    $curr_command->[2] = "no-decode";
+                    $curr_command->[3] = "no-decode";
+                } elsif ($a eq "--form-b") {
+                    $curr_command->[4] = "form-b";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -444,7 +446,7 @@ sub parseQuery {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
                 } elsif ($a eq "--no-decode") {
-                    $curr_command->[2] = "no-decode";
+                    $curr_command->[3] = "no-decode";
                 } else {
                     $curr_command->[1] = $a;
                 }
@@ -527,16 +529,19 @@ sub parseQuery {
                 if ($curr_command->[0] eq "parseuriparams") {
                     $curr_command->[0] = "uriparams";
                 }
-                if ($curr_command->[0] eq "uriparams" && defined($curr_command->[3])) {
+                if ($curr_command->[0] eq "uriparams" && defined($curr_command->[2])) {
                     unshift(@$argv, $a);
                     unshift(@$argv, ")");
-                    if ($curr_command->[2] eq "no-decode") {
+                    if ($curr_command->[4] eq "form-b") {
+                        unshift(@$argv, "--form-b");
+                    }
+                    if ($curr_command->[3] eq "no-decode") {
                         unshift(@$argv, "--no-decode");
                     }
                     unshift(@$argv, $curr_command->[1]);
                     unshift(@$argv, "--name");
                     unshift(@$argv, "uriparams");
-                    unshift(@$argv, $curr_command->[3]);
+                    unshift(@$argv, $curr_command->[2]);
                     unshift(@$argv, "--col");
                     unshift(@$argv, "cut");
                     unshift(@$argv, "(");
@@ -677,7 +682,7 @@ sub parseQuery {
             if ($c->[1] eq "") {
                 die "subcommand \`uriparams\` needs --col option";
             }
-            push(@$commands2, ["uriparams", $c->[1], $c->[2]]);
+            push(@$commands2, ["uriparams", $c->[1], $c->[3], $c->[4]]);
         } elsif ($c->[0] eq "update") {
             if (!defined($c->[1])) {
                 die "subcommand \`update\` needs --index option";
@@ -1204,7 +1209,11 @@ sub build_ircode_command {
             } else {
                 push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]);
             }
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv --fields $cols"]);
+            my $option = "";
+            if ($t->[3] eq "form-b") {
+                $option .= " --form-b";
+            }
+            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv$option --fields $cols"]);
 
         } elsif ($command eq "update") {
             my $index = escape_for_bash($t->[1]);
