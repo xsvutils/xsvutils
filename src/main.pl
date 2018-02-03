@@ -435,6 +435,8 @@ sub parseQuery {
                     $curr_command->[2] = shift(@$argv);
                 } elsif ($a eq "--no-decode") {
                     $curr_command->[3] = "no-decode";
+                } elsif ($a eq "--form-a") {
+                    $curr_command->[4] = "form-a";
                 } elsif ($a eq "--form-b") {
                     $curr_command->[4] = "form-b";
                 } else {
@@ -1204,16 +1206,15 @@ sub build_ircode_command {
         } elsif ($command eq "uriparams") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "tail -n+2"]);
-            if ($t->[2] eq "no-decode") {
-                push(@$ircode, ["cmd", "bash \$TOOL_DIR/no-decode-percent.sh"]);
-            } else {
-                push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]);
-            }
+            push(@$ircode, ["cmd", "bash \$TOOL_DIR/pre-encode-percent.sh"]);
             my $option = "";
             if ($t->[3] eq "form-b") {
                 $option .= " --form-b";
             }
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv$option --fields $cols"]);
+            if ($t->[2] eq "decode") {
+                push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]); # TODO $colsもデコードされてしまう問題あり
+            }
 
         } elsif ($command eq "update") {
             my $index = escape_for_bash($t->[1]);

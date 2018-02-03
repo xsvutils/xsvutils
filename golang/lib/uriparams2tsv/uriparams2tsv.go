@@ -104,11 +104,7 @@ func Convert(in *os.File, out *os.File, query string, fullUrl bool, formB bool) 
 					if len(line[index]) == 0 {
 						line[index] = value
 					} else {
-						li := line[index]
-						if li[len(li) - 1] != ';' {
-							line[index] += ";"
-						}
-						line[index] += value + ";"
+						line[index] += ";" + value
 					}
 				}
 			} else {

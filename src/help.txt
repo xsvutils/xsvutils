@@ -236,16 +236,17 @@ Subcommand `uriparams`:
         --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
         --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
         --no-decode  パーセントエンコーディングのデコード処理を行わない
-        --form-b     出力形式をB形式とする
+        --form-a     出力形式をA形式とする (default is this)
+        --form-b     出力形式をB形式とする (default is form-b)
 
-    パラメータは同じ名前で複数の可能性があり、また指定のパラメータが存在しない場合もあり、
-    値も空文字列がありえるため、それらのケースを区別できるよう、セミコロン(;)を使って値を出力する。
+    出力A形式: パラメータは同じ名前で複数の可能性があり、また指定のパラメータが存在しない場合もあり、
+    値も空文字列がありえるため、それらのケースを区別できるよう、
+    値ごとにその後ろにセミコロン(;)を使って値を出力する。
     以下は --name q というオプションを指定した場合の例である。
-    1行目の例では抽出結果は空文字列になる。
 
-        query string       result
+        query string       q
         ---------------------------
-        r=xxx              
+        r=xxx                        <- q string is empty
         q=&r=xxx           ;
         q=aaa&r=xxx        aaa;
         q=aaa&q=bbb&r=xxx  aaa;bbb;
@@ -253,19 +254,19 @@ Subcommand `uriparams`:
         q=aaa&q=&r=xxx     aaa;;
         q=&q=&r=xxx        ;;
 
-    B形式: --form-b オプションを付けた場合は、パラメータが存在しない、または1つの場合にセミコロンを使用しない。
-    パラメータが存在しない場合と値が空文字列のパラメータは区別できない。
+    出力B形式: --form-b オプションを付けた場合は、値と値の間にセミコロン(;)を配置する。
+    パラメータが存在しない場合と値が空文字列の場合とを区別しない。
     抽出結果は以下のようになる。
 
-        query string       result
+        query string       q
         ---------------------------
-        r=xxx              
-        q=&r=xxx           
+        r=xxx                        <- q string is empty
+        q=&r=xxx                     <- q string is empty
         q=aaa&r=xxx        aaa
-        q=aaa&q=bbb&r=xxx  aaa;bbb;
+        q=aaa&q=bbb&r=xxx  aaa;bbb
         q=&q=bbb&r=xxx     bbb
         q=aaa&q=&r=xxx     aaa
-        q=&q=&r=xxx        
+        q=&q=&r=xxx                  <- q string is empty
 
 
 Subcommand `parseuriparams`:
