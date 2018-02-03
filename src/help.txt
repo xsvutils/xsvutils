@@ -367,11 +367,23 @@ Subcommand `treetable`:
 
     左のカラムから順番にカラム組み合わせのファセットカウントを集計する。
 
+    Options:
+        --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
+                         デフォルトは10である。
+
+    例
+
+        $ xsvutils data.tsv cut categoryA,categoryB treetable --top 20,3
+
 
 Subcommand `crosstable`:
     [EXPERIMENTAL]
 
     左から2カラムでクロス集計する。
+
+    Options:
+        --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
+                         デフォルトは10である。
 
 
 Subcommand `wordsflags`:

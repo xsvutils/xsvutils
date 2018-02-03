@@ -2,6 +2,18 @@ use strict;
 use warnings;
 use utf8;
 
+my $topCount = [];
+
+while (@ARGV) {
+    my $a = shift(@ARGV);
+    if ($a eq "--top") { # example: --top 50,5,3
+        die "option --top needs an argument" unless (@ARGV);
+        $topCount = [split(/,/, shift(@ARGV), -1)];
+    } else {
+        die "Unknown argument: $a";
+    }
+}
+
 my $headers = undef;
 
 my $facetcountA = {};
@@ -41,6 +53,15 @@ $SIG{INT} = \&interrupt;
     $headers = \@cols;
     if (@$headers < 1) {
         push(@$headers, "value");
+    }
+
+    for (my $i = 2 - @$topCount; $i > 0; $i--) {
+        push(@$topCount, 10);
+    }
+    for (my $i = 0; $i < 2; $i++) {
+        if ($topCount->[$i] !~ /\A(0|[1-9][0-9]*)\z/) {
+            $topCount->[$i] = 10;
+        }
     }
 }
 
@@ -99,6 +120,13 @@ my $valuesB = [sort {
         $r = $a cmp $b;
     }
     $r; } (keys %$facetcountB)];
+
+if ($topCount->[0] > 0 && @$valuesA > $topCount->[0]) {
+    $valuesA = [@$valuesA[0 .. ($topCount->[0] - 1)]];
+}
+if ($topCount->[1] > 0 && @$valuesB > $topCount->[1]) {
+    $valuesB = [@$valuesB[0 .. ($topCount->[1] - 1)]];
+}
 
 print "$headers->[0]\tcount";
 foreach my $valueB (@$valuesB) {

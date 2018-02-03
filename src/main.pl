@@ -187,12 +187,12 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "treetable") {
-            $next_command = ["treetable"];
+            $next_command = ["treetable", undef];
             $last_command = $a;
             $next_output_table = '';
 
         } elsif ($a eq "crosstable") {
-            $next_command = ["crosstable"];
+            $next_command = ["crosstable", undef];
             $last_command = $a;
             $next_output_table = '';
 
@@ -523,6 +523,22 @@ sub parseQuery {
                     push(@$curr_command, $a);
                 }
 
+            } elsif ($curr_command->[0] eq "treetable") {
+                if ($a eq "--top") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } else {
+                    die "Unknown argument: $a";
+                }
+
+            } elsif ($curr_command->[0] eq "crosstable") {
+                if ($a eq "--top") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } else {
+                    die "Unknown argument: $a";
+                }
+
             } else {
                 die "Unknown argument: $a\n";
             }
@@ -732,9 +748,9 @@ sub parseQuery {
         } elsif ($c->[0] eq "facetcount") {
             push(@$commands2, ["facetcount"]);
         } elsif ($c->[0] eq "treetable") {
-            push(@$commands2, ["treetable"]);
+            push(@$commands2, ["treetable", $c->[1]]);
         } elsif ($c->[0] eq "crosstable") {
-            push(@$commands2, ["crosstable"]);
+            push(@$commands2, ["crosstable", $c->[1]]);
         } elsif ($c->[0] eq "wordsflags") {
             if (@$c <= 1) {
                 die "subcommand \`wordsflags\` needs --flag option";
@@ -1282,10 +1298,18 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl"]);
 
         } elsif ($command eq "treetable") {
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl"]);
+            my $option = "";
+            if (defined($t->[1])) {
+                $option .= " --top " . escape_for_bash($t->[1]);
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl$option"]);
 
         } elsif ($command eq "crosstable") {
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl"]);
+            my $option = "";
+            if (defined($t->[1])) {
+                $option .= " --top " . escape_for_bash($t->[1]);
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl$option"]);
 
         } elsif ($command eq "wordsflags") {
             my $flags = '';

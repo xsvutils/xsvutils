@@ -2,6 +2,18 @@ use strict;
 use warnings;
 use utf8;
 
+my $topCount = [];
+
+while (@ARGV) {
+    my $a = shift(@ARGV);
+    if ($a eq "--top") { # example: --top 50,5,3
+        die "option --top needs an argument" unless (@ARGV);
+        $topCount = [split(/,/, shift(@ARGV), -1)];
+    } else {
+        die "Unknown argument: $a";
+    }
+}
+
 my $headers = undef;
 my $header_count = 0;
 
@@ -36,6 +48,15 @@ $SIG{INT} = \&interrupt;
 
     $headers = \@cols;
     $header_count = scalar @cols;
+
+    for (my $i = $header_count - @$topCount; $i > 0; $i--) {
+        push(@$topCount, 10);
+    }
+    for (my $i = 0; $i < $header_count; $i++) {
+        if ($topCount->[$i] !~ /\A(0|[1-9][0-9]*)\z/) {
+            $topCount->[$i] = 10;
+        }
+    }
 }
 
 while (my $line = <STDIN>) {
@@ -84,12 +105,13 @@ sub printResult {
     my ($head, $sum, $fc, $level) = @_;
     my @words = keys(%$fc);
     @words = sort { my $r = $fc->{$b}->{count} <=> $fc->{$a}->{count}; if ($r == 0) { $r = $a cmp $b; }; $r } @words;
-    if ($level == 0) {
+    if ($level == $header_count - 1) {
         my $i = 1;
         foreach my $word (@words) {
             my $count = $fc->{$word}->{count};
             my $h = [@$head, $i, $word, $count, sprintf("%6.2f%%", 100 * $count / $sum)];
             print join("\t", @$h) . "\n";
+            last if ($i == $topCount->[$level]);
             $i++;
         }
     } else {
@@ -97,11 +119,12 @@ sub printResult {
         foreach my $word (@words) {
             my $count = $fc->{$word}->{count};
             my $h = [@$head, $i, $word, $count, sprintf("%6.2f%%", 100 * $count / $sum)];
-            printResult($h, $count, $fc->{$word}->{values}, $level - 1);
+            printResult($h, $count, $fc->{$word}->{values}, $level + 1);
+            last if ($i == $topCount->[$level]);
             $i++;
         }
     }
 }
 
-printResult([], $record_count, $facetcount, $header_count - 1);
+printResult([], $record_count, $facetcount, 0);
 
