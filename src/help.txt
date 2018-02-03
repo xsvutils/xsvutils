@@ -98,7 +98,7 @@ Subcommands:
         summary                         データのサマリを表示する
         countcols                       カラム数を集計する
         facetcount                      [EXPERIMENTAL]
-        multifacetcount                 [EXPERIMENTAL]
+        treetable                       [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
 
 
@@ -357,7 +357,7 @@ Subcommand `facetcount`:
     カラムそれぞれのファセットカウントを集計する。
 
 
-Subcommand `multifacetcount`:
+Subcommand `treetable`:
     [EXPERIMENTAL]
 
     左のカラムから順番にカラム組み合わせのファセットカウントを集計する。

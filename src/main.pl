@@ -186,8 +186,8 @@ sub parseQuery {
             $last_command = $a;
             $next_output_table = '';
 
-        } elsif ($a eq "multifacetcount") {
-            $next_command = ["multifacetcount"];
+        } elsif ($a eq "treetable") {
+            $next_command = ["treetable"];
             $last_command = $a;
             $next_output_table = '';
 
@@ -726,8 +726,8 @@ sub parseQuery {
             push(@$commands2, ["summary"]);
         } elsif ($c->[0] eq "facetcount") {
             push(@$commands2, ["facetcount"]);
-        } elsif ($c->[0] eq "multifacetcount") {
-            push(@$commands2, ["multifacetcount"]);
+        } elsif ($c->[0] eq "treetable") {
+            push(@$commands2, ["treetable"]);
         } elsif ($c->[0] eq "wordsflags") {
             if (@$c <= 1) {
                 die "subcommand \`wordsflags\` needs --flag option";
@@ -1274,8 +1274,8 @@ sub build_ircode_command {
         } elsif ($command eq "facetcount") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl"]);
 
-        } elsif ($command eq "multifacetcount") {
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/multifacetcount.pl"]);
+        } elsif ($command eq "treetable") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl"]);
 
         } elsif ($command eq "wordsflags") {
             my $flags = '';
