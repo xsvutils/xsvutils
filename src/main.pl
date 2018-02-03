@@ -191,6 +191,11 @@ sub parseQuery {
             $last_command = $a;
             $next_output_table = '';
 
+        } elsif ($a eq "crosstable") {
+            $next_command = ["crosstable"];
+            $last_command = $a;
+            $next_output_table = '';
+
         } elsif ($a eq "wordsflags") {
             $next_command = ["wordsflags"];
             $last_command = $a;
@@ -728,6 +733,8 @@ sub parseQuery {
             push(@$commands2, ["facetcount"]);
         } elsif ($c->[0] eq "treetable") {
             push(@$commands2, ["treetable"]);
+        } elsif ($c->[0] eq "crosstable") {
+            push(@$commands2, ["crosstable"]);
         } elsif ($c->[0] eq "wordsflags") {
             if (@$c <= 1) {
                 die "subcommand \`wordsflags\` needs --flag option";
@@ -1276,6 +1283,9 @@ sub build_ircode_command {
 
         } elsif ($command eq "treetable") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl"]);
+
+        } elsif ($command eq "crosstable") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl"]);
 
         } elsif ($command eq "wordsflags") {
             my $flags = '';

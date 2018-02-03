@@ -103,6 +103,7 @@ Subcommands:
         countcols                       カラム数を集計する
         facetcount                      [EXPERIMENTAL]
         treetable                       [EXPERIMENTAL]
+        crosstable                      [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
 
 
@@ -365,6 +366,12 @@ Subcommand `treetable`:
     [EXPERIMENTAL]
 
     左のカラムから順番にカラム組み合わせのファセットカウントを集計する。
+
+
+Subcommand `crosstable`:
+    [EXPERIMENTAL]
+
+    左から2カラムでクロス集計する。
 
 
 Subcommand `wordsflags`:
