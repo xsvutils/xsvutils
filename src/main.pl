@@ -999,9 +999,14 @@ sub guess_charencoding {
         }
     }
     if (!$utf8_flag && $sjis_flag) {
-        return "SHIFT-JIS";
+        return ($head_buf, "SHIFT-JIS");
     } else {
-        return "UTF-8";
+        if ($len >= 3) {
+            if (substr($head_buf, 0, 3) eq "\xEF\xBB\xBF") {
+                $head_buf = substr($head_buf, 3);
+            }
+        }
+        return ($head_buf, "UTF-8");
     }
 }
 
@@ -1031,16 +1036,28 @@ sub prefetch_input {
         }
         $input->{handle} = $in;
 
-        sysread($in, $head_buf, $head_size);
-
-        $input->{head_buf} = $head_buf;
+        $input->{head_buf} = "";
+        my $size = $head_size;
+        while () {
+            if ($size <= 0) {
+                $head_buf = $input->{head_buf};
+                last;
+            }
+            my $l = sysread($in, $head_buf, $size);
+            if ($l == 0) {
+                $head_buf = $input->{head_buf};
+                last;
+            }
+            $size -= $l;
+            $input->{head_buf} .= $head_buf;
+        }
 
         if ($input->{format} eq '') {
             $input->{format} = guess_format($head_buf);
         }
 
         if ($input->{charencoding} eq '') {
-            $input->{charencoding} = guess_charencoding($head_buf);
+            ($input->{head_buf}, $input->{charencoding}) = guess_charencoding($head_buf);
         }
     }
 }
