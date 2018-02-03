@@ -37,8 +37,8 @@ USAGE:
 
     パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った同等の書き方も可能。
 
-        $ xsvutils data.tsv cut title
-        $ xsvutils data.tsv cut --col title
+        $ xsvutils data.tsv cut title         (パラメータでの指定)
+        $ xsvutils data.tsv cut --col title   (オプションでの指定)
 
     都度コマンドラインからコマンドを入力する際には1つ目の書き方が短くて便利だが、
     パラメータにどんな値が来るかわからない場合には別の解釈をされないようにオプションでの指定が必要。
@@ -49,6 +49,10 @@ USAGE:
     それが cut のパラメータではなく head というサブコマンドになってしまう。
 
         $ xsvutils data.tsv cut $COLUMN
+
+    将来のxsvutilsのバージョンで新しいサブコマンドが増える可能性があり、
+    仮に title というサブコマンドができた場合に1つ目のパラメータでの指定方法では意味が変わってしまう。
+    従ってスクリプトの中で使うなどして将来も同じ動作をさせたい場合にはやはりオプションでの指定が必要。
 
     Character encoding:
 
@@ -237,7 +241,7 @@ Subcommand `uriparams`:
         --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
         --no-decode  パーセントエンコーディングのデコード処理を行わない
         --form-a     出力形式をA形式とする (default is this)
-        --form-b     出力形式をB形式とする (default is form-b)
+        --form-b     出力形式をB形式とする (default is form-a)
 
     出力A形式: パラメータは同じ名前で複数の可能性があり、また指定のパラメータが存在しない場合もあり、
     値も空文字列がありえるため、それらのケースを区別できるよう、
