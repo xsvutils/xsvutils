@@ -187,7 +187,7 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "treetable") {
-            $next_command = ["treetable", undef];
+            $next_command = ["treetable", undef, ""];
             $last_command = $a;
             $next_output_table = '';
 
@@ -527,6 +527,8 @@ sub parseQuery {
                 if ($a eq "--top") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "--multi-value-b") {
+                    $curr_command->[2] = "multi-value-b";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -750,7 +752,7 @@ sub parseQuery {
         } elsif ($c->[0] eq "facetcount") {
             push(@$commands2, ["facetcount"]);
         } elsif ($c->[0] eq "treetable") {
-            push(@$commands2, ["treetable", $c->[1]]);
+            push(@$commands2, ["treetable", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "crosstable") {
             push(@$commands2, ["crosstable", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "wordsflags") {
@@ -1303,6 +1305,9 @@ sub build_ircode_command {
             my $option = "";
             if (defined($t->[1])) {
                 $option .= " --top " . escape_for_bash($t->[1]);
+            }
+            if ($t->[2] eq "multi-value-b") {
+                $option .= " --multi-value-b";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl$option"]);
 

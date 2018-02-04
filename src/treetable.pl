@@ -3,12 +3,15 @@ use warnings;
 use utf8;
 
 my $topCount = [];
+my $multiValueBFlag = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--top") { # example: --top 50,5,3
         die "option --top needs an argument" unless (@ARGV);
         $topCount = [split(/,/, shift(@ARGV), -1)];
+    } elsif ($a eq "--multi-value-b") {
+        $multiValueBFlag = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -59,6 +62,51 @@ $SIG{INT} = \&interrupt;
     }
 }
 
+sub incrementCount {
+    my ($cols, $level, $fc) = @_;
+
+    my $v = $cols->[$level];
+    if ($multiValueBFlag) {
+        # TODO セミコロンのエスケープ解除
+        my @vs = grep { $_ ne "" } split(/;/, $v, -1);
+        if ($level == $header_count - 1) {
+            foreach my $v (@vs) {
+                if (defined($fc->{$v})) {
+                    $fc->{$v}->{count}++;
+                } else {
+                    $fc->{$v} = {count => 1 };
+                }
+            }
+        } else {
+            foreach my $v (@vs) {
+                if (defined($fc->{$v})) {
+                    $fc->{$v}->{count}++;
+                    incrementCount($cols, $level + 1, $fc->{$v}->{values});
+                } else {
+                    $fc->{$v} = {count => 1, values => {} };
+                    incrementCount($cols, $level + 1, $fc->{$v}->{values});
+                }
+            }
+        }
+    } else {
+        if ($level == $header_count - 1) {
+            if (defined($fc->{$v})) {
+                $fc->{$v}->{count}++;
+            } else {
+                $fc->{$v} = {count => 1 };
+            }
+        } else {
+            if (defined($fc->{$v})) {
+                $fc->{$v}->{count}++;
+                incrementCount($cols, $level + 1, $fc->{$v}->{values});
+            } else {
+                $fc->{$v} = {count => 1, values => {} };
+                incrementCount($cols, $level + 1, $fc->{$v}->{values});
+            }
+        }
+    }
+}
+
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
@@ -70,20 +118,7 @@ while (my $line = <STDIN>) {
         push(@cols, "");
     }
 
-    my $fc = $facetcount;
-    for (my $i = 0; $i < $header_count; $i++) {
-        my $v = $cols[$i];
-        if (defined($fc->{$v})) {
-            $fc->{$v}->{count}++;
-        } else {
-            if ($i == $header_count - 1) {
-                $fc->{$v} = {count => 1 };
-            } else {
-                $fc->{$v} = {count => 1, values => {} };
-            }
-        }
-        $fc = $fc->{$v}->{values}
-    }
+    incrementCount(\@cols, 0, $facetcount);
 
     if ($record_count % 10000 == 0) {
         print STDERR "Record: $record_count ...\n";

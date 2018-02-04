@@ -370,6 +370,7 @@ Subcommand `treetable`:
     Options:
         --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
                          デフォルトは10である。
+        --multi-value-b  複数値B形式に対応した集計をする
 
     例
 
@@ -384,6 +385,7 @@ Subcommand `crosstable`:
     Options:
         --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
                          デフォルトは10である。
+        --multi-value-b  複数値B形式に対応した集計をする
 
 
 Subcommand `wordsflags`:
