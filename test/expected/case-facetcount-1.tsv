@@ -1,0 +1,9 @@
+column	value	count
+col1	aaa	5
+col1	bbb	4
+col1	aaa;bbb	1
+col2	value3	5
+col2	value1	2
+col2	value2	1
+col2	value4	1
+col2	value4;value5	1

@@ -2,6 +2,17 @@ use strict;
 use warnings;
 use utf8;
 
+my $multiValueBFlag = '';
+
+while (@ARGV) {
+    my $a = shift(@ARGV);
+    if ($a eq "--multi-value-b") {
+        $multiValueBFlag = 1;
+    } else {
+        die "Unknown argument: $a";
+    }
+}
+
 my $headers = undef;
 my $header_count = 0;
 
@@ -43,10 +54,22 @@ while (my $line = <STDIN>) {
 
     for (my $i = 0; $i < $header_count; $i++) {
         my $v = $cols[$i];
-        if (defined($facetcount->[$i]->{$v})) {
-            $facetcount->[$i]->{$v}++;
+        if ($multiValueBFlag) {
+            # TODO セミコロンのエスケープ解除
+            my @vs = grep { $_ ne "" } split(/;/, $v, -1);
+            foreach my $v (@vs) {
+                if (defined($facetcount->[$i]->{$v})) {
+                    $facetcount->[$i]->{$v}++;
+                } else {
+                    $facetcount->[$i]->{$v} = 1;
+                }
+            }
         } else {
-            $facetcount->[$i]->{$v} = 1;
+            if (defined($facetcount->[$i]->{$v})) {
+                $facetcount->[$i]->{$v}++;
+            } else {
+                $facetcount->[$i]->{$v} = 1;
+            }
         }
     }
 

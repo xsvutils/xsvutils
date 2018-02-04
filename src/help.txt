@@ -362,6 +362,9 @@ Subcommand `facetcount`:
 
     カラムそれぞれのファセットカウントを集計する。
 
+    Options:
+        --multi-value-b  複数値B形式に対応した集計をする
+
 
 Subcommand `treetable`:
     [EXPERIMENTAL]
