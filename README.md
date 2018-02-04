@@ -60,3 +60,7 @@ name, id の2カラムのみを表示する。2カラムは元ファイルから
     $ xsvutils data.tsv header
 
 
+## License
+
+This software is released under the MIT License, see LICENSE.txt.
+
