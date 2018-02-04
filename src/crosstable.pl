@@ -3,15 +3,15 @@ use warnings;
 use utf8;
 
 my $topCount = [];
-my $multiValueFlag = '';
+my $multiValueBFlag = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--top") { # example: --top 50,5,3
         die "option --top needs an argument" unless (@ARGV);
         $topCount = [split(/,/, shift(@ARGV), -1)];
-    } elsif ($a eq "--multi-value") {
-        $multiValueFlag = 1;
+    } elsif ($a eq "--multi-value-b") {
+        $multiValueBFlag = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -82,8 +82,7 @@ while (my $line = <STDIN>) {
     my $valueA = $cols[0];
     my $valueB = $cols[1];
 
-    if ($multiValueFlag) {
-        # TODO 空文字列の扱い
+    if ($multiValueBFlag) {
         # TODO セミコロンのエスケープ解除
         my @valuesA = grep { $_ ne "" } split(/;/, $valueA, -1);
         my @valuesB = grep { $_ ne "" } split(/;/, $valueB, -1);

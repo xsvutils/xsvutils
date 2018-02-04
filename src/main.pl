@@ -535,8 +535,8 @@ sub parseQuery {
                 if ($a eq "--top") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
-                } elsif ($a eq "--multi-value") {
-                    $curr_command->[2] = "multi-value";
+                } elsif ($a eq "--multi-value-b") {
+                    $curr_command->[2] = "multi-value-b";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -1311,8 +1311,8 @@ sub build_ircode_command {
             if (defined($t->[1])) {
                 $option .= " --top " . escape_for_bash($t->[1]);
             }
-            if ($t->[2] eq "multi-value") {
-                $option .= " --multi-value";
+            if ($t->[2] eq "multi-value-b") {
+                $option .= " --multi-value-b";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl$option"]);
 
