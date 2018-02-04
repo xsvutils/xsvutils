@@ -142,6 +142,10 @@ sub parseQuery {
             $next_command = ["addcross", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "addmap") {
+            $next_command = ["addmap", undef, undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "uriparams") {
             $next_command = ["uriparams", "", undef, "decode", "form-a"];
             $last_command = $a;
@@ -431,6 +435,41 @@ sub parseQuery {
                     die "Unknown argument: $a";
                 }
 
+            } elsif ($curr_command->[0] eq "addmap") {
+                if ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $name;
+                } elsif ($a eq "--src") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $src = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --src";
+                    }
+                    $curr_command->[2] = $src;
+                } elsif ($a eq "--file") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $file = shift(@$argv);
+                    if (defined($curr_command->[3])) {
+                        die "duplicated option: --file";
+                    }
+                    $curr_command->[3] = $file;
+                } elsif (!defined($curr_command->[1])) {
+                    my $name = $a;
+                    $curr_command->[1] = $name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $cols = $a;
+                    $curr_command->[2] = $cols;
+                } elsif (!defined($curr_command->[3])) {
+                    my $cols = $a;
+                    $curr_command->[3] = $cols;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
             } elsif ($curr_command->[0] eq "uriparams") {
                 if ($a eq "--name" || $a eq "--names") {
                     die "option $a needs an argument" unless (@$argv);
@@ -705,6 +744,17 @@ sub parseQuery {
                 die "subcommand \`addcross\` needs --cols option";
             }
             push(@$commands2, ["addcross", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "addmap") {
+            if (!defined($c->[1])) {
+                die "subcommand \`addmap\` needs --name option";
+            }
+            if (!defined($c->[2])) {
+                die "subcommand \`addmap\` needs --src option";
+            }
+            if (!defined($c->[3])) {
+                die "subcommand \`addmap\` needs --file option";
+            }
+            push(@$commands2, ["addmap", $c->[1], $c->[2], $c->[3]]);
         } elsif ($c->[0] eq "uriparams") {
             if ($c->[1] eq "") {
                 die "subcommand \`uriparams\` needs --col option";
@@ -1241,6 +1291,12 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $cols = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcross.pl --name $name --col $cols"]);
+
+        } elsif ($command eq "addmap") {
+            my $name  = escape_for_bash($t->[1]);
+            my $src = escape_for_bash($t->[2]);
+            my $file = escape_for_bash($t->[3]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl --name $name --src $src --file $file"]);
 
         } elsif ($command eq "removecol") {
             my $count  = escape_for_bash($t->[1]);
