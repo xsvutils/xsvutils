@@ -5,6 +5,7 @@ use utf8;
 my $name = undef;
 my $src_column_name = undef;
 my $mapping_file = undef;
+my $default_value = undef;
 
 while (@ARGV) {
     my $a = shift(@ARGV);
@@ -17,6 +18,9 @@ while (@ARGV) {
     } elsif ($a eq "--file") {
         die "option --file needs an argument" unless (@ARGV);
         $mapping_file = shift(@ARGV);
+    } elsif ($a eq "--default") {
+        die "option --default needs an argument" unless (@ARGV);
+        $default_value = shift(@ARGV);
     } else {
         die "Unknown argument: $a";
     }
@@ -83,6 +87,8 @@ while (my $line = <STDIN>) {
     }
     if (defined($mapping->{$value})) {
         $value = $mapping->{$value};
+    } elsif (defined($default_value)) {
+        $value = $default_value;
     }
 
     unshift(@cols, $value);

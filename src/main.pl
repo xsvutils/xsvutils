@@ -143,7 +143,7 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "addmap") {
-            $next_command = ["addmap", undef, undef, undef];
+            $next_command = ["addmap", undef, undef, undef, undef];
             $last_command = $a;
 
         } elsif ($a eq "uriparams") {
@@ -457,6 +457,13 @@ sub parseQuery {
                         die "duplicated option: --file";
                     }
                     $curr_command->[3] = $file;
+                } elsif ($a eq "--default") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $value = shift(@$argv);
+                    if (defined($curr_command->[4])) {
+                        die "duplicated option: --default";
+                    }
+                    $curr_command->[4] = $value;
                 } elsif (!defined($curr_command->[1])) {
                     my $name = $a;
                     $curr_command->[1] = $name;
@@ -761,7 +768,7 @@ sub parseQuery {
             if (!defined($c->[3])) {
                 die "subcommand \`addmap\` needs --file option";
             }
-            push(@$commands2, ["addmap", $c->[1], $c->[2], $c->[3]]);
+            push(@$commands2, ["addmap", $c->[1], $c->[2], $c->[3], $c->[4]]);
         } elsif ($c->[0] eq "uriparams") {
             if ($c->[1] eq "") {
                 die "subcommand \`uriparams\` needs --col option";
@@ -1303,7 +1310,11 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $src = escape_for_bash($t->[2]);
             my $file = escape_for_bash($t->[3]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl --name $name --src $src --file $file"]);
+            my $option = "";
+            if (defined($t->[4])) {
+                $option .= " --default ". escape_for_bash($t->[4]);
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl$option --name $name --src $src --file $file"]);
 
         } elsif ($command eq "removecol") {
             my $count  = escape_for_bash($t->[1]);
