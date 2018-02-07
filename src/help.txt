@@ -158,6 +158,12 @@ Subcommand `head` and Subcommand `limit`:
 
     3 subcommands `take`, `head` and `limit` are the same subcommand.
 
+    Usage:
+        xsvutils head [<N>] [option...]
+
+    Parameter:
+        <N>       (optional) Print first N records (default is 10)
+
     Options:
         -n <N>    Print first N records (default is 10)
 
@@ -176,23 +182,38 @@ Subcommand `head` and Subcommand `limit`:
 
 Subcommand `offset`:
 
+    Print all except first N records.
     先頭のNレコードを除く残りを出力する。
 
     2 subcommands `drop` and `offset` are the same subcommand.
+
+    Usage:
+        xsvutils offset [<N>] [option...]
+
+    Parameter:
+        <N>       (optional) Print all except first N records (default is 10)
 
     Options:
         -n <N>    Print all except first N records (default is 10)
 
     以下は同じ意味である。
 
-        $ xsvutils FILENAME drop -n 5
-        $ xsvutils FILENAME drop -n5
-        $ xsvutils FILENAME drop 5
+        $ xsvutils FILENAME offset -n 5
+        $ xsvutils FILENAME offset -n5
+        $ xsvutils FILENAME offset 5
 
-    他のサブコマンドとの組み合わせは `take` サブコマンドと同様である。
+    他のサブコマンドとの組み合わせは `head` サブコマンドと同様に可能である。
 
 
 Subcommand `cut`:
+
+    Print specified columns.
+
+    Usage:
+        xsvutils cut [<COLUMNS>] [option...]
+
+    Parameter:
+        <COLUMNS>         (optional) Print <COLUMNS>
 
     Options:
         --col <COLUMNS>   Print <COLUMNS>
@@ -297,10 +318,17 @@ Subcommand `update`:
 
 Subcommand `sort`:
 
+    Sort by specified columns.
     ソートする
 
+    Usage:
+        xsvutils sort [<COLUMNS>] [option...]
+
+    Parameter:
+        <COLUMNS>       (optional) Sort by <COLUMNS>
+
     Options:
-        --col <COLUMNS>
+        --col <COLUMNS> Sort by <COLUMNS>
 
     <COLUMNS> にはカンマ区切りで複数のカラム名を書くことができる。
     カラム名の後に `:n` と書くと数値としてのソートをする。
@@ -315,6 +343,7 @@ Subcommand `sort`:
 
 Subcommand `wcl`:
 
+    Print record count excluding header line.
     レコード数を表示する。ヘッダ行は含まない。
 
     データが大きい場合には、標準エラー出力に進捗表示をする。
@@ -415,4 +444,7 @@ Common options for developer:
     また、 OBSOLETE と書かれている箇所は
     廃止予定で互換性のためだけに残してある機能である。
 
+
+License:
+    This software is released under the MIT License, see LICENSE.txt.
 
