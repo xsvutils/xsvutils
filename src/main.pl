@@ -1222,7 +1222,7 @@ sub build_ircode_command {
         my $stdin_pipe = $input_pipe_list->[0];
 
         if ($stdin_pipe->{charencoding} ne "UTF-8") {
-            push(@$ircode, ["cmd", "iconv -f $stdin_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
+            push(@$ircode, ["cmd", "iconv -c -f $stdin_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
         }
 
         if ($stdin_pipe->{format} eq "csv") {
