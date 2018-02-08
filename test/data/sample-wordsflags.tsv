@@ -1,0 +1,11 @@
+word	flag
+aaa	t
+aaa	f
+bbb	t
+bbb	t
+bbb	t
+ccc	t
+ccc	t
+ccc	f
+ccc	f
+ccc	x
