@@ -1,9 +1,9 @@
 id	querystring	q	r
-1	r=xxx		xxx;
-2	q=&r=xxx	;	xxx;
-3	q=aaa&r=xxx	aaa;	xxx;
-4	q=aaa&q=bbb&r=xxx	aaa;bbb;	xxx;
-5	q=&q=bbb&r=xxx	;bbb;	xxx;
-6	q=aaa&q=&r=xxx	aaa;;	xxx;
-7	q=&q=&r=xxx	;;	xxx;
-10	q=a%20b%21c+d%25e%26f%3dg%5ch;i	a b!c d%e&f=g\\h\x3Bi;	
+1	r=xxx		xxx
+2	q=&r=xxx		xxx
+3	q=aaa&r=xxx	aaa	xxx
+4	q=aaa&q=bbb&r=xxx	aaa;bbb	xxx
+5	q=&q=bbb&r=xxx	bbb	xxx
+6	q=aaa&q=&r=xxx	aaa	xxx
+7	q=&q=&r=xxx		xxx
+10	q=a%20b%21c+d%25e%26f%3dg%5ch;i	a b!c d%e&f=g\\h\x3Bi	

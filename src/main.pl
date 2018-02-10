@@ -147,11 +147,11 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "uriparams") {
-            $next_command = ["uriparams", "", undef, "decode", "form-a"];
+            $next_command = ["uriparams", "", undef, "decode", "a"];
             $last_command = $a;
 
         } elsif ($a eq "parseuriparams") {
-            $next_command = ["parseuriparams", "", undef, "decode", "form-a"];
+            $next_command = ["parseuriparams", "", undef, "decode", "a"];
             $last_command = $a;
 
         } elsif ($a eq "update") {
@@ -486,10 +486,10 @@ sub parseQuery {
                     $curr_command->[2] = shift(@$argv);
                 } elsif ($a eq "--no-decode") {
                     $curr_command->[3] = "no-decode";
-                } elsif ($a eq "--form-a") {
-                    $curr_command->[4] = "form-a";
-                } elsif ($a eq "--form-b") {
-                    $curr_command->[4] = "form-b";
+                } elsif ($a eq "--multi-value-a") {
+                    $curr_command->[4] = "a";
+                } elsif ($a eq "--multi-value-b") {
+                    $curr_command->[4] = "b";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -612,8 +612,8 @@ sub parseQuery {
                 if ($curr_command->[0] eq "uriparams" && defined($curr_command->[2])) {
                     unshift(@$argv, $a);
                     unshift(@$argv, ")");
-                    if ($curr_command->[4] eq "form-b") {
-                        unshift(@$argv, "--form-b");
+                    if ($curr_command->[4] eq "b") {
+                        unshift(@$argv, "--multi-value-b");
                     }
                     if ($curr_command->[3] eq "no-decode") {
                         unshift(@$argv, "--no-decode");
@@ -1326,8 +1326,8 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "tail -n+2"]);
             push(@$ircode, ["cmd", "bash \$TOOL_DIR/pre-encode-percent.sh"]);
             my $option = "";
-            if ($t->[3] eq "form-b") {
-                $option .= " --form-b";
+            if ($t->[3] eq "b") {
+                $option .= " --multi-value-b";
             }
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv$option --fields $cols"]);
             if ($t->[2] eq "decode") {
