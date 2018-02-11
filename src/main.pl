@@ -805,9 +805,9 @@ sub parseQuery {
             push(@$commands2, ["update", $c->[1], $c->[2], $c->[3]]);
         } elsif ($c->[0] eq "sort") {
             if (defined($c->[1])) {
-                push(@$commands2, @{parseSortParams($c->[1])});
+                push(@$commands2, @{parseSortParams([split(/,/, $c->[1])])});
             } else {
-                push(@$commands2, ["sort"]);
+                push(@$commands2, @{parseSortParams([])});
             }
         } elsif ($c->[0] eq "paste") {
             if (!defined($c->[1])) {
@@ -856,8 +856,8 @@ sub parseQuery {
 }
 
 sub parseSortParams {
-    my ($arg) = @_;
-    my @args = split(/,/, $arg);
+    my ($args) = @_;
+    my @args = @$args;
     my $commands = [];
     push(@$commands, ["addlinenum2", ""]);
     my $c = 1;
