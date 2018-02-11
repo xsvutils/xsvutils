@@ -146,6 +146,7 @@ while (my $line = <STDIN>) {
         last;
     }
 }
+$record_count--;
 
 my $valuesA = [sort {
     my $r = $facetcountA->{$b} <=> $facetcountA->{$a};
@@ -173,7 +174,7 @@ foreach my $valueB (@$valuesB) {
 }
 print "\n";
 
-print "\t" . ($record_count - 1);
+print "\t" . $record_count;
 foreach my $valueB (@$valuesB) {
     print "\t" . $facetcountB->{$valueB};
 }

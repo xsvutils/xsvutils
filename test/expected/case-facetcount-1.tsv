@@ -1,10 +1,10 @@
-column	value	count
-col1	aaa	5
-col1	bbb	4
-col1	aaa;bbb	1
-col2	value3	4
-col2	value1	2
-col2	value2	1
-col2	value3;value3	1
-col2	value4	1
-col2	value4;value5	1
+column	value	count	ratio
+col1	aaa	5	 50.00%
+col1	bbb	4	 40.00%
+col1	aaa;bbb	1	 10.00%
+col2	value3	4	 40.00%
+col2	value1	2	 20.00%
+col2	value2	1	 10.00%
+col2	value3;value3	1	 10.00%
+col2	value4	1	 10.00%
+col2	value4;value5	1	 10.00%

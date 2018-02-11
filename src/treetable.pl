@@ -129,6 +129,7 @@ while (my $line = <STDIN>) {
         last;
     }
 }
+$record_count--;
 
 for (my $i = 0; $i < $header_count; $i++) {
     my $c = $headers->[$i];

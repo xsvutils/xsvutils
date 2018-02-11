@@ -82,8 +82,9 @@ while (my $line = <STDIN>) {
         last;
     }
 }
+$record_count--;
 
-print "column\tvalue\tcount\n";
+print "column\tvalue\tcount\tratio\n";
 for (my $i = 0; $i < $header_count; $i++) {
     my $col_name = $headers->[$i];
     my $fc = $facetcount->[$i];
@@ -91,7 +92,8 @@ for (my $i = 0; $i < $header_count; $i++) {
     $values = [sort { my $r = $fc->{$b} <=> $fc->{$a}; if ($r == 0) { $r = $a cmp $b; } $r; } @$values];
     foreach my $v (@$values) {
         my $c = $fc->{$v};
-        print "$col_name\t$v\t$c\n";
+        my $ratio = sprintf("%6.2f%%", 100 * $c / $record_count);
+        print "$col_name\t$v\t$c\t$ratio\n";
     }
 }
 
