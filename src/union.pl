@@ -2,8 +2,6 @@ use strict;
 use warnings;
 use utf8;
 
-use Data::Dumper;
-
 my $sources = \@ARGV;
 my $handles = [];
 my $headers = [];

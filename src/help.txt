@@ -92,6 +92,7 @@ Subcommands:
         update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                ソートする
         paste <OTHER_FILE>              [EXPERIMENTAL]
+        join <OTHER_FILE>               [EXPERIMENTAL]
         union <OTHER_FILE>              [EXPERIMENTAL]
 
     集計するコマンド

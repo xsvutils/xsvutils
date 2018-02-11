@@ -32,6 +32,7 @@ while () {
         @left_cols = split(/\t/, $left_line, -1);
     } else {
         @left_cols = ();
+        $left_line = "";
     }
 
     my @right_cols;
@@ -40,6 +41,7 @@ while () {
         @right_cols = split(/\t/, $right_line, -1);
     } else {
         @right_cols = ();
+        $right_line = "";
     }
 
     if (!defined($left_header_count)) {
@@ -52,13 +54,16 @@ while () {
         while (@left_cols < $left_header_count) {
             push(@left_cols, "");
         }
-    } else {
+        $left_line = join("\t", @left_cols);
+    } elsif (@left_cols > $left_header_count) {
+        pop(@left_cols);
         while (@left_cols > $left_header_count) {
             pop(@left_cols);
         }
+        $left_line = join("\t", @left_cols);
     }
 
-    print join("\t", @left_cols, @right_cols) . "\n";
+    print "$left_line\t$right_line\n";
 }
 
 close($right_in);

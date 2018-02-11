@@ -166,6 +166,10 @@ sub parseQuery {
             $next_command = ["paste", undef];
             $last_command = $a;
 
+        } elsif ($a eq "join") {
+            $next_command = ["join", undef, "inner"];
+            $last_command = $a;
+
         } elsif ($a eq "union") {
             $next_command = ["union", undef];
             $last_command = $a;
@@ -556,6 +560,24 @@ sub parseQuery {
                     $curr_command->[1] = $a;
                 }
 
+            } elsif ($curr_command->[0] eq "join") {
+                if ($a eq "--right") {
+                    die "option $a needs an argument" unless (@$argv);
+                    $curr_command->[1] = shift(@$argv);
+                } elsif ($a eq "(") {
+                    ($curr_command->[1], $argv) = parseQuery($argv);
+                } elsif ($a eq "--inner") {
+                    $curr_command->[2] = "inner";
+                } elsif ($a eq "--left-outer") {
+                    $curr_command->[2] = "left-outer";
+                } elsif ($a eq "--right-outer") {
+                    $curr_command->[2] = "right-outer";
+                } elsif ($a eq "--full-outer") {
+                    $curr_command->[2] = "full-outer";
+                } else {
+                    $curr_command->[1] = $a;
+                }
+
             } elsif ($curr_command->[0] eq "union") {
                 if ($a eq "--right") {
                     die "option $a needs an argument" unless (@$argv);
@@ -814,6 +836,11 @@ sub parseQuery {
                 die "subcommand \`paste\` needs --right option";
             }
             push(@$commands2, ["paste", $c->[1]]);
+        } elsif ($c->[0] eq "join") {
+            if (!defined($c->[1])) {
+                die "subcommand \`join\` needs --right option";
+            }
+            push(@$commands2, ["join", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "union") {
             if (!defined($c->[1])) {
                 die "subcommand \`union\` needs --right option";
@@ -952,7 +979,9 @@ sub extractNamedPipe {
     my $commands2 = [];
     for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
         my $curr_command = $command_seq->{commands}->[$i];
-        if ($curr_command->[0] eq "paste" || $curr_command->[0] eq "union") {
+        if ($curr_command->[0] eq "paste" ||
+            $curr_command->[0] eq "join" ||
+            $curr_command->[0] eq "union") {
             if (ref($curr_command->[1]) eq "HASH") {
                 my $subquery = $curr_command->[1];
 
@@ -1374,6 +1403,13 @@ sub build_ircode_command {
             my $right = escape_for_bash($t->[1]);
             $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $right"]);
+
+        } elsif ($command eq "join") {
+            my $option = "";
+            $option .= " --" . $t->[2];
+            my $right = escape_for_bash($t->[1]);
+            $right = "$input_pipe_prefix${right}";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/join.pl$option --right $right"]);
 
         } elsif ($command eq "union") {
             my $right = escape_for_bash($t->[1]);
