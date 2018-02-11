@@ -6,13 +6,20 @@ import (
 	"strings"
 )
 
-func printHeaderAsTsv(wr *bufio.Writer, header map[string]int) error {
+func printHeaderNamesAsTsv(wr *bufio.Writer) {
+	_, err := wr.WriteString("names\n")
+	if err != nil {
+		os.Exit(0); // 出力先がなくなった場合はそのまま終了する
+	}
+}
+
+func printHeaderAsTsv(wr *bufio.Writer, header map[string]int) {
 	headerLength := len(header)
 	for i := 0; i < headerLength; i++ {
 		if i > 0 {
 			err := wr.WriteByte(byte('\t'))
 			if err != nil {
-				return err
+				os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 			}
 		}
 		for k, v := range header {
@@ -21,19 +28,18 @@ func printHeaderAsTsv(wr *bufio.Writer, header map[string]int) error {
 			}
 			_, err := wr.WriteString(k)
 			if err != nil {
-				return err
+				os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 			}
 			break
 		}
 	}
 	err := wr.WriteByte(byte('\n'))
 	if err != nil {
-		return err
+		os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 	}
-	return nil
 }
 
-func printLineAsTsv(wr *bufio.Writer, line []string) error {
+func printLineAsTsv(wr *bufio.Writer, line []string) {
 	lineLength := len(line)
 	for i, l := range line {
 		_, err := wr.WriteString(l)
@@ -52,21 +58,23 @@ func printLineAsTsv(wr *bufio.Writer, line []string) error {
 	if err != nil {
 		os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 	}
-
-	return nil
 }
 
-func Convert(in *os.File, out *os.File, query string, fullUrl bool, multiValueB bool) error {
+func Convert(in *os.File, out *os.File, query string, fullUrl bool, namesAction bool, multiValueB bool) error {
 	wr := bufio.NewWriter(out)
 	keys := strings.Split(query, ",")
 	header := make(map[string]int, len(keys))
-	for i, k := range keys {
-		header[k] = i
+	if namesAction {
+		printHeaderNamesAsTsv(wr)
+	} else {
+		for i, k := range keys {
+			header[k] = i
+		}
+		printHeaderAsTsv(wr, header)
 	}
-	printHeaderAsTsv(wr, header)
 	err := wr.Flush()
 	if err != nil {
-		return err
+		os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 	}
 
 	sc := bufio.NewScanner(in)
@@ -89,6 +97,22 @@ func Convert(in *os.File, out *os.File, query string, fullUrl bool, multiValueB 
 			if strings.HasSuffix(name, "[]") {
 				name = name[:len(name)-2]
 			}
+
+			if namesAction {
+				if multiValueB {
+					line[0] += name + ";";
+				} else {
+					if len(name) > 0 {
+						if len(line[0]) == 0 {
+							line[0] = name
+						} else {
+							line[0] += ";" + name
+						}
+					}
+				}
+				continue
+			}
+
 			index, ok := header[name]
 			if !ok {
 				continue
@@ -115,10 +139,7 @@ func Convert(in *os.File, out *os.File, query string, fullUrl bool, multiValueB 
 		if i % 1000 == 0 {
 			wr.Flush()
 		}
-		err = printLineAsTsv(wr, line)
-		if err != nil {
-			return err
-		}
+		printLineAsTsv(wr, line)
 	}
 	err = wr.Flush()
 	if err != nil {

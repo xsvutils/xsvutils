@@ -1,7 +1,7 @@
 id	querystring	q	r
 1	r=xxx		xxx;
 2	q=&r=xxx	;	xxx;
-3	q=aaa&r=xxx	aaa;	xxx;
+3	q=aaa	aaa;	
 4	q=aaa&q=bbb&r=xxx	aaa;bbb;	xxx;
 5	q=&q=bbb&r=xxx	;bbb;	xxx;
 6	q=aaa&q=&r=xxx	aaa;;	xxx;
