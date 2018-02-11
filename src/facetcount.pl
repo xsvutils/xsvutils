@@ -56,7 +56,8 @@ while (my $line = <STDIN>) {
         my $v = $cols[$i];
         if ($multiValueFlag eq "a") {
             # TODO セミコロンのエスケープ解除
-            my @vs = grep { $_ ne "" } split(/;/, $v, -1);
+            my %vs_map = map { $_ => 1 } (grep { $_ ne "" } split(/;/, $v, -1));
+            my @vs = keys %vs_map;
             foreach my $v (@vs) {
                 if (defined($facetcount->[$i]->{$v})) {
                     $facetcount->[$i]->{$v}++;

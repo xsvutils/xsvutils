@@ -84,8 +84,10 @@ while (my $line = <STDIN>) {
 
     if ($multiValueFlag eq "a") {
         # TODO セミコロンのエスケープ解除
-        my @valuesA = grep { $_ ne "" } split(/;/, $valueA, -1);
-        my @valuesB = grep { $_ ne "" } split(/;/, $valueB, -1);
+        my %valuesA_map = map { $_ => 1 } (grep { $_ ne "" } split(/;/, $valueA, -1));
+        my @valuesA = keys %valuesA_map;
+        my %valuesB_map = map { $_ => 1 } (grep { $_ ne "" } split(/;/, $valueB, -1));
+        my @valuesB = keys %valuesB_map;
 
         foreach my $valueA (@valuesA) {
             if (defined($facetcountA->{$valueA})) {

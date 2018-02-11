@@ -68,7 +68,8 @@ sub incrementCount {
     my $v = $cols->[$level];
     if ($multiValueFlag eq "a") {
         # TODO セミコロンのエスケープ解除
-        my @vs = grep { $_ ne "" } split(/;/, $v, -1);
+        my %vs_map = map { $_ => 1 } (grep { $_ ne "" } split(/;/, $v, -1));
+        my @vs = keys %vs_map;
         if ($level == $header_count - 1) {
             foreach my $v (@vs) {
                 if (defined($fc->{$v})) {
