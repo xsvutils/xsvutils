@@ -1,0 +1,13 @@
+列を追加するサブコマンド案:
+    insconst <VALUE> <NEW_COLUMN_NAME>
+    inscopy <SOURCE_COLUMN_NAME> <NEW_COLUMN_NAME>
+    inslinenum <NEW_COLUMN_NAME>
+    insmap <SOURCE_COLUMN_NAME> <MAPPING_FILE> <NEW_COLUMN_NAME>
+    insuriparams <SOURCE_COLUMN_NAME> <PARAM_NAMES>
+
+
+未実装だけど作りたいサブコマンド:
+    rmemptycols すべてのレコードでデータが空のカラムを削除
+    checkheader カラム名の重複や空のカラム名や命名規則をチェック
+
+

@@ -46,13 +46,10 @@ USAGE:
         $ xsvutils data.tsv cut --col $COLUMN
 
     以下のように書いてしまうと、 $COLUMN が head という値の場合に、
-    それが cut のパラメータではなく head というサブコマンドになってしまう。
+    それが cut のパラメータではなく head というサブコマンドになってしまうので、避けること。
 
         $ xsvutils data.tsv cut $COLUMN
 
-    将来のxsvutilsのバージョンで新しいサブコマンドが増える可能性があり、
-    仮に title というサブコマンドができた場合に1つ目のパラメータでの指定方法では意味が変わってしまう。
-    従ってスクリプトの中で使うなどして将来も同じ動作をさせたい場合にはやはりオプションでの指定が必要。
 
     Character encoding:
 
@@ -72,8 +69,8 @@ Subcommands:
         head [<N>]                      Print first N records
         limit [<N>]                     Print first N records
         offset [<N>]                    Print all except first N records
-        take [<N>]                      [OBSOLETE] Print first N records
-        drop [<N>]                      [OBSOLETE] Print all except first N records
+        take [<N>]                      [DEPRECATED] Print first N records
+        drop [<N>]                      [DEPRECATED] Print all except first N records
         where <CONDITION>               [EXPERIMENTAL]
         filter <CONDITION>              [EXPERIMENTAL]
 
@@ -89,7 +86,7 @@ Subcommands:
         addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [EXPERIMENTAL]
         addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [EXPERIMENTAL]
         uriparams <NAMES>                                       [EXPERIMENTAL]
-        parseuriparams <NAMES>                                  [OBSOLETE]
+        parseuriparams <NAMES>                                  [DEPRECATED]
 
     その他のデータを加工するコマンド
         update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
@@ -119,7 +116,7 @@ Common options:
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
     --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
-                     ([OBSOLETE] --i-header も同じ)
+                     ([DEPRECATED] --i-header も同じ)
     --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
@@ -298,7 +295,7 @@ Subcommand `uriparams`:
 
 
 Subcommand `parseuriparams`:
-    [OBSOLETE]
+    [DEPRECATED]
 
     Options:
         --col     <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
@@ -428,22 +425,42 @@ Subcommand `wordsflags`:
     1列目の各値に対する、2列目の値のファセットカウントを集計する。
 
 
-未実装だけど作りたいサブコマンド:
-
-    rmemptycols すべてのレコードでデータが空のカラムを削除
-    checkheader カラム名の重複や空のカラム名や命名規則をチェック
-
-
 Common options for developer:
 
     --explain 実行するスクリプトを標準エラー出力に出力する
 
 
-注意:
-    このヘルプに EXPERIMENTAL と書かれている箇所は
-    まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
-    また、 OBSOLETE と書かれている箇所は
-    廃止予定で互換性のためだけに残してある機能である。
+互換性に関する注意点:
+
+    1.
+        将来のxsvutilsのバージョンで新しいサブコマンドができる可能性があるが、
+        xsvuitlsを使っているスクリプトの中で使用しているパラメータと同じサブコマンドができた場合、
+        動作が変わってしまうことに注意のこと。
+
+        以下のように書いた場合に将来 title というサブコマンドができた場合に、
+        cutのパラメータだったつもりのtitleがサブコマンドに変わってしまう。
+
+            $ xsvutils data.tsv cut title         (パラメータでの指定)
+
+        以下のように書けば将来も互換性を保てる。
+
+            $ xsvutils data.tsv cut --col title   (オプションでの指定)
+
+        xsvutilsはマイナーバージョンアップで新しいサブコマンドができる可能性がある。
+
+    2.
+        このヘルプに EXPERIMENTAL と書かれている箇所は
+        まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
+
+        xsvutilsはマイナーバージョンアップで EXPERIMENTAL と書かれている仕様を、
+        互換性なく変更する可能性がある。
+
+    3.
+        このヘルプに DEPRECATED と書かれている箇所は
+        廃止予定で互換性のためだけに残してある機能である。
+
+        xsvutilsはマイナーバージョンアップで DEPRECATED と書かれている仕様を、
+        廃止または互換性なく変更する可能性がある。
 
 
 License:
