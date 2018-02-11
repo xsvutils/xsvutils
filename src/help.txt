@@ -260,10 +260,10 @@ Subcommand `uriparams`:
         --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
         --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
         --no-decode  パーセントエンコーディングのデコード処理を行わない
-        --multi-value-a     出力形式をA形式とする (default is this)
-        --multi-value-b     出力形式をB形式とする (default is multi-value-a)
+        --multi-value-a     出力形式を複数値A形式とする (default is this)
+        --multi-value-b     出力形式を複数値B形式とする (default is multi-value-a)
 
-    出力A形式: パラメータは同じ名前で複数の可能性があるが、
+    複数値A形式: パラメータは同じ名前で複数の可能性があるが、
     その場合には、値と値の間にセミコロン(;)を配置する。
     パラメータが存在しない場合と値が空文字列の場合とを区別しない。
     以下は --name q というオプションを指定した場合の例である。
@@ -278,7 +278,7 @@ Subcommand `uriparams`:
         q=aaa&q=&r=xxx     aaa
         q=&q=&r=xxx                  <- q string is empty
 
-    出力B形式: --multi-value-b オプションを付けた場合は、
+    複数値B形式: --multi-value-b オプションを付けた場合は、
     指定のパラメータが存在しない場合と空文字列の値をを区別できるよう、
     値ごとにその後ろにセミコロン(;)を使って値を出力する。
     抽出結果は以下のようになる。
@@ -390,7 +390,7 @@ Subcommand `facetcount`:
     カラムそれぞれのファセットカウントを集計する。
 
     Options:
-        --multi-value-b  複数値B形式に対応した集計をする
+        --multi-value-a  複数値A形式に対応した集計をする
 
 
 Subcommand `treetable`:
@@ -401,7 +401,7 @@ Subcommand `treetable`:
     Options:
         --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
                          デフォルトは10である。
-        --multi-value-b  複数値B形式に対応した集計をする
+        --multi-value-a  複数値A形式に対応した集計をする
 
     例
 
@@ -416,7 +416,7 @@ Subcommand `crosstable`:
     Options:
         --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
                          デフォルトは10である。
-        --multi-value-b  複数値B形式に対応した集計をする
+        --multi-value-a  複数値A形式に対応した集計をする
 
 
 Subcommand `wordsflags`:

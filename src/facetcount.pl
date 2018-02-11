@@ -2,12 +2,12 @@ use strict;
 use warnings;
 use utf8;
 
-my $multiValueBFlag = '';
+my $multiValueFlag = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
-    if ($a eq "--multi-value-b") {
-        $multiValueBFlag = 1;
+    if ($a eq "--multi-value-a") {
+        $multiValueFlag = "a";
     } else {
         die "Unknown argument: $a";
     }
@@ -54,7 +54,7 @@ while (my $line = <STDIN>) {
 
     for (my $i = 0; $i < $header_count; $i++) {
         my $v = $cols[$i];
-        if ($multiValueBFlag) {
+        if ($multiValueFlag eq "a") {
             # TODO セミコロンのエスケープ解除
             my @vs = grep { $_ ne "" } split(/;/, $v, -1);
             foreach my $v (@vs) {

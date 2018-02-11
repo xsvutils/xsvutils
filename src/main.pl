@@ -570,8 +570,8 @@ sub parseQuery {
                 }
 
             } elsif ($curr_command->[0] eq "facetcount") {
-                if ($a eq "--multi-value-b") {
-                    $curr_command->[1] = "multi-value-b";
+                if ($a eq "--multi-value-a") {
+                    $curr_command->[1] = "multi-value-a";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -580,8 +580,8 @@ sub parseQuery {
                 if ($a eq "--top") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
-                } elsif ($a eq "--multi-value-b") {
-                    $curr_command->[2] = "multi-value-b";
+                } elsif ($a eq "--multi-value-a") {
+                    $curr_command->[2] = "multi-value-a";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -590,8 +590,8 @@ sub parseQuery {
                 if ($a eq "--top") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
-                } elsif ($a eq "--multi-value-b") {
-                    $curr_command->[2] = "multi-value-b";
+                } elsif ($a eq "--multi-value-a") {
+                    $curr_command->[2] = "multi-value-a";
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -1374,8 +1374,8 @@ sub build_ircode_command {
 
         } elsif ($command eq "facetcount") {
             my $option = "";
-            if ($t->[1] eq "multi-value-b") {
-                $option .= " --multi-value-b";
+            if ($t->[1] eq "multi-value-a") {
+                $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
@@ -1384,8 +1384,8 @@ sub build_ircode_command {
             if (defined($t->[1])) {
                 $option .= " --top " . escape_for_bash($t->[1]);
             }
-            if ($t->[2] eq "multi-value-b") {
-                $option .= " --multi-value-b";
+            if ($t->[2] eq "multi-value-a") {
+                $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl$option"]);
 
@@ -1394,8 +1394,8 @@ sub build_ircode_command {
             if (defined($t->[1])) {
                 $option .= " --top " . escape_for_bash($t->[1]);
             }
-            if ($t->[2] eq "multi-value-b") {
-                $option .= " --multi-value-b";
+            if ($t->[2] eq "multi-value-a") {
+                $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl$option"]);
 

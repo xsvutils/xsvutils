@@ -3,15 +3,15 @@ use warnings;
 use utf8;
 
 my $topCount = [];
-my $multiValueBFlag = '';
+my $multiValueFlag = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--top") { # example: --top 50,5,3
         die "option --top needs an argument" unless (@ARGV);
         $topCount = [split(/,/, shift(@ARGV), -1)];
-    } elsif ($a eq "--multi-value-b") {
-        $multiValueBFlag = 1;
+    } elsif ($a eq "--multi-value-a") {
+        $multiValueFlag = "a";
     } else {
         die "Unknown argument: $a";
     }
@@ -66,7 +66,7 @@ sub incrementCount {
     my ($cols, $level, $fc) = @_;
 
     my $v = $cols->[$level];
-    if ($multiValueBFlag) {
+    if ($multiValueFlag eq "a") {
         # TODO セミコロンのエスケープ解除
         my @vs = grep { $_ ne "" } split(/;/, $v, -1);
         if ($level == $header_count - 1) {
