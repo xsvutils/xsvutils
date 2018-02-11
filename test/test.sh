@@ -1,5 +1,7 @@
 
-rm -r var/test
+if [ -e var/test ]; then
+    rm -r var/test
+fi
 mkdir -p var/test
 
 bash ./test/case-uriparams.sh

@@ -3,7 +3,7 @@
 TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh|help-noot-released\.txt)' | sed 's/^/target\//g') | LC_ALL=C sort))
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
-RM_TARGET=$(diff -u <(ls $TARGET_SOURCES) <(ls target/*) | grep -E '^\+target' | cut -b2-)
+RM_TARGET=$(diff -u <(ls $TARGET_SOURCES 2>/dev/null) <(ls target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
 if [ -n "$RM_TARGET" ]; then
     echo rm $RM_TARGET >&2
     rm $RM_TARGET >&2
