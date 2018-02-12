@@ -342,6 +342,28 @@ Subcommand `sort`:
     指定したソートキーがすべて同じ値のレコードがあれば、もとのファイルに現れた順番を維持する(安定ソート)。
 
 
+Subcommand `paste`:
+    [EXPERIMENTAL]
+
+    Merge records of two inputs.
+
+
+Subcommand `join`:
+    [EXPERIMENTAL]
+
+    Join records of two inputs.
+
+    Options:
+        --right
+        --inner
+        --left-outer
+        --right-outer
+        --full-outer
+
+
+Subcommand `union`:
+
+
 Subcommand `wcl`:
 
     Print record count excluding header line.
@@ -433,10 +455,26 @@ Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
 
 
+バージョン番号の方針:
+    xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
+    (当面は 0.X.Y の形式)
+
+    コマンドラインインターフェースに互換性のない変更がある場合には X のバージョンを上げる。
+    (メジャーバージョンアップ)
+
+    サブコマンドやオプションが増えるなどで、互換性を維持した機能追加の場合には Y のバージョンを上げる。
+    (メジャーバージョンアップ)
+
+    互換性を維持したまま、バグ修正や若干の性能改善の場合には Z のバージョンを上げる。
+    (パッチバージョンアップ)
+    (当面は Z はバージョン番号に含めない)
+
+    ただし、ここでいう互換性があるかどうかは、下記の互換性に関する注意点を守っている場合に限る。
+
+
 互換性に関する注意点:
 
-    1.
-        将来のxsvutilsのバージョンで新しいサブコマンドができる可能性があるが、
+    1.  将来のxsvutilsのバージョンで新しいサブコマンドができる可能性があるが、
         xsvuitlsを使っているスクリプトの中で使用しているパラメータと同じサブコマンドができた場合、
         動作が変わってしまうことに注意のこと。
 
@@ -451,19 +489,17 @@ Common options for developer:
 
         xsvutilsはマイナーバージョンアップで新しいサブコマンドができる可能性がある。
 
-    2.
-        このヘルプに EXPERIMENTAL と書かれている箇所は
+    2.  このヘルプに EXPERIMENTAL と書かれている箇所は
         まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
 
         xsvutilsはマイナーバージョンアップで EXPERIMENTAL と書かれている仕様を、
         互換性なく変更する可能性がある。
 
-    3.
-        このヘルプに DEPRECATED と書かれている箇所は
+    3.  このヘルプに DEPRECATED と書かれている箇所は
         廃止予定で互換性のためだけに残してある機能である。
 
-        xsvutilsはマイナーバージョンアップで DEPRECATED と書かれている仕様を、
-        廃止または互換性なく変更する可能性がある。
+        xsvutilsはメジャーバージョンアップで DEPRECATED と書かれている仕様を、
+        廃止する可能性がある。
 
 
 License:

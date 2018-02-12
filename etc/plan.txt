@@ -1,3 +1,11 @@
+このファイルは help.txt に記載の文面案や、将来の機能実装の構想などを書くことにする。
+
+列の選択に関するサブコマンド案:
+    mvcolfirst <COLUMN_NAMES>
+    mvcollast <COLUMN_NAMES>
+    dropcol <COLUMN_NAMES>
+
+
 列を追加するサブコマンド案:
     insconst <VALUE> <NEW_COLUMN_NAME>
     inscopy <SOURCE_COLUMN_NAME> <NEW_COLUMN_NAME>
@@ -9,5 +17,9 @@
 未実装だけど作りたいサブコマンド:
     rmemptycols すべてのレコードでデータが空のカラムを削除
     checkheader カラム名の重複や空のカラム名や命名規則をチェック
+
+
+Common options:
+    --o-html 出力はHTMLフォーマット
 
 
