@@ -122,6 +122,10 @@ sub parseQuery {
             $next_command = ["insdate", undef, undef];
             $last_command = $a;
 
+        } elsif ($a eq "insweek") {
+            $next_command = ["insweek", undef, undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "addconst") {
             $next_command = ["addconst", undef, undef];
             $last_command = $a;
@@ -321,6 +325,55 @@ sub parseQuery {
                 } elsif (!defined($curr_command->[2])) {
                     my $src = $a;
                     $curr_command->[2] = $src;
+                } elsif (!defined($curr_command->[1])) {
+                    my $name = $a;
+                    $curr_command->[1] = $name;
+                } else {
+                    die "Unknown argument: $a";
+                }
+
+            } elsif ($curr_command->[0] eq "insweek") {
+                if ($a eq "--src") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $src = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --src";
+                    }
+                    $curr_command->[2] = $src;
+                } elsif ($a eq "--start-day") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $start_day = shift(@$argv);
+                    if (defined($curr_command->[3])) {
+                        die "duplicated option: --start-day";
+                    }
+                    if ($start_day =~ /\A[0-7]\z/) {
+                        $curr_command->[3] = $start_day;
+                    } elsif ($start_day eq "7") {
+                        $curr_command->[3] = 0;
+                    } elsif ($start_day =~ /\Amonday\z/i) {
+                        $curr_command->[3] = 1;
+                    }
+                } elsif ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $src = $a;
+                    $curr_command->[2] = $src;
+                } elsif (!defined($curr_command->[3])) {
+                    my $start_day = $a;
+                    if ($start_day =~ /\A[0-7]\z/) {
+                        $curr_command->[3] = $start_day;
+                    } elsif ($start_day eq "7") {
+                        $curr_command->[3] = 0;
+                    } elsif ($start_day =~ /\Amonday\z/i) {
+                        $curr_command->[3] = 1;
+                    } else {
+                        die "Unknown argument: $a";
+                    }
                 } elsif (!defined($curr_command->[1])) {
                     my $name = $a;
                     $curr_command->[1] = $name;
@@ -779,6 +832,17 @@ sub parseQuery {
                 die "subcommand \`insdate\` needs --name option";
             }
             push(@$commands2, ["insdate", $c->[1], $c->[2]]);
+        } elsif ($c->[0] eq "insweek") {
+            if (!defined($c->[2])) {
+                die "subcommand \`insweek\` needs --src option";
+            }
+            if (!defined($c->[3])) {
+                die "subcommand \`insweek\` needs --start-day option";
+            }
+            if (!defined($c->[1])) {
+                die "subcommand \`insweek\` needs --name option";
+            }
+            push(@$commands2, ["insweek", $c->[1], $c->[2], $c->[3]]);
         } elsif ($c->[0] eq "addconst") {
             if (!defined($c->[1])) {
                 die "subcommand \`addconst\` needs --name option";
@@ -1359,6 +1423,12 @@ sub build_ircode_command {
             my $name  = escape_for_bash($t->[1]);
             my $src = escape_for_bash($t->[2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $name --src $src"]);
+
+        } elsif ($command eq "insweek") {
+            my $name  = escape_for_bash($t->[1]);
+            my $src = escape_for_bash($t->[2]);
+            my $start_day = escape_for_bash($t->[3]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insweek.pl --name $name --src $src --start-day $start_day"]);
 
         } elsif ($command eq "addconst") {
             my $name  = escape_for_bash($t->[1]);
