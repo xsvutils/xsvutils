@@ -12,6 +12,7 @@ bash ./test/case-crosstable.sh
 bash ./test/case-wordsflags.sh
 bash ./test/case-addmap.sh
 bash ./test/case-join.sh
+bash ./test/case-datetime.sh
 
 diff -ru ./test/expected ./var/test && echo OK
 

@@ -118,6 +118,10 @@ sub parseQuery {
             $next_command = ["cut", ""];
             $last_command = $a;
 
+        } elsif ($a eq "insdate") {
+            $next_command = ["insdate", undef, undef];
+            $last_command = $a;
+
         } elsif ($a eq "addconst") {
             $next_command = ["addconst", undef, undef];
             $last_command = $a;
@@ -297,6 +301,31 @@ sub parseQuery {
                     $curr_command->[1] = shift(@$argv);
                 } else {
                     $curr_command->[1] = $a;
+                }
+
+            } elsif ($curr_command->[0] eq "insdate") {
+                if ($a eq "--src") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $src = shift(@$argv);
+                    if (defined($curr_command->[2])) {
+                        die "duplicated option: --src";
+                    }
+                    $curr_command->[2] = $src;
+                } elsif ($a eq "--name") {
+                    die "option $a needs an argument" unless (@$argv);
+                    my $name = shift(@$argv);
+                    if (defined($curr_command->[1])) {
+                        die "duplicated option: --name";
+                    }
+                    $curr_command->[1] = $name;
+                } elsif (!defined($curr_command->[2])) {
+                    my $src = $a;
+                    $curr_command->[2] = $src;
+                } elsif (!defined($curr_command->[1])) {
+                    my $name = $a;
+                    $curr_command->[1] = $name;
+                } else {
+                    die "Unknown argument: $a";
                 }
 
             } elsif ($curr_command->[0] eq "addconst") {
@@ -742,6 +771,14 @@ sub parseQuery {
                 die "subcommand \`cut\` needs --col option";
             }
             push(@$commands2, ["cut", $c->[1]]);
+        } elsif ($c->[0] eq "insdate") {
+            if (!defined($c->[2])) {
+                die "subcommand \`insdate\` needs --src option";
+            }
+            if (!defined($c->[1])) {
+                die "subcommand \`insdate\` needs --name option";
+            }
+            push(@$commands2, ["insdate", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "addconst") {
             if (!defined($c->[1])) {
                 die "subcommand \`addconst\` needs --name option";
@@ -1317,6 +1354,11 @@ sub build_ircode_command {
         } elsif ($command eq "cut") {
             my $cols = escape_for_bash($t->[1]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
+
+        } elsif ($command eq "insdate") {
+            my $name  = escape_for_bash($t->[1]);
+            my $src = escape_for_bash($t->[2]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $name --src $src"]);
 
         } elsif ($command eq "addconst") {
             my $name  = escape_for_bash($t->[1]);
