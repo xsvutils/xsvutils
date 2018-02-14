@@ -86,6 +86,7 @@ while (my $line = <STDIN>) {
         last;
     }
 }
+$record_count--;
 
 print "column\tratio\tvalues\n";
 for (my $i = 0; $i < $header_count; $i++) {
