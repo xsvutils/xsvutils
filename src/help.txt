@@ -60,7 +60,7 @@ USAGE:
         SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
 
 
-Subcommands:
+Available subcommands:
 
     なにもしないサブコマンド
         cat                             Print data to the terminal
