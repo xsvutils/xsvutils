@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## version 0.1.1 (Unreleased)
+## version 0.1.1 (2018-02-18)
 - fix a bug of ratio of summary
 - add number comparation operators of subcommand `where`
 
