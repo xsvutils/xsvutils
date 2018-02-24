@@ -275,11 +275,16 @@ sub parseQuery {
         } elsif ($a eq "--o-no-header") {
             $output_header_flag = '';
 
-        } elsif (!defined($input) && -e $a) {
-            $input = $a;
-
         } else {
-            die "Unknown argument: $a\n";
+            if (!defined($input)) {
+                if (-e $a) {
+                    $input = $a;
+                } else {
+                    die "Not found: $a\n";
+                }
+            } else {
+                die "Unknown argument: $a\n";
+            }
         }
 
         if (defined($next_command)) {
