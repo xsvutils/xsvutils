@@ -203,6 +203,11 @@ sub parseQuery {
             $last_command = $a;
             $next_output_table = '';
 
+        } elsif ($a eq "countcols") {
+            $next_command = {command => "countcols"};
+            $last_command = $a;
+            $next_output_table = '';
+
         } elsif ($a eq "facetcount") {
             $next_command = {command => "facetcount", multi_value => undef};
             $last_command = $a;
@@ -215,9 +220,6 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "wordsflags") {
-            degradeMain();
-
-        } elsif ($a eq "countcols") {
             degradeMain();
 
         } elsif ($a eq "--tsv") {
@@ -483,6 +485,8 @@ sub parseQuery {
             push(@$commands2, $curr_command);
         } elsif ($command_name eq "summary") {
             push(@$commands2, $curr_command);
+        } elsif ($command_name eq "countcols") {
+            push(@$commands2, $curr_command);
         } elsif ($command_name eq "facetcount") {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "";
@@ -498,8 +502,6 @@ sub parseQuery {
                 die "subcommand \`wordsflags\` needs --flag option";
             }
             push(@$commands2, $c);
-        } elsif ($command_name eq "countcols") {
-            push(@$commands2, ["countcols"]);
 =cut
         } else {
             die $command_name;
@@ -937,6 +939,9 @@ sub build_ircode_command {
         } elsif ($command_name eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
 
+        } elsif ($command_name eq "countcols") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);
+
         } elsif ($command_name eq "facetcount") {
             my $option = "";
             if ($curr_command->{multi_value} eq "a") {
@@ -971,9 +976,6 @@ sub build_ircode_command {
                 $flags .= ' ' . escape_for_bash($curr_command->{$i]);
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/wordsflags.pl$flags"]);
-
-        } elsif ($command_name eq "countcols") {
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);
 
 =cut
         } else {
