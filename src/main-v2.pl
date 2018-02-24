@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use utf8;
 
+use Data::Dumper;
+
 use POSIX qw/mkfifo/;
 
 my $TOOL_DIR = $ENV{"TOOL_DIR"};
@@ -695,7 +697,8 @@ sub prefetch_input {
     my $format = <$format_fh>;
     close($format_fh);
 
-    if ($format !~ /^format:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+)$/) {
+    $format =~ s/\n\z//g;
+    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+)\z/) {
         die "failed to guess format $input_pipe_path";
     }
     $input->{format}       = $1;
