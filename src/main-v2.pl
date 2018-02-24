@@ -189,7 +189,9 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "wcl") {
-            degradeMain();
+            $next_command = {command => "wcl"};
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "header") {
             degradeMain();
@@ -470,8 +472,10 @@ sub parseQuery {
                 die "subcommand \`union\` needs --right option";
             }
             push(@$commands2, ["union", $curr_command->{1]]);
+=cut
         } elsif ($command_name eq "wcl") {
-            push(@$commands2, ["wcl"]);
+            push(@$commands2, $curr_command);
+=comment
         } elsif ($command_name eq "header") {
             push(@$commands2, ["header"]);
         } elsif ($command_name eq "summary") {
@@ -921,9 +925,11 @@ sub build_ircode_command {
             $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $right"]);
 
+=cut
         } elsif ($command_name eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
 
+=comment
         } elsif ($command_name eq "header") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/header.pl"]);
 
