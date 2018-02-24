@@ -635,7 +635,7 @@ sub parseQuery {
                 }
 
             } elsif ($curr_command->[0] eq "paste") {
-                if ($a eq "--right") {
+                if ($a eq "--file" || $a eq "--right") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
                 } elsif ($a eq "(") {

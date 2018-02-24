@@ -90,7 +90,7 @@ sub parseQuery {
             }
         }
 
-        if ($a eq ")") {
+        if ($a eq "]") {
             if (defined($curr_command)) {
                 unshift(@$argv, $a);
                 $a = "cat";
@@ -115,6 +115,22 @@ sub parseQuery {
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
             die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = $a;
+
+        } elsif ($command_name eq "paste" && $a eq "--right") {
+            degradeMain();
+
+        } elsif ($command_name eq "paste" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "paste" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv);
+
+        } elsif ($command_name eq "paste" && !defined($curr_command->{file})) {
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
             die "duplicated option $a" if defined($curr_command->{multi_value});
@@ -191,7 +207,8 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "paste") {
-            degradeMain();
+            $next_command = {command => "paste", file => undef, "rule" => undef};
+            $last_command = $a;
 
         } elsif ($a eq "join") {
             degradeMain();
@@ -481,11 +498,13 @@ sub parseQuery {
             } else {
                 push(@$commands2, @{parseSortParams([])});
             }
+=cut
         } elsif ($command_name eq "paste") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`paste\` needs --right option";
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`paste\` needs --file option";
             }
-            push(@$commands2, ["paste", $curr_command->{1]]);
+            push(@$commands2, $curr_command);
+=comment
         } elsif ($command_name eq "join") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`join\` needs --right option";
@@ -628,7 +647,107 @@ sub extractNamedPipe {
     my $commands2 = [];
     for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
         my $curr_command = $command_seq->{commands}->[$i];
-        push(@$commands2, $curr_command);
+        my $command_name = $curr_command->{command};
+        if ($command_name eq "paste" ||
+            $command_name eq "join" ||
+            $command_name eq "union") {
+            if (ref($curr_command->{file}) eq "HASH") {
+                my $subquery = $curr_command->{file};
+
+                if ($subquery->{output} ne "") {
+                    die "sub query of `$command_name` subcommand must not have output";
+                }
+                if ($subquery->{output_table} eq "") {
+                    die "sub query of `$command_name` subcommand must not have a command `$subquery->{last_command}`";
+                }
+                if ($subquery->{output_header_flag} eq "") {
+                    die "sub query of `$command_name` subcommand must not have an option --o-no-header";
+                }
+                if ($subquery->{output_format} eq "") {
+                    die "sub query of `$command_name` subcommand must not have an option --o-tsv or --o-csv";
+                }
+
+                extractNamedPipe($subquery);
+
+                if ($subquery->{input} eq "") {
+                    my $pipe_id_1 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => "",
+                        "source" => "",
+                        "format" => "tsv",
+                        "header" => "",
+                        "charencoding" => "UTF-8",
+                        "utf8bom" => ""});
+
+                    my $pipe_id_2 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => "",
+                        "source" => "",
+                        "format" => "tsv",
+                        "header" => "",
+                        "charencoding" => "UTF-8",
+                        "utf8bom" => ""});
+
+                    push(@$statement_list, {
+                        "input_pipe_id" => $pipe_id_1,
+                        "output_pipe_id" => $pipe_id_2,
+                        "query" => $subquery});
+
+                    $curr_command->{file_pipe_id} = $pipe_id_2;
+
+                    push(@{$subquery->{commands}}, {command => "buffer"});
+
+                    push(@$commands2, {command => "tee", file_pipe_id => $pipe_id_1});
+                    push(@$commands2, {command => "buffer"});
+                    push(@$commands2, $curr_command);
+                } else { # unless ($subquery->{input} eq "")
+                    my $pipe_id_1 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => 1,
+                        "source" => $subquery->{input},
+                        "format" => $subquery->{format},
+                        "header" => $subquery->{input_header},
+                        "charencoding" => "",
+                        "utf8bom" => ""});
+
+                    my $pipe_id_2 = scalar @$input_pipe_list;
+                    push(@$input_pipe_list, {
+                        "prefetch" => "",
+                        "source" => "",
+                        "format" => "tsv",
+                        "header" => "",
+                        "charencoding" => "UTF-8",
+                        "utf8bom" => ""});
+
+                    push(@$statement_list, {
+                        "input_pipe_id" => $pipe_id_1,
+                        "output_pipe_id" => $pipe_id_2,
+                        "query" => $subquery});
+
+                    $curr_command->{file_pipe_id} = $pipe_id_2;
+
+                    push(@$commands2, $curr_command);
+                }
+
+            } else { # unless (ref($curr_command->{file}) eq "HASH")
+                if ( ! -e $curr_command->{file}) {
+                    die "File not found: $curr_command->{file}";
+                }
+                my $pipe_id = scalar @$input_pipe_list;
+                push(@$input_pipe_list, {
+                    "prefetch" => 1,
+                    "source" => $curr_command->{file},
+                    "format" => "",
+                    "header" => "",
+                    "charencoding" => "",
+                    "utf8bom" => ""});
+                $curr_command->{file_pipe_id} = $pipe_id;
+
+                push(@$commands2, $curr_command);
+            }
+        } else {
+            push(@$commands2, $curr_command);
+        }
     }
 
     $command_seq->{commands} = $commands2;
@@ -932,21 +1051,24 @@ sub build_ircode_command {
         } elsif ($command_name eq "sort") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
+=cut
         } elsif ($command_name eq "tee") {
-            my $branch = escape_for_bash($curr_command->{1]);
-            $branch = "$input_pipe_prefix${branch}";
-            push(@$ircode, ["cmd", "tee $branch"]);
+            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            push(@$ircode, ["cmd", "tee $file"]);
 
         } elsif ($command_name eq "buffer") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer"]);
+
         } elsif ($command_name eq "buffer-debug") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer --debug"]);
 
         } elsif ($command_name eq "paste") {
-            my $right = escape_for_bash($curr_command->{1]);
-            $right = "$input_pipe_prefix${right}";
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $right"]);
+            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $file"]);
 
+=comment
         } elsif ($command_name eq "join") {
             my $option = "";
             $option .= " --" . $curr_command->{2];
