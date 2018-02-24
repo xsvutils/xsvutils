@@ -113,6 +113,7 @@ sub parseQuery {
             $curr_command->{cols} = shift(@$argv);
 
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
+            die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
