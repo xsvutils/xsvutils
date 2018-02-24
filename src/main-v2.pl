@@ -194,7 +194,9 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "header") {
-            degradeMain();
+            $next_command = {command => "header"};
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "summary") {
             degradeMain();
@@ -475,9 +477,9 @@ sub parseQuery {
 =cut
         } elsif ($command_name eq "wcl") {
             push(@$commands2, $curr_command);
-=comment
         } elsif ($command_name eq "header") {
-            push(@$commands2, ["header"]);
+            push(@$commands2, $curr_command);
+=comment
         } elsif ($command_name eq "summary") {
             push(@$commands2, ["summary"]);
 =cut
@@ -929,10 +931,10 @@ sub build_ircode_command {
         } elsif ($command_name eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
 
-=comment
         } elsif ($command_name eq "header") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/header.pl"]);
 
+=comment
         } elsif ($command_name eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
 
