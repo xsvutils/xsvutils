@@ -117,6 +117,14 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{multi_value});
             $curr_command->{multi_value} = "a";
 
+        } elsif ($command_name eq "treetable" && $a eq "--top") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{top});
+            $curr_command->{top} = shift(@$argv);
+
+        } elsif ($command_name eq "treetable" && $a eq "--multi-value-a") {
+            $curr_command->{multi_value} = "a";
+
         } elsif ($a eq "--help") {
             $option_help = 1;
 
@@ -214,7 +222,9 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "treetable") {
-            degradeMain();
+            $next_command = {command => "treetable", top => undef, multi_value => undef};
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "crosstable") {
             degradeMain();
@@ -492,9 +502,20 @@ sub parseQuery {
                 $curr_command->{multi_value} = "";
             }
             push(@$commands2, $curr_command);
-=comment
         } elsif ($command_name eq "treetable") {
-            push(@$commands2, ["treetable", $curr_command->{1], $curr_command->{2]]);
+            if (defined($curr_command->{top})) {
+                my @topCount = split(/,/, $curr_command->{top});
+                foreach my $c (@topCount) {
+                    if ($c !~ /\A(0|[1-9][0-9]*)\z/) {
+                        die "Illegal argument of --top option: $curr_command->{top}";
+                    }
+                }
+            }
+            if (!defined($curr_command->{multi_value})) {
+                $curr_command->{multi_value} = "";
+            }
+            push(@$commands2, $curr_command);
+=comment
         } elsif ($command_name eq "crosstable") {
             push(@$commands2, ["crosstable", $curr_command->{1], $curr_command->{2]]);
         } elsif ($command_name eq "wordsflags") {
@@ -949,17 +970,17 @@ sub build_ircode_command {
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
-=comment
         } elsif ($command_name eq "treetable") {
             my $option = "";
-            if (defined($curr_command->{1])) {
-                $option .= " --top " . escape_for_bash($curr_command->{1]);
+            if (defined($curr_command->{top})) {
+                $option .= " --top " . escape_for_bash($curr_command->{top});
             }
-            if ($curr_command->{2] eq "multi-value-a") {
+            if ($curr_command->{multi_value} eq "a") {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl$option"]);
 
+=comment
         } elsif ($command_name eq "crosstable") {
             my $option = "";
             if (defined($curr_command->{1])) {
