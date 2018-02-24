@@ -100,7 +100,20 @@ sub parseQuery {
         my $next_command = undef;
         my $next_output_table = 1;
 
-        if ($a eq "--help") {
+        my $command_name = '';
+        if (defined($curr_command)) {
+            $command_name = $curr_command->{command};
+        }
+
+        if ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{cols});
+            $curr_command->{cols} = shift(@$argv);
+
+        } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
+            $curr_command->{cols} = $a;
+
+        } elsif ($a eq "--help") {
             $option_help = 1;
 
         } elsif ($a eq "--explain") {
@@ -120,7 +133,8 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "cut") {
-            degradeMain();
+            $next_command = {command => "cut", cols => undef};
+            $last_command = $a;
 
         } elsif ($a eq "insdate") {
             degradeMain();
@@ -277,7 +291,15 @@ sub parseQuery {
 
     my $commands2 = [];
     for my $curr_command (@$commands) {
-        die $curr_command->{command};
+        my $command_name = $curr_command->{command};
+        if ($command_name eq "cut") {
+            if (!defined($curr_command->{cols})) {
+                die "subcommand \`cut\` needs --cols option";
+            }
+            push(@$commands2, $curr_command);
+        } else {
+            die $curr_command->{command};
+        }
     }
 
     ({"commands" => $commands2,
@@ -556,12 +578,12 @@ sub build_ircode_command {
         }
     }
 
-    foreach my $t (@{$command_seq->{commands}}) {
-        my $command = $t->{command};
+    foreach my $curr_command (@{$command_seq->{commands}}) {
+        my $command_name = $curr_command->{command};
 =comment
-        if ($command eq "range") {
-            my $num1 = $t->[1];
-            my $num2 = $t->[2];
+        if ($command_name eq "range") {
+            my $num1 = $curr_command->{1];
+            my $num2 = $curr_command->{2];
             if ($num1 eq "") {
                 if ($num2 eq "") {
                     # nop
@@ -579,178 +601,178 @@ sub build_ircode_command {
                 }
             }
 
-        } elsif ($command eq "where") {
+        } elsif ($command_name eq "where") {
             my $conds = '';
             for (my $i = 1; $i < @$t; $i++) {
-                $conds .= ' ' . escape_for_bash($t->[$i]);
+                $conds .= ' ' . escape_for_bash($curr_command->{$i]);
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
 
-        } elsif ($command eq "cut") {
-            my $cols = escape_for_bash($t->[1]);
+=cut
+        if ($command_name eq "cut") {
+            my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
-        } elsif ($command eq "insdate") {
-            my $name  = escape_for_bash($t->[1]);
-            my $src = escape_for_bash($t->[2]);
+=comment
+        } elsif ($command_name eq "insdate") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $src = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $name --src $src"]);
 
-        } elsif ($command eq "insweek") {
-            my $name  = escape_for_bash($t->[1]);
-            my $src = escape_for_bash($t->[2]);
-            my $start_day = escape_for_bash($t->[3]);
+        } elsif ($command_name eq "insweek") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $src = escape_for_bash($curr_command->{2]);
+            my $start_day = escape_for_bash($curr_command->{3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insweek.pl --name $name --src $src --start-day $start_day"]);
 
-        } elsif ($command eq "addconst") {
-            my $name  = escape_for_bash($t->[1]);
-            my $value = escape_for_bash($t->[2]);
+        } elsif ($command_name eq "addconst") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addconst.pl --name $name --value $value"]);
 
-        } elsif ($command eq "addcopy") {
-            my $name  = escape_for_bash($t->[1]);
-            my $src = escape_for_bash($t->[2]);
+        } elsif ($command_name eq "addcopy") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $src = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $name --src $src"]);
 
-        } elsif ($command eq "addlinenum") {
-            my $name  = escape_for_bash($t->[1]);
-            my $value = escape_for_bash($t->[2]);
+        } elsif ($command_name eq "addlinenum") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $name --value $value"]);
 
-        } elsif ($command eq "addlinenum2") {
-            my $name  = escape_for_bash($t->[1]);
+        } elsif ($command_name eq "addlinenum2") {
+            my $name  = escape_for_bash($curr_command->{1]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name $name"]);
 
-        } elsif ($command eq "addnumsortable") {
-            my $name  = escape_for_bash($t->[1]);
-            my $col = escape_for_bash($t->[2]);
+        } elsif ($command_name eq "addnumsortable") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $col = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
 
-        } elsif ($command eq "addcross") {
-            my $name  = escape_for_bash($t->[1]);
-            my $cols = escape_for_bash($t->[2]);
+        } elsif ($command_name eq "addcross") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $cols = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcross.pl --name $name --col $cols"]);
 
-        } elsif ($command eq "addmap") {
-            my $name  = escape_for_bash($t->[1]);
-            my $src = escape_for_bash($t->[2]);
-            my $file = escape_for_bash($t->[3]);
+        } elsif ($command_name eq "addmap") {
+            my $name  = escape_for_bash($curr_command->{1]);
+            my $src = escape_for_bash($curr_command->{2]);
+            my $file = escape_for_bash($curr_command->{3]);
             my $option = "";
-            if (defined($t->[4])) {
-                $option .= " --default ". escape_for_bash($t->[4]);
+            if (defined($curr_command->{4])) {
+                $option .= " --default ". escape_for_bash($curr_command->{4]);
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl$option --name $name --src $src --file $file"]);
 
-        } elsif ($command eq "removecol") {
-            my $count  = escape_for_bash($t->[1]);
+        } elsif ($command_name eq "removecol") {
+            my $count  = escape_for_bash($curr_command->{1]);
             my $arg = '-f' . ($count + 1) . '-';
             push(@$ircode, ["cmd", "cut $arg"]);
 
-        } elsif ($command eq "uriparams") {
+        } elsif ($command_name eq "uriparams") {
             push(@$ircode, ["cmd", "tail -n+2"]);
             push(@$ircode, ["cmd", "bash \$TOOL_DIR/pre-encode-percent.sh"]);
             my $option = "";
-            if ($t->[1] eq "") {
+            if ($curr_command->{1] eq "") {
                 $option .= " --names";
             } else {
-                my $cols = escape_for_bash($t->[1]);
+                my $cols = escape_for_bash($curr_command->{1]);
                 $option .= " --fields $cols";
             }
-            if ($t->[3] eq "b") {
+            if ($curr_command->{3] eq "b") {
                 $option .= " --multi-value-b";
             }
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv$option"]);
-            if ($t->[2] eq "decode") {
+            if ($curr_command->{2] eq "decode") {
                 push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]); # TODO $colsもデコードされてしまう問題あり
             }
 
-        } elsif ($command eq "update") {
-            my $index = escape_for_bash($t->[1]);
-            my $column = escape_for_bash($t->[2]);
-            my $value = escape_for_bash($t->[3]);
+        } elsif ($command_name eq "update") {
+            my $index = escape_for_bash($curr_command->{1]);
+            my $column = escape_for_bash($curr_command->{2]);
+            my $value = escape_for_bash($curr_command->{3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
 
-        } elsif ($command eq "sort") {
+        } elsif ($command_name eq "sort") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
-        } elsif ($command eq "tee") {
-            my $branch = escape_for_bash($t->[1]);
+        } elsif ($command_name eq "tee") {
+            my $branch = escape_for_bash($curr_command->{1]);
             $branch = "$input_pipe_prefix${branch}";
             push(@$ircode, ["cmd", "tee $branch"]);
 
-        } elsif ($command eq "buffer") {
+        } elsif ($command_name eq "buffer") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer"]);
-        } elsif ($command eq "buffer-debug") {
+        } elsif ($command_name eq "buffer-debug") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer --debug"]);
 
-        } elsif ($command eq "paste") {
-            my $right = escape_for_bash($t->[1]);
+        } elsif ($command_name eq "paste") {
+            my $right = escape_for_bash($curr_command->{1]);
             $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $right"]);
 
-        } elsif ($command eq "join") {
+        } elsif ($command_name eq "join") {
             my $option = "";
-            $option .= " --" . $t->[2];
-            my $right = escape_for_bash($t->[1]);
+            $option .= " --" . $curr_command->{2];
+            my $right = escape_for_bash($curr_command->{1]);
             $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/join.pl$option --right $right"]);
 
-        } elsif ($command eq "union") {
-            my $right = escape_for_bash($t->[1]);
+        } elsif ($command_name eq "union") {
+            my $right = escape_for_bash($curr_command->{1]);
             $right = "$input_pipe_prefix${right}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $right"]);
 
-        } elsif ($command eq "wcl") {
+        } elsif ($command_name eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
 
-        } elsif ($command eq "header") {
+        } elsif ($command_name eq "header") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/header.pl"]);
 
-        } elsif ($command eq "summary") {
+        } elsif ($command_name eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
 
-        } elsif ($command eq "facetcount") {
+        } elsif ($command_name eq "facetcount") {
             my $option = "";
-            if ($t->[1] eq "multi-value-a") {
+            if ($curr_command->{1] eq "multi-value-a") {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
-        } elsif ($command eq "treetable") {
+        } elsif ($command_name eq "treetable") {
             my $option = "";
-            if (defined($t->[1])) {
-                $option .= " --top " . escape_for_bash($t->[1]);
+            if (defined($curr_command->{1])) {
+                $option .= " --top " . escape_for_bash($curr_command->{1]);
             }
-            if ($t->[2] eq "multi-value-a") {
+            if ($curr_command->{2] eq "multi-value-a") {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/treetable.pl$option"]);
 
-        } elsif ($command eq "crosstable") {
+        } elsif ($command_name eq "crosstable") {
             my $option = "";
-            if (defined($t->[1])) {
-                $option .= " --top " . escape_for_bash($t->[1]);
+            if (defined($curr_command->{1])) {
+                $option .= " --top " . escape_for_bash($curr_command->{1]);
             }
-            if ($t->[2] eq "multi-value-a") {
+            if ($curr_command->{2] eq "multi-value-a") {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl$option"]);
 
-        } elsif ($command eq "wordsflags") {
+        } elsif ($command_name eq "wordsflags") {
             my $flags = '';
             for (my $i = 1; $i < @$t; $i++) {
-                $flags .= ' ' . escape_for_bash($t->[$i]);
+                $flags .= ' ' . escape_for_bash($curr_command->{$i]);
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/wordsflags.pl$flags"]);
 
-        } elsif ($command eq "countcols") {
+        } elsif ($command_name eq "countcols") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);
 
+=cut
         } else {
-=cut
-            die $command;
-=comment
+            die $command_name;
         }
-=cut
     }
 
     $command_seq->{ircode} = ["pipe", $ircode];
