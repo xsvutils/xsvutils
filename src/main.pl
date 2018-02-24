@@ -1727,6 +1727,8 @@ $main_1_source = $main_1_source . ")";
 
 $main_1_source = $main_1_source . "\n";
 
+$main_1_source = "# -v1\n" . $main_1_source;
+
 if ($option_explain) {
     my $view = $main_1_source;
     $view =~ s/^/> /gm;
