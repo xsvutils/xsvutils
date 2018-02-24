@@ -199,7 +199,9 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "summary") {
-            degradeMain();
+            $next_command = {command => "summary"};
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "facetcount") {
             $next_command = {command => "facetcount", multi_value => undef};
@@ -479,10 +481,8 @@ sub parseQuery {
             push(@$commands2, $curr_command);
         } elsif ($command_name eq "header") {
             push(@$commands2, $curr_command);
-=comment
         } elsif ($command_name eq "summary") {
-            push(@$commands2, ["summary"]);
-=cut
+            push(@$commands2, $curr_command);
         } elsif ($command_name eq "facetcount") {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "";
@@ -934,11 +934,9 @@ sub build_ircode_command {
         } elsif ($command_name eq "header") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/header.pl"]);
 
-=comment
         } elsif ($command_name eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
 
-=cut
         } elsif ($command_name eq "facetcount") {
             my $option = "";
             if ($curr_command->{multi_value} eq "a") {
