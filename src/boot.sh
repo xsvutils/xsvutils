@@ -40,12 +40,12 @@ tput lines >/dev/null 2>&1 && export TERMINAL_LINES=$(tput lines);
 
 if [ "$1" = "-v1" ]; then
     shift
-    perl $TOOL_DIR/main.pl "$@"
+    perl $TOOL_DIR/main-v1.pl "$@"
 elif [ "$1" = "-v2" ]; then
     shift
-    perl $TOOL_DIR/main2.pl "$@"
+    perl $TOOL_DIR/main-v2.pl "$@"
 else
-    perl $TOOL_DIR/main.pl "$@"
+    perl $TOOL_DIR/main-v1.pl "$@"
 fi
 
 exit $?

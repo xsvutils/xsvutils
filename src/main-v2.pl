@@ -18,7 +18,7 @@ if (-t STDOUT) {
 my @originalArgv = @ARGV;
 sub degradeMain {
     print STDERR "warning: degrade to v1 (@originalArgv)\n";
-    exec("perl", "$TOOL_DIR/main.pl", @originalArgv);
+    exec("perl", "$TOOL_DIR/main-v1.pl", @originalArgv);
 }
 
 sub escape_for_bash {
