@@ -113,6 +113,10 @@ sub parseQuery {
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
             $curr_command->{cols} = $a;
 
+        } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
+            die "duplicated option $a" if defined($curr_command->{multi_value});
+            $curr_command->{multi_value} = "a";
+
         } elsif ($a eq "--help") {
             $option_help = 1;
 
@@ -194,7 +198,9 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "facetcount") {
-            degradeMain();
+            $next_command = {command => "facetcount", multi_value => undef};
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "treetable") {
             degradeMain();
@@ -292,13 +298,205 @@ sub parseQuery {
     my $commands2 = [];
     for my $curr_command (@$commands) {
         my $command_name = $curr_command->{command};
+=comment
+        if ($command_name eq "take") {
+            if ($curr_command->{1] eq "") {
+                $curr_command->{1] = "10";
+            }
+            my $f = 1;
+            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+                # 直前のサブコマンドと結合
+                my $prev = $commands2->[@$commands2 - 1];
+                if ($prev->[1] ne "" && $prev->[2] eq "") {
+                    $f = '';
+                    $prev->[2] = $prev->[1] + $curr_command->{1];
+                }
+            }
+            if ($f) {
+                push(@$commands2, ["range", "", $curr_command->{1]]);
+            }
+        } elsif ($command_name eq "drop") {
+            if ($curr_command->{1] eq "") {
+                $curr_command->{1] = "10";
+            }
+            my $f = 1;
+            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+                # 直前のサブコマンドと結合
+                my $prev = $commands2->[@$commands2 - 1];
+                if ($prev->[1] eq "" && $prev->[2] ne "") {
+                    $f = '';
+                    if ($prev->[2] <= $curr_command->{1]) {
+                        $prev->[2] = "0"; # drop all records
+                    } else {
+                        $prev->[1] = $curr_command->{1];
+                    }
+                }
+            }
+            if ($f) {
+                push(@$commands2, ["range", $curr_command->{1], ""]);
+            }
+        } elsif ($command_name eq "where") {
+            if (@$c <= 1) {
+                die "subcommand \`where\` needs --cond option";
+            }
+            push(@$commands2, $c);
+=cut
         if ($command_name eq "cut") {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
             }
             push(@$commands2, $curr_command);
+=comment
+        } elsif ($command_name eq "insdate") {
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`insdate\` needs --src option";
+            }
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`insdate\` needs --name option";
+            }
+            push(@$commands2, ["insdate", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "insweek") {
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`insweek\` needs --src option";
+            }
+            if (!defined($curr_command->{3])) {
+                die "subcommand \`insweek\` needs --start-day option";
+            }
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`insweek\` needs --name option";
+            }
+            push(@$commands2, ["insweek", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
+        } elsif ($command_name eq "addconst") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addconst\` needs --name option";
+            }
+            if (!defined($curr_command->{2])) {
+                $curr_command->{2] = "";
+            }
+            push(@$commands2, ["addconst", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "addcopy") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addcopy\` needs --name option";
+            }
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`addcopy\` needs --src option";
+            }
+            push(@$commands2, ["addcopy", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "addlinenum") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addlinenum\` needs --name option";
+            }
+            if (!defined($curr_command->{2])) {
+                $curr_command->{2] = 1;
+            }
+            push(@$commands2, ["addlinenum", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "addlinenum2") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addlinenum2\` needs --name option";
+            }
+            push(@$commands2, ["addlinenum2", $curr_command->{1]]);
+        } elsif ($command_name eq "addnumsortable") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addnumsortable\` needs --name option";
+            }
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`addnumsortable\` needs --col option";
+            }
+            push(@$commands2, ["addnumsortable", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "removecol") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`removecol\` needs --count option";
+            }
+            push(@$commands2, ["removecol", $curr_command->{1]]);
+        } elsif ($command_name eq "addcross") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addccross\` needs --name option";
+            }
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`addcross\` needs --cols option";
+            }
+            push(@$commands2, ["addcross", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "addmap") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`addmap\` needs --name option";
+            }
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`addmap\` needs --src option";
+            }
+            if (!defined($curr_command->{3])) {
+                die "subcommand \`addmap\` needs --file option";
+            }
+            push(@$commands2, ["addmap", $curr_command->{1], $curr_command->{2], $curr_command->{3], $curr_command->{4]]);
+        } elsif ($command_name eq "uriparams") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`uriparams\` needs --col option";
+            }
+            push(@$commands2, ["uriparams", $curr_command->{1], $curr_command->{3], $curr_command->{4]]);
+        } elsif ($command_name eq "update") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`update\` needs --index option";
+            }
+            if (!defined($curr_command->{2])) {
+                die "subcommand \`update\` needs --col option";
+            }
+            if (!defined($curr_command->{3])) {
+                die "subcommand \`update\` needs --value option";
+            }
+            if ($curr_command->{1] !~ /\A(0|[1-9][0-9]*)\z/) {
+                die "option --index needs a number argument: '$curr_command->{1]'";
+            }
+            if ($curr_command->{2] !~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal column name: $curr_command->{2]\n";
+            }
+            push(@$commands2, ["update", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
+        } elsif ($command_name eq "sort") {
+            if (defined($curr_command->{1])) {
+                push(@$commands2, @{parseSortParams([split(/,/, $curr_command->{1])])});
+            } else {
+                push(@$commands2, @{parseSortParams([])});
+            }
+        } elsif ($command_name eq "paste") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`paste\` needs --right option";
+            }
+            push(@$commands2, ["paste", $curr_command->{1]]);
+        } elsif ($command_name eq "join") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`join\` needs --right option";
+            }
+            push(@$commands2, ["join", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "union") {
+            if (!defined($curr_command->{1])) {
+                die "subcommand \`union\` needs --right option";
+            }
+            push(@$commands2, ["union", $curr_command->{1]]);
+        } elsif ($command_name eq "wcl") {
+            push(@$commands2, ["wcl"]);
+        } elsif ($command_name eq "header") {
+            push(@$commands2, ["header"]);
+        } elsif ($command_name eq "summary") {
+            push(@$commands2, ["summary"]);
+=cut
+        } elsif ($command_name eq "facetcount") {
+            if (!defined($curr_command->{multi_value})) {
+                $curr_command->{multi_value} = "";
+            }
+            push(@$commands2, $curr_command);
+=comment
+        } elsif ($command_name eq "treetable") {
+            push(@$commands2, ["treetable", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "crosstable") {
+            push(@$commands2, ["crosstable", $curr_command->{1], $curr_command->{2]]);
+        } elsif ($command_name eq "wordsflags") {
+            if (@$c <= 1) {
+                die "subcommand \`wordsflags\` needs --flag option";
+            }
+            push(@$commands2, $c);
+        } elsif ($command_name eq "countcols") {
+            push(@$commands2, ["countcols"]);
+=cut
         } else {
-            die $curr_command->{command};
+            die $command_name;
         }
     }
 
@@ -732,13 +930,15 @@ sub build_ircode_command {
         } elsif ($command_name eq "summary") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/summary.pl"]);
 
+=cut
         } elsif ($command_name eq "facetcount") {
             my $option = "";
-            if ($curr_command->{1] eq "multi-value-a") {
+            if ($curr_command->{multi_value} eq "a") {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
+=comment
         } elsif ($command_name eq "treetable") {
             my $option = "";
             if (defined($curr_command->{1])) {
