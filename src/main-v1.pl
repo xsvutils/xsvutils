@@ -635,7 +635,7 @@ sub parseQuery {
                 }
 
             } elsif ($curr_command->[0] eq "paste") {
-                if ($a eq "--right") {
+                if ($a eq "--file" || $a eq "--right") {
                     die "option $a needs an argument" unless (@$argv);
                     $curr_command->[1] = shift(@$argv);
                 } elsif ($a eq "(") {
@@ -1726,6 +1726,8 @@ $main_1_source = $main_1_source . ")";
 }
 
 $main_1_source = $main_1_source . "\n";
+
+$main_1_source = "# -v1\n" . $main_1_source;
 
 if ($option_explain) {
     my $view = $main_1_source;

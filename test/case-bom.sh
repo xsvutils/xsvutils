@@ -1,3 +1,3 @@
 
-./xsvutils ./test/data/sample-bom.tsv > ./var/test/case-bom-1.tsv
+./xsvutils ./test/data/sample-bom.csv > ./var/test/case-bom-1.tsv
 
