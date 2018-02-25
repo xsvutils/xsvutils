@@ -1,6 +1,8 @@
 # CHANGELOG
 
 ## version 0.2.0+ (Unreleased)
+- add --version option
+- split help document
 
 ## version 0.2.0 (2018-02-25)
 - add -v1, -v2 options

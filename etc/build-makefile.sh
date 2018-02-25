@@ -51,7 +51,19 @@ target/help-version.txt: version.txt
 
 EOF
 
-for f in $(ls help); do
+ls help/*.txt | grep -v 'main\.txt' | sed -E 's/^help\/([^.]+)\.txt$/\1/g' | column -c 80 > var/help-list.txt.tmp
+if [ ! -e var/help-list.txt.tmp ] || ! diff -q var/help-list.txt var/help-list.txt.tmp >/dev/null; then
+    mv var/help-list.txt.tmp var/help-list.txt
+fi
+
+cat <<EOF
+target/help-main.txt: etc/build-help-main.sh help/main.txt var/help-list.txt
+	bash etc/build-help-main.sh > target/help-main.txt.tmp
+	mv target/help-main.txt.tmp target/help-main.txt
+
+EOF
+
+for f in $(ls help | grep -v 'main\.txt'); do
 cat <<EOF
 target/help-$f: help/$f
 	cp help/$f target/help-$f

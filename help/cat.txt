@@ -1,0 +1,7 @@
+cat subcommand
+
+    Print data to the terminal.
+    入力ファイルを単に出力する。
+
+    `cat` は省略可能なサブコマンドであり、省略してはいけないケースはない。
+
