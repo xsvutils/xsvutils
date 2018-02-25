@@ -172,8 +172,13 @@ sub parseQuery {
             $curr_command->{cols} = shift(@$argv);
 
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
-            die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = $a;
+
+        } elsif ($command_name eq "insdate" && !defined($curr_command->{src})) {
+            $curr_command->{src} = $a;
+
+        } elsif ($command_name eq "insdate" && !defined($curr_command->{dst})) {
+            $curr_command->{dst} = $a;
 
         } elsif ($command_name eq "paste" && $a eq "--right") {
             degradeMain();
@@ -188,7 +193,6 @@ sub parseQuery {
             ($curr_command->{file}, $argv) = parseQuery($argv);
 
         } elsif ($command_name eq "paste" && !defined($curr_command->{file})) {
-            die "duplicated option $a" if defined($curr_command->{file});
             $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
@@ -227,7 +231,8 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "insdate") {
-            degradeMain();
+            $next_command = {command => "insdate", src => undef, dst => undef};
+            $last_command = $a;
 
         } elsif ($a eq "insweek") {
             degradeMain();
@@ -448,15 +453,15 @@ sub parseQuery {
                 die "subcommand \`cut\` needs --cols option";
             }
             push(@$commands2, $curr_command);
-=comment
         } elsif ($command_name eq "insdate") {
-            if (!defined($curr_command->{2])) {
+            if (!defined($curr_command->{src})) {
                 die "subcommand \`insdate\` needs --src option";
             }
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`insdate\` needs --name option";
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`insdate\` needs --dst option";
             }
-            push(@$commands2, ["insdate", $curr_command->{1], $curr_command->{2]]);
+            push(@$commands2, $curr_command);
+=comment
         } elsif ($command_name eq "insweek") {
             if (!defined($curr_command->{2])) {
                 die "subcommand \`insweek\` needs --src option";
@@ -1037,12 +1042,12 @@ sub build_ircode_command {
             my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
-=comment
         } elsif ($command_name eq "insdate") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            my $src = escape_for_bash($curr_command->{2]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $name --src $src"]);
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $dst --src $src"]);
 
+=comment
         } elsif ($command_name eq "insweek") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $src = escape_for_bash($curr_command->{2]);
