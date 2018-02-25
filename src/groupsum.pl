@@ -79,9 +79,11 @@ while (my $line = <STDIN>) {
 }
 $record_count--;
 
-print "$headers->[0]\tsum\n";
+print "$headers->[0]\tcount\tsum\tavg\n";
 
 foreach my $valueA (@$values) {
+    my $count = $grouptotal->{$valueA}->{count};
     my $sum = $grouptotal->{$valueA}->{sum};
-    print "$valueA\t$sum\n";
+    my $avg = $sum / $count;
+    print "$valueA\t$count\t$sum\t$avg\n";
 }
