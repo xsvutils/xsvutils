@@ -180,6 +180,12 @@ sub parseQuery {
         } elsif ($command_name eq "insdate" && !defined($curr_command->{dst})) {
             $curr_command->{dst} = $a;
 
+        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{src})) {
+            $curr_command->{src} = $a;
+
+        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{dst})) {
+            $curr_command->{dst} = $a;
+
         } elsif ($command_name eq "paste" && $a eq "--right") {
             degradeMain();
 
@@ -236,6 +242,10 @@ sub parseQuery {
 
         } elsif ($a eq "insweek") {
             degradeMain();
+
+        } elsif ($a eq "insdeltasec") {
+            $next_command = {command => "insdeltasec", src => undef, dst => undef};
+            $last_command = $a;
 
         } elsif ($a eq "addconst") {
             degradeMain();
@@ -453,6 +463,7 @@ sub parseQuery {
                 die "subcommand \`cut\` needs --cols option";
             }
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "insdate") {
             if (!defined($curr_command->{src})) {
                 die "subcommand \`insdate\` needs --src option";
@@ -461,6 +472,7 @@ sub parseQuery {
                 die "subcommand \`insdate\` needs --dst option";
             }
             push(@$commands2, $curr_command);
+
 =comment
         } elsif ($command_name eq "insweek") {
             if (!defined($curr_command->{2])) {
@@ -473,6 +485,18 @@ sub parseQuery {
                 die "subcommand \`insweek\` needs --name option";
             }
             push(@$commands2, ["insweek", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
+
+=cut
+        } elsif ($command_name eq "insdeltasec") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`insdeltasec\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`insdeltasec\` needs --dst option";
+            }
+            push(@$commands2, $curr_command);
+
+=comment
         } elsif ($command_name eq "addconst") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`addconst\` needs --name option";
@@ -568,6 +592,7 @@ sub parseQuery {
                 die "subcommand \`paste\` needs --file option";
             }
             push(@$commands2, $curr_command);
+
 =comment
         } elsif ($command_name eq "join") {
             if (!defined($curr_command->{1])) {
@@ -582,17 +607,22 @@ sub parseQuery {
 =cut
         } elsif ($command_name eq "wcl") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "header") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "summary") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "countcols") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "facetcount") {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "";
             }
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "treetable") {
             if (defined($curr_command->{top})) {
                 my @topCount = split(/,/, $curr_command->{top});
@@ -606,6 +636,7 @@ sub parseQuery {
                 $curr_command->{multi_value} = "";
             }
             push(@$commands2, $curr_command);
+
 =comment
         } elsif ($command_name eq "crosstable") {
             push(@$commands2, ["crosstable", $curr_command->{1], $curr_command->{2]]);
@@ -1054,6 +1085,13 @@ sub build_ircode_command {
             my $start_day = escape_for_bash($curr_command->{3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insweek.pl --name $name --src $src --start-day $start_day"]);
 
+=cut
+        } elsif ($command_name eq "insdeltasec") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdeltasec.pl --src $src --dst $dst"]);
+
+=comment
         } elsif ($command_name eq "addconst") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $value = escape_for_bash($curr_command->{2]);

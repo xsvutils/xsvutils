@@ -81,7 +81,8 @@ Available subcommands:
         cut <COLUMNS>                   Print specified columns
 
     列を追加するサブコマンド
-        insdate <SOURCE_COLUMN_NAME> <NEW_COLUMN_NAME>          [EXPERIMENTAL]
+        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
+        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
         addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [EXPERIMENTAL]
