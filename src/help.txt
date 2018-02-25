@@ -101,7 +101,7 @@ Available subcommands:
         header                          カラムの一覧を表示する
         summary                         データのサマリを表示する
         countcols                       カラム数を集計する
-        facetcount                      [EXPERIMENTAL]
+        facetcount                      カラムそれぞれのファセットカウントを集計する
         treetable                       [EXPERIMENTAL]
         crosstable                      [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
@@ -118,7 +118,7 @@ Common options:
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
     --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
-                     ([DEPRECATED] --i-header も同じ)
+                     ([DEPRECATED] --i-header も同じ。v2では --i-header は使えない)
     --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
@@ -216,6 +216,8 @@ Subcommand `cut`:
 
     Options:
         --col <COLUMNS>   Print <COLUMNS>
+
+    [v2] Either of COLUMNS parameter or --col option is required.
 
     以下は同じ意味である。
 
@@ -410,7 +412,6 @@ Subcommand `countcols`:
 
 
 Subcommand `facetcount`:
-    [EXPERIMENTAL]
 
     カラムそれぞれのファセットカウントを集計する。
 
@@ -455,6 +456,31 @@ Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
 
 
+v1 と v2:
+    コマンドラインパラメータのパースの実装に v1 と v2 がある。
+    v1 と v2 とではわずかに互換性のない違いがある。
+    このヘルプに [v2] と書かれている箇所は v2 の場合のみの記述である。
+
+    近い将来 v2 に統一する予定だが、現在はコマンドラインの内容によって v1 と v2 のどちらかが選択される。
+    v2自体はまだEXPERIMENTALの扱いである。
+
+    先頭のコマンドラインパラメータに -v1 オプションを使用した場合
+        v1 でパースされる。
+
+    先頭のコマンドラインパラメータに -v2 オプションを使用した場合
+        v2 でパースされる。
+        ただし、v2 でサポートされていないコマンドラインパラメータが存在した場合には
+        警告を標準エラー出力に出力し v1 でパースする。
+
+    それ以外の場合
+        デフォルトで v1 でパースされる。
+        2018年3月には、デフォルトで v2 に変更予定。
+        ただし、デフォルト変更後も、v2 でサポートされていないコマンドラインパラメータが存在した場合には
+        警告を標準エラー出力に出力し v1 でパースする。
+
+    2018年4月以降に v1 は廃止予定で、コマンドラインパラメータによらず v2 でパースされる予定。
+
+
 バージョン番号の方針:
     xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
     (当面は 0.X.Y の形式)
@@ -488,6 +514,10 @@ Common options for developer:
             $ xsvutils data.tsv cut --col title   (オプションでの指定)
 
         xsvutilsはマイナーバージョンアップで新しいサブコマンドができる可能性がある。
+
+        v2 では `cut title` と書いても例え title というサブコマンドができても
+        title は cut のパラメータの扱いのままになる。
+
 
     2.  このヘルプに EXPERIMENTAL と書かれている箇所は
         まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
