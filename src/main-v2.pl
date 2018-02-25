@@ -590,7 +590,7 @@ if ($option_help) {
 }
 
 if ($help_stdout || $help_stderr) {
-    my $help_filepath = $TOOL_DIR . "/help.txt";
+    my $help_filepath = $TOOL_DIR . "/help-main.txt";
     if ($help_stderr) {
         open(IN, '<', $help_filepath) or die $!;
         my @lines = <IN>;
