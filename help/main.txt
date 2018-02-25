@@ -121,6 +121,9 @@ Common options:
                      ([DEPRECATED] --i-header も同じ。v2では --i-header は使えない)
     --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
 
+    --help           Print help information.
+    --version        Print version information.
+
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。
     入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。

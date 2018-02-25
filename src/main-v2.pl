@@ -32,11 +32,69 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
+
+################################################################################
+# parse command line options for help
+################################################################################
+
+my $option_help = undef;
+my $help_document = undef;
+
+sub getHelpFilePath {
+    my ($help_name) = @_;
+    return $TOOL_DIR . "/help-${help_name}.txt";
+}
+
+sub parseQueryForHelp {
+    my ($argv) = @_;
+    my @argv = @$argv;
+    $argv = \@argv;
+    while () {
+        my $a;
+        if (@$argv) {
+            $a = shift(@$argv);
+        } else {
+            last;
+        }
+
+        if ($a eq "help" || $a eq "--help") {
+            $option_help = 1;
+            if (defined($help_document)) {
+                if (@$argv) {
+                    $option_help = undef;
+                }
+            } else {
+                if (@$argv) {
+                    my $a2 = shift(@$argv);
+                    if (-e getHelpFilePath($a2) && !@$argv) {
+                        $help_document = $a2;
+                    }
+                }
+            }
+            last;
+        } elsif ($a eq "--version") {
+            if (!@$argv) {
+                $option_help = 1;
+                $help_document = "version";
+            }
+            last;
+        } else {
+            if (-e getHelpFilePath($a)) {
+                $help_document = $a;
+            } else {
+                last;
+            }
+        }
+    }
+}
+
+parseQueryForHelp(\@ARGV);
+
+
 ################################################################################
 # parse command line options
 ################################################################################
 
-my $option_help = undef;
 my $option_explain = undef;
 
 my $exists_args = '';
@@ -61,6 +119,7 @@ sub parseQuery {
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
     my ($argv) = @_;
+    my @argv = @$argv;
 
     ################################
     # オプション列からコマンド列を抽出する
@@ -568,7 +627,13 @@ sub parseQuery {
      $argv);
 }
 
-my ($command_seq, $tail_argv) = parseQuery(\@ARGV);
+my ($command_seq, $tail_argv);
+if ($option_help) {
+    ($command_seq, $tail_argv) = (undef, undef);
+} else {
+    ($command_seq, $tail_argv) = parseQuery(\@ARGV);
+}
+
 
 ################################################################################
 # help
@@ -590,7 +655,10 @@ if ($option_help) {
 }
 
 if ($help_stdout || $help_stderr) {
-    my $help_filepath = $TOOL_DIR . "/help-main.txt";
+    if (!$help_document) {
+        $help_document = "main";
+    }
+    my $help_filepath = getHelpFilePath($help_document);
     if ($help_stderr) {
         open(IN, '<', $help_filepath) or die $!;
         my @lines = <IN>;
@@ -604,6 +672,7 @@ if ($help_stdout || $help_stderr) {
         exec("cat", $help_filepath);
     }
 }
+
 
 ################################################################################
 # named pipe
