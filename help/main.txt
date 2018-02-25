@@ -109,6 +109,7 @@ Available subcommands:
         treetable                       [EXPERIMENTAL]
         crosstable                      [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
+        groupsum                        [EXPERIMENTAL]
 
 Common options:
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)

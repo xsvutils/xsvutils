@@ -326,6 +326,11 @@ sub parseQuery {
         } elsif ($a eq "wordsflags") {
             degradeMain();
 
+        } elsif ($a eq "groupsum") {
+            $next_command = {command => "groupsum"};
+            $last_command = $a;
+            $next_output_table = '';
+
         } elsif ($a eq "--tsv") {
             die "duplicated option: $a" if defined($format);
             $format = "tsv";
@@ -645,7 +650,11 @@ sub parseQuery {
                 die "subcommand \`wordsflags\` needs --flag option";
             }
             push(@$commands2, $c);
+
 =cut
+        } elsif ($command_name eq "groupsum") {
+            push(@$commands2, $curr_command);
+
         } else {
             die $command_name;
         }
@@ -1242,6 +1251,10 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/wordsflags.pl$flags"]);
 
 =cut
+        } elsif ($command_name eq "groupsum") {
+            my $option = "";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/groupsum.pl$option"]);
+
         } else {
             die $command_name;
         }
