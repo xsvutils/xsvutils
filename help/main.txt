@@ -1,7 +1,6 @@
 Utilities for handling separated value data
 
 EXAMPLES:
-
     $ xsvutils data.tsv                   # Print data to the terminal
     $ xsvutils data.csv                   # xsvutils can handle not only tsv format but csv format
     $ xsvutils data.tsv cut id,name       # Print only columns `id,name` to the terminal
@@ -10,8 +9,14 @@ EXAMPLES:
     $ xsvutils data.tsv cut id limit 100  # Print only column `id` of first 100 records
     $ xsvutils data.csv > data.tsv        # Convert to tsv format
 
-USAGE:
+DETAILS:
+    See each document.
+        $ git help <SUBCOMMAND>|<GUIDE>
 
+    <SUBCOMMAND> and <GUIDE> are following.
+        ####HELP_INDEX####
+
+USAGE:
     $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
 
     SUBCOMMAND には cut, limit などがある。(後述)
@@ -59,9 +64,7 @@ USAGE:
         オプションによる文字コード指定は未実装。
         SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
 
-
 Available subcommands:
-
     なにもしないサブコマンド
         cat                             Print data to the terminal
 
@@ -78,7 +81,8 @@ Available subcommands:
         cut <COLUMNS>                   Print specified columns
 
     列を追加するサブコマンド
-        insdate <SOURCE_COLUMN_NAME> <NEW_COLUMN_NAME>          [EXPERIMENTAL]
+        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
+        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
         addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [EXPERIMENTAL]
@@ -105,10 +109,9 @@ Available subcommands:
         treetable                       [EXPERIMENTAL]
         crosstable                      [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
-
+        groupsum                        [EXPERIMENTAL]
 
 Common options:
-
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
     --o-tsv          出力はTSVフォーマット (default when stdout is file)
@@ -120,6 +123,9 @@ Common options:
     --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
                      ([DEPRECATED] --i-header も同じ。v2では --i-header は使えない)
     --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
+
+    --help           Print help information.
+    --version        Print version information.
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。
@@ -143,318 +149,8 @@ Common options:
         $ xsvutils < FILENAME
         $ xsvutils cat < FILENAME
 
-
-Subcommand `cat`:
-
-     入力ファイルを単に出力する。
-
-     `cat` は省略可能なサブコマンドであり、省略してはいけないケースはない。
-
-
-Subcommand `head` and Subcommand `limit`:
-
-    Print first N records.
-
-    3 subcommands `take`, `head` and `limit` are the same subcommand.
-
-    Usage:
-        xsvutils head [<N>] [option...]
-
-    Parameter:
-        <N>       (optional) Print first N records (default is 10)
-
-    Options:
-        -n <N>    Print first N records (default is 10)
-
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME head -n 5
-        $ xsvutils FILENAME head -n5
-        $ xsvutils FILENAME head 5
-
-    他のサブコマンドと組み合わせることも可能で、以下は結果が同じになる。
-    つまり先頭の20レコード(ヘッダ行を除く)のid,nameの2列を表示する。
-
-        $ xsvutils FILENAME head 20 cut id,name
-        $ xsvutils FILENAME cut id,name head 20
-
-
-Subcommand `offset`:
-
-    Print all except first N records.
-    先頭のNレコードを除く残りを出力する。
-
-    2 subcommands `drop` and `offset` are the same subcommand.
-
-    Usage:
-        xsvutils offset [<N>] [option...]
-
-    Parameter:
-        <N>       (optional) Print all except first N records (default is 10)
-
-    Options:
-        -n <N>    Print all except first N records (default is 10)
-
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME offset -n 5
-        $ xsvutils FILENAME offset -n5
-        $ xsvutils FILENAME offset 5
-
-    他のサブコマンドとの組み合わせは `head` サブコマンドと同様に可能である。
-
-
-Subcommand `cut`:
-
-    Print specified columns.
-
-    Usage:
-        xsvutils cut [<COLUMNS>] [option...]
-
-    Parameter:
-        <COLUMNS>         (optional) Print <COLUMNS>
-
-    Options:
-        --col <COLUMNS>   Print <COLUMNS>
-
-    [v2] Either of COLUMNS parameter or --col option is required.
-
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME cut --col name1,name2,name3
-        $ xsvutils FILENAME cut --col name1..name3
-        $ xsvutils FILENAME cut name1,name2,name3
-        $ xsvutils FILENAME cut name1..name3
-
-    Retrieve only 3 columns: foo, col1, col20
-
-        $ xsvutils data.tsv cut --col foo,col1,col20
-
-    retrieve 21 columns: foo, col1, col2, col3, ... col20
-
-        $ xsvutils data.tsv cut --col foo,col1..col20
-
-
-Subcommand `addconst`:
-    [EXPERIMENTAL]
-
-    固定値のカラムを一番左に追加する
-
-    Options:
-        --name <COLUMN>
-        --value <VALUE>
-
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME addconst --name col21 --value 0
-        $ xsvutils FILENAME addconst --value 0 --name col21
-        $ xsvutils FILENAME addconst col21 0
-
-    他のサブコマンドと組み合わせることも可能。
-    以下の例では、FILENAME の id カラムと固定値 0 のカラム col0 の2カラムを表示する。
-
-        $ xsvutils FILENAME addconst col0 dummy cut id,col0
-
-
-Subcommand `uriparams`:
-    [EXPERIMENTAL]
-
-    Options:
-        --name  <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
-        --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
-        --name-list                値の代わりにパラメータ名を抜き出す。--name, --names と同時には指定できない
-        --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
-        --no-decode  パーセントエンコーディングのデコード処理を行わない
-        --multi-value-a     出力形式を複数値A形式とする (default is this)
-        --multi-value-b     出力形式を複数値B形式とする (default is multi-value-a)
-
-    複数値A形式: パラメータは同じ名前で複数の可能性があるが、
-    その場合には、値と値の間にセミコロン(;)を配置する。
-    パラメータが存在しない場合と値が空文字列の場合とを区別しない。
-    以下は --name q というオプションを指定した場合の例である。
-
-        query string       q
-        ---------------------------
-        r=xxx                        <- q string is empty
-        q=&r=xxx                     <- q string is empty
-        q=aaa&r=xxx        aaa
-        q=aaa&q=bbb&r=xxx  aaa;bbb
-        q=&q=bbb&r=xxx     bbb
-        q=aaa&q=&r=xxx     aaa
-        q=&q=&r=xxx                  <- q string is empty
-
-    複数値B形式: --multi-value-b オプションを付けた場合は、
-    指定のパラメータが存在しない場合と空文字列の値をを区別できるよう、
-    値ごとにその後ろにセミコロン(;)を使って値を出力する。
-    抽出結果は以下のようになる。
-
-        query string       q
-        ---------------------------
-        r=xxx                        <- q string is empty
-        q=&r=xxx           ;
-        q=aaa&r=xxx        aaa;
-        q=aaa&q=bbb&r=xxx  aaa;bbb;
-        q=&q=bbb&r=xxx     ;bbb;
-        q=aaa&q=&r=xxx     aaa;;
-        q=&q=&r=xxx        ;;
-
-
-Subcommand `parseuriparams`:
-    [DEPRECATED]
-
-    Options:
-        --col     <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
-        --cols    <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
-        --columns <PARAMETER_NAMES> query string から抜き出すパラメータ名を指定
-        --no-decode  パーセントエンコーディングのデコード処理を行わない
-
-
-Subcommand `update`:
-
-    セルを指定して値を更新する
-
-    Options:
-        --index <RECORD_INDEX>
-        --col <COLUMN>         カラム名を指定。カラム番号でも可
-        --value <VALUE>
-
-
-Subcommand `sort`:
-
-    Sort by specified columns.
-    ソートする
-
-    Usage:
-        xsvutils sort [<COLUMNS>] [option...]
-
-    Parameter:
-        <COLUMNS>       (optional) Sort by <COLUMNS>
-
-    Options:
-        --col <COLUMNS> Sort by <COLUMNS>
-
-    <COLUMNS> にはカンマ区切りで複数のカラム名を書くことができる。
-    カラム名の後に `:n` と書くと数値としてのソートをする。
-
-    以下は、第1ソートとして hitnum カラムを数値の昇順、
-    第2ソートとして date カラムをテキストの昇順にソートする例。
-
-        $ xsvutils data.tsv sort hitnum:n,date
-
-    指定したソートキーがすべて同じ値のレコードがあれば、もとのファイルに現れた順番を維持する(安定ソート)。
-
-
-Subcommand `paste`:
-    [EXPERIMENTAL]
-
-    Merge records of two inputs.
-
-
-Subcommand `join`:
-    [EXPERIMENTAL]
-
-    Join records of two inputs.
-
-    Options:
-        --right
-        --inner
-        --left-outer
-        --right-outer
-        --full-outer
-
-
-Subcommand `union`:
-
-
-Subcommand `wcl`:
-
-    Print record count excluding header line.
-    レコード数を表示する。ヘッダ行は含まない。
-
-    データが大きい場合には、標準エラー出力に進捗表示をする。
-
-
-Subcommand `header`:
-
-    カラムの一覧を表示する。
-
-
-Subcommand `summary`:
-
-    データのカラムごとのサマリを表示する。
-
-    出力は右から、カラムの位置、カラム名、データが含まれている割合、値の例の列挙である。
-
-    データが大きい場合には、標準エラー出力に進捗表示をする。
-    Ctrl-C で集計処理を中止し、集計したところまでを表示する。
-
-
-Subcommand `countcols`:
-
-    カラム数を集計する。ヘッダ行も含めて集計する。
-
-    データのカラム数が不明な場合に、正しいカラム数を推測するための参考情報になる。
-
-    以下の出力例は、1行目が59カラムあり、しかしほとんどの列が56カラムであり、
-    もっともカラム数の少ないのは51カラムであることを示す。
-
-        | cols | records | ratio  | header |
-        | 51   | 439     | 0.36%  |        |
-        | 54   | 239     | 0.20%  |        |
-        | 55   | 169     | 0.14%  |        |
-        | 56   | 118485  | 97.36% |        |
-        | 57   | 1423    | 1.17%  |        |
-        | 58   | 846     | 0.70%  |        |
-        | 59   | 96      | 0.08%  | *      |
-
-    データが大きい場合には、標準エラー出力に進捗表示をする。
-    Ctrl-C で集計処理を中止し、集計したところまでを表示する。
-
-
-Subcommand `facetcount`:
-
-    カラムそれぞれのファセットカウントを集計する。
-
-    Options:
-        --multi-value-a  複数値A形式に対応した集計をする
-
-
-Subcommand `treetable`:
-    [EXPERIMENTAL]
-
-    左のカラムから順番にカラム組み合わせのファセットカウントを集計する。
-
-    Options:
-        --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
-                         デフォルトは10である。
-        --multi-value-a  複数値A形式に対応した集計をする
-
-    例
-
-        $ xsvutils data.tsv cut categoryA,categoryB treetable --top 20,3
-
-
-Subcommand `crosstable`:
-    [EXPERIMENTAL]
-
-    左から2カラムでクロス集計する。
-
-    Options:
-        --top <NUMS>     コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
-                         デフォルトは10である。
-        --multi-value-a  複数値A形式に対応した集計をする
-
-
-Subcommand `wordsflags`:
-    [EXPERIMENTAL]
-
-    1列目の各値に対する、2列目の値のファセットカウントを集計する。
-
-
 Common options for developer:
-
     --explain 実行するスクリプトを標準エラー出力に出力する
-
 
 v1 と v2:
     コマンドラインパラメータのパースの実装に v1 と v2 がある。
@@ -480,7 +176,6 @@ v1 と v2:
 
     2018年4月以降に v1 は廃止予定で、コマンドラインパラメータによらず v2 でパースされる予定。
 
-
 バージョン番号の方針:
     xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
     (当面は 0.X.Y の形式)
@@ -496,7 +191,6 @@ v1 と v2:
     (当面は Z はバージョン番号に含めない)
 
     ただし、ここでいう互換性があるかどうかは、下記の互換性に関する注意点を守っている場合に限る。
-
 
 互換性に関する注意点:
 
@@ -530,7 +224,6 @@ v1 と v2:
 
         xsvutilsはメジャーバージョンアップで DEPRECATED と書かれている仕様を、
         廃止する可能性がある。
-
 
 License:
     This software is released under the MIT License, see LICENSE.txt.

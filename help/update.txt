@@ -1,0 +1,9 @@
+update subcommand
+
+    セルを指定して値を更新する
+
+    Options:
+        --index <RECORD_INDEX>
+        --col <COLUMN>         カラム名を指定。カラム番号でも可
+        --value <VALUE>
+

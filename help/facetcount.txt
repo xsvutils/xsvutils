@@ -1,0 +1,7 @@
+facetcount subcommand
+
+    カラムそれぞれのファセットカウントを集計する
+
+    Options:
+        --multi-value-a  複数値A形式に対応した集計をする
+

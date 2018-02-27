@@ -4,18 +4,18 @@ use utf8;
 
 use Time::Local qw/timelocal/;
 
-my $new_column_name = undef;
-my $source_column_name = undef;
+my $dst_column_name = undef;
+my $src_column_name = undef;
 my $start_day = undef;
 
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--name") {
         die "option --name needs an argument" unless (@ARGV);
-        $new_column_name = shift(@ARGV);
+        $dst_column_name = shift(@ARGV);
     } elsif ($a eq "--src") {
         die "option --src needs an argument" unless (@ARGV);
-        $source_column_name = shift(@ARGV);
+        $src_column_name = shift(@ARGV);
     } elsif ($a eq "--start-day") {
         die "option --start-day needs an argument" unless (@ARGV);
         $start_day = shift(@ARGV);
@@ -24,12 +24,12 @@ while (@ARGV) {
     }
 }
 
-die "subcommand `insweek` requires option --name" unless defined $new_column_name;
-die "subcommand `insweek` requires option --source" unless defined $source_column_name;
+die "subcommand `insweek` requires option --name" unless defined $dst_column_name;
+die "subcommand `insweek` requires option --src" unless defined $src_column_name;
 die "subcommand `insweek` requires option --start-day" unless defined $start_day;
 
 my $headers = undef;
-my $source_column_index = undef;
+my $src_column_index = undef;
 
 {
     my $line = <STDIN>;
@@ -39,16 +39,16 @@ my $source_column_index = undef;
     $headers = \@cols;
 
     for (my $i = 0; $i < @$headers; $i++) {
-        if ($headers->[$i] eq $source_column_name) {
-            $source_column_index = $i;
+        if ($headers->[$i] eq $src_column_name) {
+            $src_column_index = $i;
             last;
         }
     }
-    if (!defined($source_column_index)) {
-        die "Column not found: $source_column_name\n";
+    if (!defined($src_column_index)) {
+        die "Column not found: $src_column_name\n";
     }
 
-    print $new_column_name . "\t" . $line . "\n";
+    print $dst_column_name . "\t" . $line . "\n";
 }
 
 while (my $line = <STDIN>) {
@@ -56,8 +56,8 @@ while (my $line = <STDIN>) {
     my @cols = split(/\t/, $line, -1);
 
     my $value = "";
-    if (defined($cols[$source_column_index])) {
-        $value = $cols[$source_column_index];
+    if (defined($cols[$src_column_index])) {
+        $value = $cols[$src_column_index];
     }
 
     my $result = "";

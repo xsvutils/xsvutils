@@ -1,0 +1,32 @@
+cut subcommand
+
+    Print specified columns.
+
+    Usage:
+        xsvutils cut [<COLUMNS>] [option...]
+
+    Parameter:
+        <COLUMNS>         (optional) Print <COLUMNS>
+
+    Options:
+        --cols <COLUMNS>   Print <COLUMNS> (--col, --columns are the same)
+
+    Either of COLUMNS parameter or --col option is required.
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME cut --col name1,name2,name3
+        $ xsvutils FILENAME cut --col name1..name3
+        $ xsvutils FILENAME cut name1,name2,name3
+        $ xsvutils FILENAME cut name1..name3
+
+    Examples:
+
+        Retrieve only 3 columns: foo, col1, col20
+
+            $ xsvutils data.tsv cut --col foo,col1,col20
+
+        retrieve 21 columns: foo, col1, col2, col3, ... col20
+
+            $ xsvutils data.tsv cut --col foo,col1..col20
+

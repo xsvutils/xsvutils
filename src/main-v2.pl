@@ -32,11 +32,69 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
+
+################################################################################
+# parse command line options for help
+################################################################################
+
+my $option_help = undef;
+my $help_document = undef;
+
+sub getHelpFilePath {
+    my ($help_name) = @_;
+    return $TOOL_DIR . "/help-${help_name}.txt";
+}
+
+sub parseQueryForHelp {
+    my ($argv) = @_;
+    my @argv = @$argv;
+    $argv = \@argv;
+    while () {
+        my $a;
+        if (@$argv) {
+            $a = shift(@$argv);
+        } else {
+            last;
+        }
+
+        if ($a eq "help" || $a eq "--help") {
+            $option_help = 1;
+            if (defined($help_document)) {
+                if (@$argv) {
+                    $option_help = undef;
+                }
+            } else {
+                if (@$argv) {
+                    my $a2 = shift(@$argv);
+                    if (-e getHelpFilePath($a2) && !@$argv) {
+                        $help_document = $a2;
+                    }
+                }
+            }
+            last;
+        } elsif ($a eq "--version") {
+            if (!@$argv) {
+                $option_help = 1;
+                $help_document = "version";
+            }
+            last;
+        } else {
+            if (-e getHelpFilePath($a)) {
+                $help_document = $a;
+            } else {
+                last;
+            }
+        }
+    }
+}
+
+parseQueryForHelp(\@ARGV);
+
+
 ################################################################################
 # parse command line options
 ################################################################################
 
-my $option_help = undef;
 my $option_explain = undef;
 
 my $exists_args = '';
@@ -61,6 +119,7 @@ sub parseQuery {
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
     my ($argv) = @_;
+    my @argv = @$argv;
 
     ################################
     # オプション列からコマンド列を抽出する
@@ -113,8 +172,19 @@ sub parseQuery {
             $curr_command->{cols} = shift(@$argv);
 
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
-            die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = $a;
+
+        } elsif ($command_name eq "insdate" && !defined($curr_command->{src})) {
+            $curr_command->{src} = $a;
+
+        } elsif ($command_name eq "insdate" && !defined($curr_command->{dst})) {
+            $curr_command->{dst} = $a;
+
+        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{src})) {
+            $curr_command->{src} = $a;
+
+        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{dst})) {
+            $curr_command->{dst} = $a;
 
         } elsif ($command_name eq "paste" && $a eq "--right") {
             degradeMain();
@@ -129,7 +199,6 @@ sub parseQuery {
             ($curr_command->{file}, $argv) = parseQuery($argv);
 
         } elsif ($command_name eq "paste" && !defined($curr_command->{file})) {
-            die "duplicated option $a" if defined($curr_command->{file});
             $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
@@ -168,10 +237,15 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "insdate") {
-            degradeMain();
+            $next_command = {command => "insdate", src => undef, dst => undef};
+            $last_command = $a;
 
         } elsif ($a eq "insweek") {
             degradeMain();
+
+        } elsif ($a eq "insdeltasec") {
+            $next_command = {command => "insdeltasec", src => undef, dst => undef};
+            $last_command = $a;
 
         } elsif ($a eq "addconst") {
             degradeMain();
@@ -251,6 +325,11 @@ sub parseQuery {
 
         } elsif ($a eq "wordsflags") {
             degradeMain();
+
+        } elsif ($a eq "groupsum") {
+            $next_command = {command => "groupsum"};
+            $last_command = $a;
+            $next_output_table = '';
 
         } elsif ($a eq "--tsv") {
             die "duplicated option: $a" if defined($format);
@@ -389,15 +468,17 @@ sub parseQuery {
                 die "subcommand \`cut\` needs --cols option";
             }
             push(@$commands2, $curr_command);
-=comment
+
         } elsif ($command_name eq "insdate") {
-            if (!defined($curr_command->{2])) {
+            if (!defined($curr_command->{src})) {
                 die "subcommand \`insdate\` needs --src option";
             }
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`insdate\` needs --name option";
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`insdate\` needs --dst option";
             }
-            push(@$commands2, ["insdate", $curr_command->{1], $curr_command->{2]]);
+            push(@$commands2, $curr_command);
+
+=comment
         } elsif ($command_name eq "insweek") {
             if (!defined($curr_command->{2])) {
                 die "subcommand \`insweek\` needs --src option";
@@ -409,6 +490,18 @@ sub parseQuery {
                 die "subcommand \`insweek\` needs --name option";
             }
             push(@$commands2, ["insweek", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
+
+=cut
+        } elsif ($command_name eq "insdeltasec") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`insdeltasec\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`insdeltasec\` needs --dst option";
+            }
+            push(@$commands2, $curr_command);
+
+=comment
         } elsif ($command_name eq "addconst") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`addconst\` needs --name option";
@@ -504,6 +597,7 @@ sub parseQuery {
                 die "subcommand \`paste\` needs --file option";
             }
             push(@$commands2, $curr_command);
+
 =comment
         } elsif ($command_name eq "join") {
             if (!defined($curr_command->{1])) {
@@ -518,17 +612,22 @@ sub parseQuery {
 =cut
         } elsif ($command_name eq "wcl") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "header") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "summary") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "countcols") {
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "facetcount") {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "";
             }
             push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "treetable") {
             if (defined($curr_command->{top})) {
                 my @topCount = split(/,/, $curr_command->{top});
@@ -542,6 +641,7 @@ sub parseQuery {
                 $curr_command->{multi_value} = "";
             }
             push(@$commands2, $curr_command);
+
 =comment
         } elsif ($command_name eq "crosstable") {
             push(@$commands2, ["crosstable", $curr_command->{1], $curr_command->{2]]);
@@ -550,7 +650,11 @@ sub parseQuery {
                 die "subcommand \`wordsflags\` needs --flag option";
             }
             push(@$commands2, $c);
+
 =cut
+        } elsif ($command_name eq "groupsum") {
+            push(@$commands2, $curr_command);
+
         } else {
             die $command_name;
         }
@@ -568,7 +672,13 @@ sub parseQuery {
      $argv);
 }
 
-my ($command_seq, $tail_argv) = parseQuery(\@ARGV);
+my ($command_seq, $tail_argv);
+if ($option_help) {
+    ($command_seq, $tail_argv) = (undef, undef);
+} else {
+    ($command_seq, $tail_argv) = parseQuery(\@ARGV);
+}
+
 
 ################################################################################
 # help
@@ -590,7 +700,10 @@ if ($option_help) {
 }
 
 if ($help_stdout || $help_stderr) {
-    my $help_filepath = $TOOL_DIR . "/help.txt";
+    if (!$help_document) {
+        $help_document = "main";
+    }
+    my $help_filepath = getHelpFilePath($help_document);
     if ($help_stderr) {
         open(IN, '<', $help_filepath) or die $!;
         my @lines = <IN>;
@@ -604,6 +717,7 @@ if ($help_stdout || $help_stderr) {
         exec("cat", $help_filepath);
     }
 }
+
 
 ################################################################################
 # named pipe
@@ -968,18 +1082,25 @@ sub build_ircode_command {
             my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
-=comment
         } elsif ($command_name eq "insdate") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            my $src = escape_for_bash($curr_command->{2]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $name --src $src"]);
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $dst --src $src"]);
 
+=comment
         } elsif ($command_name eq "insweek") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $src = escape_for_bash($curr_command->{2]);
             my $start_day = escape_for_bash($curr_command->{3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insweek.pl --name $name --src $src --start-day $start_day"]);
 
+=cut
+        } elsif ($command_name eq "insdeltasec") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdeltasec.pl --src $src --dst $dst"]);
+
+=comment
         } elsif ($command_name eq "addconst") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $value = escape_for_bash($curr_command->{2]);
@@ -1130,6 +1251,10 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/wordsflags.pl$flags"]);
 
 =cut
+        } elsif ($command_name eq "groupsum") {
+            my $option = "";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/groupsum.pl$option"]);
+
         } else {
             die $command_name;
         }

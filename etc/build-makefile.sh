@@ -1,6 +1,6 @@
 
 
-TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh|version\.txt)' | sed 's/^/target\//g') | LC_ALL=C sort))
+TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g'; echo target/help-version.txt) | LC_ALL=C sort))
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
 RM_TARGET=$(diff -u <(ls $TARGET_SOURCES 2>/dev/null) <(ls target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
@@ -37,7 +37,7 @@ var/TARGET_VERSION_HASH: $TARGET_SOURCES
 
 EOF
 
-for f in $(ls src | grep -v -E -e '(boot\.sh|help\.txt|version\.txt)'); do
+for f in $(ls src | grep -v -E -e '(boot\.sh)'); do
 cat <<EOF
 target/$f: src/$f
 	cp src/$f target/$f
@@ -46,11 +46,30 @@ EOF
 done
 
 cat <<EOF
-target/help.txt: src/help.txt src/version.txt
-	(cat src/version.txt; echo; cat src/help.txt) > target/help.txt.tmp
-	mv target/help.txt.tmp target/help.txt
+target/help-version.txt: version.txt
+	cp version.txt target/help-version.txt
 
 EOF
+
+ls help/*.txt | grep -v 'main\.txt' | sed -E 's/^help\/([^.]+)\.txt$/\1/g' | column -c 80 > var/help-list.txt.tmp
+if [ ! -e var/help-list.txt.tmp ] || ! diff -q var/help-list.txt var/help-list.txt.tmp >/dev/null; then
+    mv var/help-list.txt.tmp var/help-list.txt
+fi
+
+cat <<EOF
+target/help-main.txt: etc/build-help-main.sh help/main.txt var/help-list.txt
+	bash etc/build-help-main.sh > target/help-main.txt.tmp
+	mv target/help-main.txt.tmp target/help-main.txt
+
+EOF
+
+for f in $(ls help | grep -v 'main\.txt'); do
+cat <<EOF
+target/help-$f: help/$f
+	cp help/$f target/help-$f
+
+EOF
+done
 
 
 cat <<EOF

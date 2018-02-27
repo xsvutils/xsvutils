@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## version 0.2.1 (2018-02-27)
+- add --version option
+- split help document
+- add some subcommands on v2
+- add `insdeltasec` subcommand
+- add `groupsum` subcommand
+
 ## version 0.2.0 (2018-02-25)
 - add -v1, -v2 options
 - add some subcommands on v2

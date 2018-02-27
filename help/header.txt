@@ -1,0 +1,4 @@
+header subcommand
+
+    カラムの一覧を表示する
+
