@@ -1424,7 +1424,7 @@ sub build_ircode_command {
         } elsif ($command eq "insdate") {
             my $name  = escape_for_bash($t->[1]);
             my $src = escape_for_bash($t->[2]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $name --src $src"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl date --name $name --src $src"]);
 
         } elsif ($command eq "insweek") {
             my $name  = escape_for_bash($t->[1]);

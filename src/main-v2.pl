@@ -174,6 +174,12 @@ sub parseQuery {
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
             $curr_command->{cols} = $a;
 
+        } elsif ($command_name eq "inshour" && !defined($curr_command->{src})) {
+            $curr_command->{src} = $a;
+
+        } elsif ($command_name eq "inshour" && !defined($curr_command->{dst})) {
+            $curr_command->{dst} = $a;
+
         } elsif ($command_name eq "insdate" && !defined($curr_command->{src})) {
             $curr_command->{src} = $a;
 
@@ -234,6 +240,10 @@ sub parseQuery {
 
         } elsif ($a eq "cut") {
             $next_command = {command => "cut", cols => undef};
+            $last_command = $a;
+
+        } elsif ($a eq "inshour") {
+            $next_command = {command => "inshour", src => undef, dst => undef};
             $last_command = $a;
 
         } elsif ($a eq "insdate") {
@@ -466,6 +476,15 @@ sub parseQuery {
         if ($command_name eq "cut") {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "inshour") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`inshour\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`inshour\` needs --dst option";
             }
             push(@$commands2, $curr_command);
 
@@ -1082,10 +1101,15 @@ sub build_ircode_command {
             my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
+        } elsif ($command_name eq "inshour") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl hour --name $dst --src $src"]);
+
         } elsif ($command_name eq "insdate") {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $dst --src $src"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl date --name $dst --src $src"]);
 
 =comment
         } elsif ($command_name eq "insweek") {
