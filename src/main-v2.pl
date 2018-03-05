@@ -211,6 +211,9 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{multi_value});
             $curr_command->{multi_value} = "a";
 
+        } elsif ($command_name eq "facetcount" && ($a eq "--weight")) {
+            $curr_command->{weight} = 1;
+
         } elsif ($command_name eq "treetable" && $a eq "--top") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{top});
@@ -321,7 +324,7 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "facetcount") {
-            $next_command = {command => "facetcount", multi_value => undef};
+            $next_command = {command => "facetcount", multi_value => undef, weight => ''};
             $last_command = $a;
             $next_output_table = '';
 
@@ -1243,6 +1246,9 @@ sub build_ircode_command {
             my $option = "";
             if ($curr_command->{multi_value} eq "a") {
                 $option .= " --multi-value-a";
+            }
+            if ($curr_command->{weight}) {
+                $option .= " --weight";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
