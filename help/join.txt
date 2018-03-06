@@ -1,0 +1,12 @@
+join subcommand
+    [EXPERIMENTAL]
+
+    Join records of two inputs.
+
+    Options:
+        --right
+        --inner
+        --left-outer
+        --right-outer
+        --full-outer
+

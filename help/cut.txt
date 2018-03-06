@@ -3,7 +3,7 @@ cut subcommand
     Print specified columns.
 
     Usage:
-        xsvutils cut [<COLUMNS>] [option...]
+        $ xsvutils cut [<COLUMNS>] [option...]
 
     Parameter:
         <COLUMNS>         (optional) Print <COLUMNS>

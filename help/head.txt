@@ -5,7 +5,7 @@ head, limit subcommand
     2 subcommands `head` and `limit` are the same subcommand.
 
     Usage:
-        xsvutils head [<N>] [option...]
+        $ xsvutils head [<N>] [option...]
 
     Parameter:
         <N>       (optional) Print first N records (default is 10)

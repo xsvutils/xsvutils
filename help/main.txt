@@ -9,61 +9,6 @@ EXAMPLES:
     $ xsvutils data.tsv cut id limit 100  # Print only column `id` of first 100 records
     $ xsvutils data.csv > data.tsv        # Convert to tsv format
 
-DETAILS:
-    See each document.
-        $ git help <SUBCOMMAND>|<GUIDE>
-
-    <SUBCOMMAND> and <GUIDE> are following.
-        ####HELP_INDEX####
-
-USAGE:
-    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
-
-    SUBCOMMAND には cut, limit などがある。(後述)
-
-    SUBCOMMAND は内容により複数を組み合わせることも可能。
-
-    以下の例では cut がサブコマンド、 id,name がcutサブコマンドのパラメータである。
-
-        $ xsvutils data.tsv cut id,name
-
-    以下の例では cut がサブコマンド、 id がcutサブコマンドのパラメータであり、
-    limit が次のサブコマンド、 100 がlimitサブコマンドのパラメータである。
-
-        $ xsvutils data.tsv cut id limit 100
-
-    標準出力が端末であれば端末に見やすく表示し、
-    標準出力がファイル等であればTSVフォーマットで出力する。
-    --o-csv オプションを指定し、標準出力が端末でない場合はCSVフォーマットで出力する。
-
-    SUBCOMMAND 省略時はcatが指定されたものと同じで、入力データの中身を加工せずにそのまま出力する。
-
-    サブコマンドによってはオプションやパラメータを受け付ける。
-
-    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った同等の書き方も可能。
-
-        $ xsvutils data.tsv cut title         (パラメータでの指定)
-        $ xsvutils data.tsv cut --col title   (オプションでの指定)
-
-    都度コマンドラインからコマンドを入力する際には1つ目の書き方が短くて便利だが、
-    パラメータにどんな値が来るかわからない場合には別の解釈をされないようにオプションでの指定が必要。
-
-        $ xsvutils data.tsv cut --col $COLUMN
-
-    以下のように書いてしまうと、 $COLUMN が head という値の場合に、
-    それが cut のパラメータではなく head というサブコマンドになってしまうので、避けること。
-
-        $ xsvutils data.tsv cut $COLUMN
-
-
-    Character encoding:
-
-        入力の文字コードは UTF-8 が原則。
-
-        [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
-        オプションによる文字コード指定は未実装。
-        SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
-
 Available subcommands:
     なにもしないサブコマンド
         cat                             Print data to the terminal
@@ -112,6 +57,53 @@ Available subcommands:
         wordsflags                      [EXPERIMENTAL]
         groupsum                        [EXPERIMENTAL]
 
+DETAILS:
+    See each document.
+        $ xsvutils help <DOCUMENT>
+
+    <DOCUMENT> are following.
+        ####HELP_INDEX####
+
+USAGE:
+    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
+
+    SUBCOMMAND には cut, limit などがある。
+
+    SUBCOMMAND は内容により複数を組み合わせることも可能。
+
+    以下の例では cut がサブコマンド、 id,name がcutサブコマンドのパラメータである。
+
+        $ xsvutils data.tsv cut id,name
+
+    以下の例では cut がサブコマンド、 id がcutサブコマンドのパラメータであり、
+    limit が次のサブコマンド、 100 がlimitサブコマンドのパラメータである。
+
+        $ xsvutils data.tsv cut id limit 100
+
+    標準出力が端末であれば端末に見やすく表示し、
+    標準出力がファイル等であればTSVフォーマットで出力する。
+    --o-csv オプションを指定し、標準出力が端末でない場合はCSVフォーマットで出力する。
+
+    SUBCOMMAND 省略時はcatが指定されたものと同じで、入力データの中身を加工せずにそのまま出力する。
+
+    サブコマンドによってはオプションやパラメータを受け付ける。
+
+    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った同等の書き方も可能。
+
+        $ xsvutils data.tsv cut title         (パラメータでの指定)
+        $ xsvutils data.tsv cut --col title   (オプションでの指定)
+
+    都度コマンドラインからコマンドを入力する際には1つ目の書き方が短くて便利だが、
+    パラメータにどんな値が来るかわからない場合には別の解釈をされないようにオプションでの指定が必要。
+
+        $ xsvutils data.tsv cut --col $COLUMN
+
+    以下のように書いてしまうと、 $COLUMN が head という値の場合に、
+    それが cut のパラメータではなく head というサブコマンドになってしまうので、避けること。
+
+        $ xsvutils data.tsv cut $COLUMN
+
+
 Common options:
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
@@ -152,6 +144,13 @@ Common options:
 
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
+
+Character encoding:
+    入力の文字コードは UTF-8 が原則。
+
+    [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
+    オプションによる文字コード指定は未実装。
+    SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
 
 v1 と v2:
     コマンドラインパラメータのパースの実装に v1 と v2 がある。
