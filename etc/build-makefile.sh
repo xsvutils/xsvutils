@@ -1,6 +1,6 @@
 
 
-TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g'; echo target/help-version.txt) | LC_ALL=C sort))
+TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g'; echo target/help-guide-version.txt; echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
 RM_TARGET=$(diff -u <(ls $TARGET_SOURCES 2>/dev/null) <(ls target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
@@ -46,20 +46,35 @@ EOF
 done
 
 cat <<EOF
-target/help-version.txt: version.txt
-	cp version.txt target/help-version.txt
+target/help-guide-version.txt: version.txt
+	cp version.txt target/help-guide-version.txt
+
+target/help-guide-changelog.txt: CHANGELOG.md
+	cp CHANGELOG.md target/help-guide-changelog.txt
 
 EOF
 
-ls help/cmd-*.txt | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g' | column -c 80 > var/help-list.txt.tmp
-if [ ! -e var/help-list.txt.tmp ] || ! diff -q var/help-list.txt var/help-list.txt.tmp >/dev/null; then
-    mv var/help-list.txt.tmp var/help-list.txt
+(
+    ls help/cmd-*.txt | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g'
+) | sort | column -c 80 > var/help-cmd-list.txt.tmp
+if [ ! -e var/help-cmd-list.txt.tmp ] || ! diff -q var/help-cmd-list.txt var/help-cmd-list.txt.tmp >/dev/null; then
+    mv var/help-cmd-list.txt.tmp var/help-cmd-list.txt
+fi
+
+(
+    #ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
+    echo version
+    echo changelog
+) | sort | column -c 80 > var/help-guide-list.txt.tmp
+if [ ! -e var/help-guide-list.txt.tmp ] || ! diff -q var/help-guide-list.txt var/help-guide-list.txt.tmp >/dev/null; then
+    mv var/help-guide-list.txt.tmp var/help-guide-list.txt
 fi
 
 cat <<EOF
-target/help-main.txt: etc/build-help-main.sh help/main.txt var/help-list.txt
-	bash etc/build-help-main.sh > target/help-main.txt.tmp
-	mv target/help-main.txt.tmp target/help-main.txt
+target/help-main.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/main.txt var/help-cmd-list.txt var/help-guide-list.txt
+	bash etc/build-help-main-1.sh help/main.txt > var/help-main.txt.tmp.1
+	bash etc/build-help-main-2.sh var/help-main.txt.tmp.1 > var/help-main.txt.tmp.2
+	cp var/help-main.txt.tmp.2 target/help-main.txt
 
 EOF
 

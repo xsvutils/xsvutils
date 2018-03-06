@@ -46,6 +46,8 @@ sub getHelpFilePath {
         return "$TOOL_DIR/help-main.txt";
     } elsif (-e "$TOOL_DIR/help-cmd-${help_name}.txt") {
         return "$TOOL_DIR/help-cmd-${help_name}.txt";
+    } elsif (-e "$TOOL_DIR/help-guide-${help_name}.txt") {
+        return "$TOOL_DIR/help-guide-${help_name}.txt";
     } else {
         return undef;
     }
