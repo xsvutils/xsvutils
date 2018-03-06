@@ -51,7 +51,7 @@ target/help-version.txt: version.txt
 
 EOF
 
-ls help/*.txt | grep -v 'main\.txt' | sed -E 's/^help\/([^.]+)\.txt$/\1/g' | column -c 80 > var/help-list.txt.tmp
+ls help/cmd-*.txt | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g' | column -c 80 > var/help-list.txt.tmp
 if [ ! -e var/help-list.txt.tmp ] || ! diff -q var/help-list.txt var/help-list.txt.tmp >/dev/null; then
     mv var/help-list.txt.tmp var/help-list.txt
 fi

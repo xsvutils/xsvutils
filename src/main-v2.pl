@@ -42,7 +42,13 @@ my $help_document = undef;
 
 sub getHelpFilePath {
     my ($help_name) = @_;
-    return $TOOL_DIR . "/help-${help_name}.txt";
+    if ($help_name eq "main") {
+        return "$TOOL_DIR/help-main.txt";
+    } elsif (-e "$TOOL_DIR/help-cmd-${help_name}.txt") {
+        return "$TOOL_DIR/help-cmd-${help_name}.txt";
+    } else {
+        return undef;
+    }
 }
 
 sub parseQueryForHelp {
@@ -66,7 +72,7 @@ sub parseQueryForHelp {
             } else {
                 if (@$argv) {
                     my $a2 = shift(@$argv);
-                    if (-e getHelpFilePath($a2) && !@$argv) {
+                    if (getHelpFilePath($a2) && !@$argv) {
                         $help_document = $a2;
                     }
                 }
@@ -79,7 +85,7 @@ sub parseQueryForHelp {
             }
             last;
         } else {
-            if (-e getHelpFilePath($a)) {
+            if (getHelpFilePath($a)) {
                 $help_document = $a;
             } else {
                 last;
