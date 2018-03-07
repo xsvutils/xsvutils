@@ -9,17 +9,70 @@ EXAMPLES:
     $ xsvutils data.tsv cut id limit 100  # Print only column `id` of first 100 records
     $ xsvutils data.csv > data.tsv        # Convert to tsv format
 
+Available subcommands:
+    なにもしないサブコマンド
+        cat                             Print data to the terminal
+
+    レコード選択に関するサブコマンド
+        head [<N>]                      Print first N records
+        limit [<N>]                     Print first N records
+        offset [<N>]                    Print all except first N records
+        take [<N>]                      [DEPRECATED] Print first N records
+        drop [<N>]                      [DEPRECATED] Print all except first N records
+        where <CONDITION>               [EXPERIMENTAL]
+        filter <CONDITION>              [EXPERIMENTAL]
+
+    列の選択に関するサブコマンド
+        cut <COLUMNS>                   Print specified columns
+
+    列を追加するサブコマンド
+        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
+        inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
+        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
+        addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
+        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
+        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [EXPERIMENTAL]
+        addlinenum2 <NEW_COLUMN_NAME>                           [EXPERIMENTAL]
+        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [EXPERIMENTAL]
+        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [EXPERIMENTAL]
+        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [EXPERIMENTAL]
+        uriparams <NAMES>                                       [EXPERIMENTAL]
+        parseuriparams <NAMES>                                  [DEPRECATED]
+
+    その他のデータを加工するコマンド
+        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+        sort [<COLUMNS>]                ソートする
+        paste <OTHER_FILE>              [EXPERIMENTAL]
+        join <OTHER_FILE>               [EXPERIMENTAL]
+        union <OTHER_FILE>              [EXPERIMENTAL]
+
+    集計するコマンド
+        wcl                             レコード数を表示する
+        header                          カラムの一覧を表示する
+        summary                         データのサマリを表示する
+        countcols                       カラム数を集計する
+        facetcount                      カラムそれぞれのファセットカウントを集計する
+        treetable                       [EXPERIMENTAL]
+        crosstable                      [EXPERIMENTAL]
+        wordsflags                      [EXPERIMENTAL]
+        groupsum                        [EXPERIMENTAL]
+
 DETAILS:
     See each document.
-        $ git help <SUBCOMMAND>|<GUIDE>
+        $ xsvutils help <DOCUMENT>
 
-    <SUBCOMMAND> and <GUIDE> are following.
-        ####HELP_INDEX####
+    <DOCUMENT> is either subcommand name or other document name.
+
+    Subcommand names are following.
+        ####HELP_CMD_INDEX####
+
+    Other <DOCUMENT> are following.
+        ####HELP_GUIDE_INDEX####
 
 USAGE:
     $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
 
-    SUBCOMMAND には cut, limit などがある。(後述)
+    SUBCOMMAND には cut, limit などがある。
 
     SUBCOMMAND は内容により複数を組み合わせることも可能。
 
@@ -55,61 +108,6 @@ USAGE:
 
         $ xsvutils data.tsv cut $COLUMN
 
-
-    Character encoding:
-
-        入力の文字コードは UTF-8 が原則。
-
-        [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
-        オプションによる文字コード指定は未実装。
-        SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
-
-Available subcommands:
-    なにもしないサブコマンド
-        cat                             Print data to the terminal
-
-    レコード選択に関するサブコマンド
-        head [<N>]                      Print first N records
-        limit [<N>]                     Print first N records
-        offset [<N>]                    Print all except first N records
-        take [<N>]                      [DEPRECATED] Print first N records
-        drop [<N>]                      [DEPRECATED] Print all except first N records
-        where <CONDITION>               [EXPERIMENTAL]
-        filter <CONDITION>              [EXPERIMENTAL]
-
-    列の選択に関するサブコマンド
-        cut <COLUMNS>                   Print specified columns
-
-    列を追加するサブコマンド
-        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
-        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
-        addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
-        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
-        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [EXPERIMENTAL]
-        addlinenum2 <NEW_COLUMN_NAME>                           [EXPERIMENTAL]
-        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [EXPERIMENTAL]
-        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [EXPERIMENTAL]
-        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [EXPERIMENTAL]
-        uriparams <NAMES>                                       [EXPERIMENTAL]
-        parseuriparams <NAMES>                                  [DEPRECATED]
-
-    その他のデータを加工するコマンド
-        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
-        sort [<COLUMNS>]                ソートする
-        paste <OTHER_FILE>              [EXPERIMENTAL]
-        join <OTHER_FILE>               [EXPERIMENTAL]
-        union <OTHER_FILE>              [EXPERIMENTAL]
-
-    集計するコマンド
-        wcl                             レコード数を表示する
-        header                          カラムの一覧を表示する
-        summary                         データのサマリを表示する
-        countcols                       カラム数を集計する
-        facetcount                      カラムそれぞれのファセットカウントを集計する
-        treetable                       [EXPERIMENTAL]
-        crosstable                      [EXPERIMENTAL]
-        wordsflags                      [EXPERIMENTAL]
-        groupsum                        [EXPERIMENTAL]
 
 Common options:
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
@@ -151,6 +149,13 @@ Common options:
 
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
+
+Character encoding:
+    入力の文字コードは UTF-8 が原則。
+
+    [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
+    オプションによる文字コード指定は未実装。
+    SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
 
 v1 と v2:
     コマンドラインパラメータのパースの実装に v1 と v2 がある。

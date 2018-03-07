@@ -3,11 +3,14 @@ use warnings;
 use utf8;
 
 my $multiValueFlag = '';
+my $weightFlag = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--multi-value-a") {
         $multiValueFlag = "a";
+    } elsif ($a eq "--weight") {
+        $weightFlag = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -19,6 +22,7 @@ my $header_count = 0;
 my $facetcount = [];
 
 my $record_count = 0;
+my $sum = 0;
 
 # Ctrl-C で中断して結果を表示するためのハンドラ
 my $interrupted = '';
@@ -36,6 +40,7 @@ $SIG{INT} = \&interrupt;
 
     $headers = \@cols;
     $header_count = scalar @cols;
+
     for (my $i = 0; $i < $header_count; $i++) {
         push(@$facetcount, {});
     }
@@ -52,7 +57,14 @@ while (my $line = <STDIN>) {
         push(@cols, "");
     }
 
-    for (my $i = 0; $i < $header_count; $i++) {
+    my $weight = 1;
+    my $i = 0;
+    if ($weightFlag) {
+        $weight = $cols[0];
+        $i++;
+    }
+    $sum += $weight;
+    for (; $i < $header_count; $i++) {
         my $v = $cols[$i];
         if ($multiValueFlag eq "a") {
             # TODO セミコロンのエスケープ解除
@@ -60,16 +72,16 @@ while (my $line = <STDIN>) {
             my @vs = keys %vs_map;
             foreach my $v (@vs) {
                 if (defined($facetcount->[$i]->{$v})) {
-                    $facetcount->[$i]->{$v}++;
+                    $facetcount->[$i]->{$v} += $weight;
                 } else {
-                    $facetcount->[$i]->{$v} = 1;
+                    $facetcount->[$i]->{$v} = $weight;
                 }
             }
         } else {
             if (defined($facetcount->[$i]->{$v})) {
-                $facetcount->[$i]->{$v}++;
+                $facetcount->[$i]->{$v} += $weight;
             } else {
-                $facetcount->[$i]->{$v} = 1;
+                $facetcount->[$i]->{$v} = $weight;
             }
         }
     }
@@ -85,14 +97,19 @@ while (my $line = <STDIN>) {
 $record_count--;
 
 print "column\tvalue\tcount\tratio\n";
-for (my $i = 0; $i < $header_count; $i++) {
+
+my $i = 0;
+if ($weightFlag) {
+    $i++;
+}
+for (; $i < $header_count; $i++) {
     my $col_name = $headers->[$i];
     my $fc = $facetcount->[$i];
     my $values = [keys(%$fc)];
     $values = [sort { my $r = $fc->{$b} <=> $fc->{$a}; if ($r == 0) { $r = $a cmp $b; } $r; } @$values];
     foreach my $v (@$values) {
         my $c = $fc->{$v};
-        my $ratio = sprintf("%6.2f%%", 100 * $c / $record_count);
+        my $ratio = sprintf("%6.2f%%", 100 * $c / $sum);
         print "$col_name\t$v\t$c\t$ratio\n";
     }
 }

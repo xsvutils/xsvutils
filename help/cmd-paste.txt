@@ -1,0 +1,5 @@
+paste subcommand
+    [EXPERIMENTAL]
+
+    Merge records of two inputs.
+

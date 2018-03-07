@@ -42,7 +42,15 @@ my $help_document = undef;
 
 sub getHelpFilePath {
     my ($help_name) = @_;
-    return $TOOL_DIR . "/help-${help_name}.txt";
+    if ($help_name eq "main") {
+        return "$TOOL_DIR/help-main.txt";
+    } elsif (-e "$TOOL_DIR/help-cmd-${help_name}.txt") {
+        return "$TOOL_DIR/help-cmd-${help_name}.txt";
+    } elsif (-e "$TOOL_DIR/help-guide-${help_name}.txt") {
+        return "$TOOL_DIR/help-guide-${help_name}.txt";
+    } else {
+        return undef;
+    }
 }
 
 sub parseQueryForHelp {
@@ -66,7 +74,7 @@ sub parseQueryForHelp {
             } else {
                 if (@$argv) {
                     my $a2 = shift(@$argv);
-                    if (-e getHelpFilePath($a2) && !@$argv) {
+                    if (getHelpFilePath($a2) && !@$argv) {
                         $help_document = $a2;
                     }
                 }
@@ -79,7 +87,7 @@ sub parseQueryForHelp {
             }
             last;
         } else {
-            if (-e getHelpFilePath($a)) {
+            if (getHelpFilePath($a)) {
                 $help_document = $a;
             } else {
                 last;
@@ -174,6 +182,12 @@ sub parseQuery {
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
             $curr_command->{cols} = $a;
 
+        } elsif ($command_name eq "inshour" && !defined($curr_command->{src})) {
+            $curr_command->{src} = $a;
+
+        } elsif ($command_name eq "inshour" && !defined($curr_command->{dst})) {
+            $curr_command->{dst} = $a;
+
         } elsif ($command_name eq "insdate" && !defined($curr_command->{src})) {
             $curr_command->{src} = $a;
 
@@ -205,6 +219,9 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{multi_value});
             $curr_command->{multi_value} = "a";
 
+        } elsif ($command_name eq "facetcount" && ($a eq "--weight")) {
+            $curr_command->{weight} = 1;
+
         } elsif ($command_name eq "treetable" && $a eq "--top") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{top});
@@ -234,6 +251,10 @@ sub parseQuery {
 
         } elsif ($a eq "cut") {
             $next_command = {command => "cut", cols => undef};
+            $last_command = $a;
+
+        } elsif ($a eq "inshour") {
+            $next_command = {command => "inshour", src => undef, dst => undef};
             $last_command = $a;
 
         } elsif ($a eq "insdate") {
@@ -311,7 +332,7 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "facetcount") {
-            $next_command = {command => "facetcount", multi_value => undef};
+            $next_command = {command => "facetcount", multi_value => undef, weight => ''};
             $last_command = $a;
             $next_output_table = '';
 
@@ -466,6 +487,15 @@ sub parseQuery {
         if ($command_name eq "cut") {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "inshour") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`inshour\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`inshour\` needs --dst option";
             }
             push(@$commands2, $curr_command);
 
@@ -1082,10 +1112,15 @@ sub build_ircode_command {
             my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
+        } elsif ($command_name eq "inshour") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl hour --name $dst --src $src"]);
+
         } elsif ($command_name eq "insdate") {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl --name $dst --src $src"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl date --name $dst --src $src"]);
 
 =comment
         } elsif ($command_name eq "insweek") {
@@ -1219,6 +1254,9 @@ sub build_ircode_command {
             my $option = "";
             if ($curr_command->{multi_value} eq "a") {
                 $option .= " --multi-value-a";
+            }
+            if ($curr_command->{weight}) {
+                $option .= " --weight";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 

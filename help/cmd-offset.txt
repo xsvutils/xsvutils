@@ -3,7 +3,7 @@ offset subcommand
     Print all except first N records. 先頭のNレコードを除く残りを出力する。
 
     Usage:
-        xsvutils offset [<N>] [option...]
+        $ xsvutils offset [<N>] [option...]
 
     Parameter:
         <N>       (optional) Print all except first N records (default is 10)

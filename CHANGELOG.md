@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## version 0.2.2 (2018-03-07)
+- add `inshour` subcommand
+- add --weight option on `facetcount` subcommand
+- fix a bug on `join` subcommand
+
 ## version 0.2.1 (2018-02-27)
 - add --version option
 - split help document

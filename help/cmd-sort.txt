@@ -3,7 +3,7 @@ sort subcommand
     Sort by specified columns. ソートする。
 
     Usage:
-        xsvutils sort [<COLUMNS>] [option...]
+        $ xsvutils sort [<COLUMNS>] [option...]
 
     Parameter:
         <COLUMNS>       (optional) Sort by <COLUMNS>

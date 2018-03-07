@@ -1,0 +1,42 @@
+uriparams subcommand
+    [EXPERIMENTAL]
+
+    Options:
+        --name  <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
+        --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
+        --name-list                値の代わりにパラメータ名を抜き出す。--name, --names と同時には指定できない
+        --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
+        --no-decode  パーセントエンコーディングのデコード処理を行わない
+        --multi-value-a     出力形式を複数値A形式とする (default is this)
+        --multi-value-b     出力形式を複数値B形式とする (default is multi-value-a)
+
+    複数値A形式: パラメータは同じ名前で複数の可能性があるが、
+    その場合には、値と値の間にセミコロン(;)を配置する。
+    パラメータが存在しない場合と値が空文字列の場合とを区別しない。
+    以下は --name q というオプションを指定した場合の例である。
+
+        query string       q
+        ---------------------------
+        r=xxx                        <- q string is empty
+        q=&r=xxx                     <- q string is empty
+        q=aaa&r=xxx        aaa
+        q=aaa&q=bbb&r=xxx  aaa;bbb
+        q=&q=bbb&r=xxx     bbb
+        q=aaa&q=&r=xxx     aaa
+        q=&q=&r=xxx                  <- q string is empty
+
+    複数値B形式: --multi-value-b オプションを付けた場合は、
+    指定のパラメータが存在しない場合と空文字列の値をを区別できるよう、
+    値ごとにその後ろにセミコロン(;)を使って値を出力する。
+    抽出結果は以下のようになる。
+
+        query string       q
+        ---------------------------
+        r=xxx                        <- q string is empty
+        q=&r=xxx           ;
+        q=aaa&r=xxx        aaa;
+        q=aaa&q=bbb&r=xxx  aaa;bbb;
+        q=&q=bbb&r=xxx     ;bbb;
+        q=aaa&q=&r=xxx     aaa;;
+        q=&q=&r=xxx        ;;
+

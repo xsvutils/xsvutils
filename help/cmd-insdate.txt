@@ -1,0 +1,8 @@
+insdate subcommand
+    [EXPERIMENTAL]
+
+    日時のカラムから日付を抽出した値を新しいカラムとして追加する。
+
+    Usage:
+        $ xsvutils insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>
+

@@ -1,0 +1,14 @@
+treetable subcommand
+    [EXPERIMENTAL]
+
+    左のカラムから順番にカラム組み合わせのファセットカウントを集計する。
+
+    Options:
+        --top <COUNT_LIST> コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
+                           デフォルトは10である。
+        --multi-value-a  複数値A形式に対応した集計をする
+
+    Examples:
+
+        $ xsvutils data.tsv cut categoryA,categoryB treetable --top 20,3
+
