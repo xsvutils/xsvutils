@@ -2,3 +2,6 @@ header subcommand
 
     カラムの一覧を表示する
 
+    Options:
+        --help    Print help information abount this subcommand.
+

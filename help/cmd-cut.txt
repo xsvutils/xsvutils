@@ -10,6 +10,8 @@ cut subcommand
 
     Options:
         --cols <COLUMNS>   Print <COLUMNS> (--col, --columns are the same)
+        --help             Print help information abount this subcommand.
+
 
     Either of COLUMNS parameter or --col option is required.
 

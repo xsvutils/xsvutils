@@ -1,6 +1,7 @@
 sort subcommand
 
-    Sort by specified columns. ソートする。
+    Sort by specified columns.
+    ソートする。
 
     Usage:
         $ xsvutils sort [<COLUMNS>] [option...]
@@ -10,6 +11,7 @@ sort subcommand
 
     Options:
         --col <COLUMNS> Sort by <COLUMNS>
+        --help          Print help information abount this subcommand.
 
     <COLUMNS> にはカンマ区切りで複数のカラム名を書くことができる。
     カラム名の後に `:n` と書くと数値としてのソートをする。

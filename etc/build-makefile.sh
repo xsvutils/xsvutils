@@ -62,7 +62,7 @@ if [ ! -e var/help-cmd-list.txt.tmp ] || ! diff -q var/help-cmd-list.txt var/hel
 fi
 
 (
-    #ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
+    ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
     echo version
     echo changelog
 ) | sort | column -c 80 > var/help-guide-list.txt.tmp

@@ -7,3 +7,6 @@ summary subcommand
     データが大きい場合には、標準エラー出力に進捗表示をする。
     Ctrl-C で集計処理を中止し、集計したところまでを表示する。
 
+    Options:
+        --help    Print help information abount this subcommand.
+

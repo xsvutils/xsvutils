@@ -6,4 +6,5 @@ update subcommand
         --index <RECORD_INDEX>
         --col <COLUMN>         カラム名を指定。カラム番号でも可
         --value <VALUE>
+        --help                 Print help information abount this subcommand.
 

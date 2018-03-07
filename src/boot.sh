@@ -48,6 +48,8 @@ elif [ "$1" = "-v2" ]; then
     perl $TOOL_DIR/main-v2.pl "$@"
 elif [ "$1" = "--help" ]; then
     perl $TOOL_DIR/main-v2.pl "$@"
+elif [ -n "$1" -a "$2" = "--help" ]; then
+    perl $TOOL_DIR/main-v2.pl "$@"
 elif [ "$1" = "help" ]; then
     perl $TOOL_DIR/main-v2.pl "$@"
 elif [ "$1" = "--version" ]; then

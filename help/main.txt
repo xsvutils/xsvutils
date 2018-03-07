@@ -3,11 +3,11 @@ Utilities for handling separated value data
 EXAMPLES:
     $ xsvutils data.tsv                   # Print data to the terminal
     $ xsvutils data.csv                   # xsvutils can handle not only tsv format but csv format
-    $ xsvutils data.tsv cut id,name       # Print only columns `id,name` to the terminal
+    $ xsvutils data.tsv cut id,name       # Print only `id`, `name` columns to the terminal
     $ xsvutils data.tsv wcl               # Count records
     $ xsvutils data.tsv limit 100         # Print only first 100 records
-    $ xsvutils data.tsv cut id limit 100  # Print only column `id` of first 100 records
-    $ xsvutils data.csv > data.tsv        # Convert to tsv format
+    $ xsvutils data.tsv cut id limit 100  # Print only `id` column of first 100 records
+    $ xsvutils data.csv > data.tsv        # Convert csv format to tsv
 
 Available subcommands:
     なにもしないサブコマンド
@@ -26,8 +26,8 @@ Available subcommands:
         cut <COLUMNS>                   Print specified columns
 
     列を追加するサブコマンド
-        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
-        inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
+        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
+        inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
@@ -156,30 +156,6 @@ Character encoding:
     [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
     オプションによる文字コード指定は未実装。
     SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
-
-v1 と v2:
-    コマンドラインパラメータのパースの実装に v1 と v2 がある。
-    v1 と v2 とではわずかに互換性のない違いがある。
-    このヘルプに [v2] と書かれている箇所は v2 の場合のみの記述である。
-
-    近い将来 v2 に統一する予定だが、現在はコマンドラインの内容によって v1 と v2 のどちらかが選択される。
-    v2自体はまだEXPERIMENTALの扱いである。
-
-    先頭のコマンドラインパラメータに -v1 オプションを使用した場合
-        v1 でパースされる。
-
-    先頭のコマンドラインパラメータに -v2 オプションを使用した場合
-        v2 でパースされる。
-        ただし、v2 でサポートされていないコマンドラインパラメータが存在した場合には
-        警告を標準エラー出力に出力し v1 でパースする。
-
-    それ以外の場合
-        デフォルトで v1 でパースされる。
-        2018年3月には、デフォルトで v2 に変更予定。
-        ただし、デフォルト変更後も、v2 でサポートされていないコマンドラインパラメータが存在した場合には
-        警告を標準エラー出力に出力し v1 でパースする。
-
-    2018年4月以降に v1 は廃止予定で、コマンドラインパラメータによらず v2 でパースされる予定。
 
 バージョン番号の方針:
     xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
