@@ -35,10 +35,7 @@ my $right_line = undef;
 my $left_id = undef;
 my $right_id = undef;
 
-my $i = 0;
 while () {
-    $i++;
-    last if ($i >= 30);
     my $header_flag = '';
     if (!defined($left_header_count)) {
         $header_flag = 1;
