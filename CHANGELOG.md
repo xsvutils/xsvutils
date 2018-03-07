@@ -1,5 +1,7 @@
 # CHANGELOG
 
+## version 0.2.2+ (Unreleased)
+
 ## version 0.2.2 (2018-03-07)
 - add `inshour` subcommand
 - add --weight option on `facetcount` subcommand
