@@ -6,5 +6,5 @@ cat subcommand
     `cat` は省略可能なサブコマンドであり、省略してはいけないケースはない。
 
     Options:
-        --help    Print help information abount this subcommand.
+        --help    Print help information about this subcommand.
 

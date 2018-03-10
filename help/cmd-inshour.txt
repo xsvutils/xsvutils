@@ -7,7 +7,7 @@ inshour subcommand
         $ xsvutils insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>
 
     Options:
-        --help    Print help information abount this subcommand.
+        --help    Print help information about this subcommand.
 
     Examples:
         $ xsvutils example.tsv

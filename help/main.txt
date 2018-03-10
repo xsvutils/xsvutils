@@ -10,41 +10,18 @@ EXAMPLES:
     $ xsvutils data.csv > data.tsv        # Convert csv format to tsv
 
 Available subcommands:
-    なにもしないサブコマンド
-        cat                             Print data to the terminal
+    主なサブコマンド
 
     レコード選択に関するサブコマンド
-        head [<N>]                      Print first N records
         limit [<N>]                     Print first N records
         offset [<N>]                    Print all except first N records
-        take [<N>]                      [DEPRECATED] Print first N records
-        drop [<N>]                      [DEPRECATED] Print all except first N records
-        where <CONDITION>               [EXPERIMENTAL]
-        filter <CONDITION>              [EXPERIMENTAL]
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                   Print specified columns
 
-    列を追加するサブコマンド
-        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
-        inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
-        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
-        addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] 固定値のカラムを一番左に追加する
-        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED]
-        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [DEPRECATED]
-        addlinenum2 <NEW_COLUMN_NAME>                           [DEPRECATED]
-        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [DEPRECATED]
-        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [DEPRECATED]
-        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [DEPRECATED]
-        uriparams <NAMES>                                       [EXPERIMENTAL]
-        parseuriparams <NAMES>                                  [DEPRECATED]
-
     その他のデータを加工するコマンド
         update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                ソートする
-        paste <OTHER_FILE>              [EXPERIMENTAL]
-        join <OTHER_FILE>               [EXPERIMENTAL]
-        union <OTHER_FILE>              [EXPERIMENTAL]
 
     集計するコマンド
         wcl                             Print record count. レコード数を表示する
@@ -54,14 +31,19 @@ Available subcommands:
         facetcount                      カラムそれぞれのファセットカウントを集計する
         treetable                       [EXPERIMENTAL]
         crosstable                      [EXPERIMENTAL]
-        wordsflags                      [EXPERIMENTAL]
-        groupsum                        [EXPERIMENTAL]
 
-    各コマンドの詳しい使い方は
+    `xsvutils help subcommands` ですべてのサブコマンドを確認できる。
+
+    各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>
     または
         $ xsvutils <SUBCOMMAND> --help
     で確認できる。
+
+USAGE
+    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
+
+    詳細は `xsvutils help usage` を見ること。
 
 DETAILS:
     See each document.
@@ -74,86 +56,6 @@ DETAILS:
 
     Other <DOCUMENT> are following.
         ####HELP_GUIDE_INDEX####
-
-USAGE:
-    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
-
-    SUBCOMMAND には cut, limit などがある。
-
-    SUBCOMMAND は内容により複数を組み合わせることも可能。
-
-    以下の例では cut がサブコマンド、 id,name がcutサブコマンドのパラメータである。
-
-        $ xsvutils data.tsv cut id,name
-
-    以下の例では cut がサブコマンド、 id がcutサブコマンドのパラメータであり、
-    limit が次のサブコマンド、 100 がlimitサブコマンドのパラメータである。
-
-        $ xsvutils data.tsv cut id limit 100
-
-    標準出力が端末であれば端末に見やすく表示し、
-    標準出力がファイル等であればTSVフォーマットで出力する。
-    --o-csv オプションを指定し、標準出力が端末でない場合はCSVフォーマットで出力する。
-
-    SUBCOMMAND 省略時はcatが指定されたものと同じで、入力データの中身を加工せずにそのまま出力する。
-
-    サブコマンドによってはオプションやパラメータを受け付ける。
-
-    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った同等の書き方も可能。
-
-        $ xsvutils data.tsv cut title         (パラメータでの指定)
-        $ xsvutils data.tsv cut --col title   (オプションでの指定)
-
-    都度コマンドラインからコマンドを入力する際には1つ目の書き方が短くて便利だが、
-    パラメータにどんな値が来るかわからない場合には別の解釈をされないようにオプションでの指定が必要。
-
-        $ xsvutils data.tsv cut --col $COLUMN
-
-    以下のように書いてしまうと、 $COLUMN が head という値の場合に、
-    それが cut のパラメータではなく head というサブコマンドになってしまうので、避けること。
-
-        $ xsvutils data.tsv cut $COLUMN
-
-Common options:
-    --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
-    --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
-    --o-tsv          出力はTSVフォーマット (default when stdout is file)
-    --o-csv          出力はCSVフォーマット (default is TSV format)
-    --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
-    -i <FILENAME>    Input from <FILENAME> (default is stdin)
-    -o <FILENAME>    Output to <FILENAME>  (default is stdout)
-
-    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
-                     ([DEPRECATED] --i-header も同じ。v2では --i-header は使えない)
-    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
-
-    --help           Print help information.
-    --version        Print version information.
-
-    xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
-    それらがない場合は標準入力が入力になる。
-    入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。
-
-    以下の2つの例では $INPUT が `head` などのサブコマンド名と偶然同じだった場合に、
-    1つ目ではエラーとなってしまうが、2つ目では意図したとおりに動く。
-
-        $ xsvutils $INPUT cut title
-        $ xsvutils -i $INPUT cut --col title
-
-    これら共通オプションは FILENAME, SUBCOMMAND の前に置くことも可能だが、
-    サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
-
-    以下は同じ意味になる。
-
-        $ xsvutils FILENAME
-        $ xsvutils FILENAME cat
-        $ xsvutils -i FILENAME
-        $ xsvutils -i FILENAME cat
-        $ xsvutils < FILENAME
-        $ xsvutils cat < FILENAME
-
-Common options for developer:
-    --explain 実行するスクリプトを標準エラー出力に出力する
 
 バージョン番号の方針:
     xsvutilsはX.Y.Z の形式でバージョン番号を付与している。

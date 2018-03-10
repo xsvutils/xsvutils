@@ -8,5 +8,5 @@ summary subcommand
     Ctrl-C で集計処理を中止し、集計したところまでを表示する。
 
     Options:
-        --help    Print help information abount this subcommand.
+        --help    Print help information about this subcommand.
 

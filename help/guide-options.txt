@@ -1,0 +1,41 @@
+Common options:
+    --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
+    --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
+    --o-tsv          出力はTSVフォーマット (default when stdout is file)
+    --o-csv          出力はCSVフォーマット (default is TSV format)
+    --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
+    -i <FILENAME>    Input from <FILENAME> (default is stdin)
+    -o <FILENAME>    Output to <FILENAME>  (default is stdout)
+
+    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
+                     ([DEPRECATED] --i-header も同じ。v2では --i-header は使えない)
+    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
+
+    --help           Print help information.
+    --version        Print version information.
+
+    xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
+    それらがない場合は標準入力が入力になる。
+    入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。
+
+    以下の2つの例では $INPUT が `head` などのサブコマンド名と偶然同じだった場合に、
+    1つ目ではエラーとなってしまうが、2つ目では意図したとおりに動く。
+
+        $ xsvutils $INPUT cut title
+        $ xsvutils -i $INPUT cut --col title
+
+    これら共通オプションは FILENAME, SUBCOMMAND の前に置くことも可能だが、
+    サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
+
+    以下は同じ意味になる。
+
+        $ xsvutils FILENAME
+        $ xsvutils FILENAME cat
+        $ xsvutils -i FILENAME
+        $ xsvutils -i FILENAME cat
+        $ xsvutils < FILENAME
+        $ xsvutils cat < FILENAME
+
+Common options for developer:
+    --explain 実行するスクリプトを標準エラー出力に出力する
+

@@ -42,6 +42,11 @@ my $help_document = undef;
 
 sub getHelpFilePath {
     my ($help_name) = @_;
+
+    if ($help_name eq "limit") {
+        $help_name = "head";
+    }
+
     if ($help_name eq "main") {
         return "$TOOL_DIR/help-main.txt";
     } elsif ($help_name eq "notfound") {

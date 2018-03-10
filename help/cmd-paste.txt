@@ -4,5 +4,5 @@ paste subcommand
     Merge records of two inputs.
 
     Options:
-        --help    Print help information abount this subcommand.
+        --help    Print help information about this subcommand.
 

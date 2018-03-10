@@ -1,12 +1,17 @@
 # xsvutils
 
-Utilities for handling separated value data
-
+Utilities for handling separated value data.
+CSVファイルやTSVファイルをCUIで扱うツール。
 
 ## Usage
 
     $ xsvutils [FILENAME] [SUBCOMMAND] [OPTIONS...]
 
+To see help documents,
+
+    $ xsvutils --help
+    $ xsvutils --help usage
+    $ xsvutils --help subcommands
 
 ## Example
 

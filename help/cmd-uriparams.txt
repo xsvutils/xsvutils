@@ -9,7 +9,7 @@ uriparams subcommand
         --no-decode                パーセントエンコーディングのデコード処理を行わない
         --multi-value-a            出力形式を複数値A形式とする (default is this)
         --multi-value-b            出力形式を複数値B形式とする (default is multi-value-a)
-        --help                     Print help information abount this subcommand.
+        --help                     Print help information about this subcommand.
 
     複数値A形式: パラメータは同じ名前で複数の可能性があるが、
     その場合には、値と値の間にセミコロン(;)を配置する。

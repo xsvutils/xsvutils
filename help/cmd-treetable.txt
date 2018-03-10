@@ -7,7 +7,7 @@ treetable subcommand
         --top <COUNT_LIST> コンマ区切りで数字を指定するとカラムごとに最大で出力する値の数を指定する
                            デフォルトは10である。
         --multi-value-a    複数値A形式に対応した集計をする
-        --help             Print help information abount this subcommand.
+        --help             Print help information about this subcommand.
 
     Examples:
 
