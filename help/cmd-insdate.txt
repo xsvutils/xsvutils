@@ -1,11 +1,18 @@
 insdate subcommand
     日時のカラムから日付を抽出した値を新しいカラムとして追加する。
+    新しいカラムは一番左に追加する。
 
     Usage:
-        $ xsvutils insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>
+        $ xsvutils insdate [--src] <SRC_COLUMN_NAME> [--dst] <DST_COLUMN_NAME>
+
+    Parameter:
+        <SRC_COLUMN_NAME>    抽出元となる日時のカラム
+        <DST_COLUMN_NAME>    抽出先の新しい日付のカラム
 
     Options:
-        --help    Print help information about this subcommand.
+        --src <SRC_COLUMN_NAME>    [v2] 抽出元となる日時のカラム
+        --dst <DST_COLUMN_NAME>    [v2] 抽出先の新しい日付のカラム
+        --help                     Print help information about this subcommand.
 
     Examples:
         $ xsvutils example.tsv
@@ -22,7 +29,7 @@ insdate subcommand
         | 2018/02/12          |
         | 2018/02/12 17:45:00 |
 
-        $ xsvutils example.tsv insdate datetime date
+        $ xsvutils example.tsv inshour datetime date
         | date       | datetime            |
         | 2018-02-12 | 20180212            |
         | 2018-02-12 | 20180212T17         |

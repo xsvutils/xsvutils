@@ -194,24 +194,31 @@ sub parseQuery {
             $curr_command->{cols} = shift(@$argv);
 
         } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --cols or -i";
+            }
             $curr_command->{cols} = $a;
 
-        } elsif ($command_name eq "inshour" && !defined($curr_command->{src})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && $a eq "--src") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{src});
+            $curr_command->{src} = shift(@$argv);
+
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && $a eq "--dst") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{dst});
+            $curr_command->{dst} = shift(@$argv);
+
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && !defined($curr_command->{src})) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --src or -i";
+            }
             $curr_command->{src} = $a;
 
-        } elsif ($command_name eq "inshour" && !defined($curr_command->{dst})) {
-            $curr_command->{dst} = $a;
-
-        } elsif ($command_name eq "insdate" && !defined($curr_command->{src})) {
-            $curr_command->{src} = $a;
-
-        } elsif ($command_name eq "insdate" && !defined($curr_command->{dst})) {
-            $curr_command->{dst} = $a;
-
-        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{src})) {
-            $curr_command->{src} = $a;
-
-        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{dst})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && !defined($curr_command->{dst})) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --dst or -i";
+            }
             $curr_command->{dst} = $a;
 
         } elsif ($command_name eq "paste" && $a eq "--right") {
