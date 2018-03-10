@@ -199,23 +199,23 @@ sub parseQuery {
             }
             $curr_command->{cols} = $a;
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && $a eq "--src") {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--src") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{src});
             $curr_command->{src} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && $a eq "--dst") {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--dst") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{dst});
             $curr_command->{dst} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && !defined($curr_command->{src})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{src})) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --src or -i";
             }
             $curr_command->{src} = $a;
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && !defined($curr_command->{dst})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{dst})) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --dst or -i";
             }
@@ -285,6 +285,10 @@ sub parseQuery {
 
         } elsif ($a eq "inssecinterval") {
             $next_command = {command => "inssecinterval", src => undef, dst => undef};
+            $last_command = $a;
+
+        } elsif ($a eq "inscopy") {
+            $next_command = {command => "inscopy", src => undef, dst => undef};
             $last_command = $a;
 
         } elsif ($a eq "addconst") {
@@ -552,6 +556,15 @@ sub parseQuery {
             }
             push(@$commands2, $curr_command);
 
+        } elsif ($command_name eq "inscopy") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`inscopy\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`inscopy\` needs --dst option";
+            }
+            push(@$commands2, $curr_command);
+
 =comment
         } elsif ($command_name eq "addconst") {
             if (!defined($curr_command->{1])) {
@@ -561,14 +574,6 @@ sub parseQuery {
                 $curr_command->{2] = "";
             }
             push(@$commands2, ["addconst", $curr_command->{1], $curr_command->{2]]);
-        } elsif ($command_name eq "addcopy") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`addcopy\` needs --name option";
-            }
-            if (!defined($curr_command->{2])) {
-                die "subcommand \`addcopy\` needs --src option";
-            }
-            push(@$commands2, ["addcopy", $curr_command->{1], $curr_command->{2]]);
         } elsif ($command_name eq "addlinenum") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`addlinenum\` needs --name option";
@@ -1146,16 +1151,16 @@ sub build_ircode_command {
             my $dst = escape_for_bash($curr_command->{dst});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/inssecinterval.pl --src $src --dst $dst"]);
 
+        } elsif ($command_name eq "inscopy") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $dst --src $src"]);
+
 =comment
         } elsif ($command_name eq "addconst") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addconst.pl --name $name --value $value"]);
-
-        } elsif ($command_name eq "addcopy") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            my $src = escape_for_bash($curr_command->{2]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $name --src $src"]);
 
         } elsif ($command_name eq "addlinenum") {
             my $name  = escape_for_bash($curr_command->{1]);
