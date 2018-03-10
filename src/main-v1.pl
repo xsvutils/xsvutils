@@ -138,10 +138,6 @@ sub parseQuery {
             $next_command = ["addlinenum", undef, undef];
             $last_command = $a;
 
-        } elsif ($a eq "addlinenum2") {
-            $next_command = ["addlinenum2", undef];
-            $last_command = $a;
-
         } elsif ($a eq "addnumsortable") {
             $next_command = ["addnumsortable", undef, undef];
             $last_command = $a;
@@ -454,21 +450,6 @@ sub parseQuery {
                 } elsif (!defined($curr_command->[2])) {
                     my $value = $a;
                     $curr_command->[2] = $value;
-                } else {
-                    die "Unknown argument: $a";
-                }
-
-            } elsif ($curr_command->[0] eq "addlinenum2") {
-                if ($a eq "--name") {
-                    die "option $a needs an argument" unless (@$argv);
-                    my $name = shift(@$argv);
-                    if (defined($curr_command->[1])) {
-                        die "duplicated option: --name";
-                    }
-                    $curr_command->[1] = $name;
-                } elsif (!defined($curr_command->[1])) {
-                    my $name = $a;
-                    $curr_command->[1] = $name;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -869,11 +850,6 @@ sub parseQuery {
                 $c->[2] = 1;
             }
             push(@$commands2, ["addlinenum", $c->[1], $c->[2]]);
-        } elsif ($c->[0] eq "addlinenum2") {
-            if (!defined($c->[1])) {
-                die "subcommand \`addlinenum2\` needs --name option";
-            }
-            push(@$commands2, ["addlinenum2", $c->[1]]);
         } elsif ($c->[0] eq "addnumsortable") {
             if (!defined($c->[1])) {
                 die "subcommand \`addnumsortable\` needs --name option";
@@ -989,7 +965,7 @@ sub parseSortParams {
     my ($args) = @_;
     my @args = @$args;
     my $commands = [];
-    push(@$commands, ["addlinenum2", ""]);
+    push(@$commands, ["addlinenum2"]);
     my $c = 1;
     while (@args) {
         my $a = pop(@args);
@@ -1448,8 +1424,7 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $name --value $value"]);
 
         } elsif ($command eq "addlinenum2") {
-            my $name  = escape_for_bash($t->[1]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name $name"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name ''"]);
 
         } elsif ($command eq "addnumsortable") {
             my $name  = escape_for_bash($t->[1]);

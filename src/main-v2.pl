@@ -296,9 +296,6 @@ sub parseQuery {
         } elsif ($a eq "addlinenum") {
             degradeMain();
 
-        } elsif ($a eq "addlinenum2") {
-            degradeMain();
-
         } elsif ($a eq "addnumsortable") {
             degradeMain();
 
@@ -1167,7 +1164,7 @@ sub build_ircode_command {
 
         } elsif ($command_name eq "addlinenum2") {
             my $name  = escape_for_bash($curr_command->{1]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name $name"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name ''"]);
 
         } elsif ($command_name eq "addnumsortable") {
             my $name  = escape_for_bash($curr_command->{1]);
