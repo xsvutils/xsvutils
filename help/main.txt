@@ -9,9 +9,7 @@ EXAMPLES:
     $ xsvutils data.tsv cut id limit 100  # Print only `id` column of first 100 records
     $ xsvutils data.csv > data.tsv        # Convert csv format to tsv
 
-Available subcommands:
-    主なサブコマンド
-
+Commonly used subcommands:
     レコード選択に関するサブコマンド
         limit [<N>]                     Print first N records
         offset [<N>]                    Print all except first N records
@@ -56,55 +54,6 @@ DETAILS:
 
     Other <DOCUMENT> are following.
         ####HELP_GUIDE_INDEX####
-
-バージョン番号の方針:
-    xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
-    (当面は 0.X.Y の形式)
-
-    コマンドラインインターフェースに互換性のない変更がある場合には X のバージョンを上げる。
-    (メジャーバージョンアップ)
-
-    サブコマンドやオプションが増えるなどで、互換性を維持した機能追加の場合には Y のバージョンを上げる。
-    (メジャーバージョンアップ)
-
-    互換性を維持したまま、バグ修正や若干の性能改善の場合には Z のバージョンを上げる。
-    (パッチバージョンアップ)
-    (当面は Z はバージョン番号に含めない)
-
-    ただし、ここでいう互換性があるかどうかは、下記の互換性に関する注意点を守っている場合に限る。
-
-互換性に関する注意点:
-
-    1.  将来のxsvutilsのバージョンで新しいサブコマンドができる可能性があるが、
-        xsvuitlsを使っているスクリプトの中で使用しているパラメータと同じサブコマンドができた場合、
-        動作が変わってしまうことに注意のこと。
-
-        以下のように書いた場合に将来 title というサブコマンドができた場合に、
-        cutのパラメータだったつもりのtitleがサブコマンドに変わってしまう。
-
-            $ xsvutils data.tsv cut title         (パラメータでの指定)
-
-        以下のように書けば将来も互換性を保てる。
-
-            $ xsvutils data.tsv cut --col title   (オプションでの指定)
-
-        xsvutilsはマイナーバージョンアップで新しいサブコマンドができる可能性がある。
-
-        v2 では `cut title` と書いても例え title というサブコマンドができても
-        title は cut のパラメータの扱いのままになる。
-
-
-    2.  このヘルプに EXPERIMENTAL と書かれている箇所は
-        まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
-
-        xsvutilsはマイナーバージョンアップで EXPERIMENTAL と書かれている仕様を、
-        互換性なく変更する可能性がある。
-
-    3.  このヘルプに DEPRECATED と書かれている箇所は
-        廃止予定で互換性のためだけに残してある機能である。
-
-        xsvutilsはメジャーバージョンアップで DEPRECATED と書かれている仕様を、
-        廃止する可能性がある。
 
 License:
     This software is released under the MIT License, see LICENSE.txt.

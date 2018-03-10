@@ -251,9 +251,6 @@ sub parseQuery {
         } elsif ($command_name eq "treetable" && $a eq "--multi-value-a") {
             $curr_command->{multi_value} = "a";
 
-        } elsif ($a eq "--help") {
-            $option_help = 1;
-
         } elsif ($a eq "--explain") {
             $option_explain = 1;
 

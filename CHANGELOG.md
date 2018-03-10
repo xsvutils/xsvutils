@@ -1,5 +1,9 @@
 # CHANGELOG
 
+To see version information, `xsvutils --version`.
+
+To see compatibility information, `xsvutils help compatibility`.
+
 ## version 0.2.2+ (Unreleased)
 - add support CR, CRLF
 - add some subcommands on v2
