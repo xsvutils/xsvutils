@@ -4,8 +4,9 @@ if [ -e var/test ]; then
 fi
 mkdir -p var/test
 
-bash ./test/case-uriparams.sh
 bash ./test/case-bom.sh
+bash ./test/case-newline.sh
+bash ./test/case-uriparams.sh
 bash ./test/case-facetcount.sh
 bash ./test/case-treetable.sh
 bash ./test/case-crosstable.sh

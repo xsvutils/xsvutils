@@ -5,6 +5,7 @@ use utf8;
 my $format = "";
 my $charencoding = "";
 my $utf8bom = "";
+my $newline = "";
 
 my $format_result_path = undef;
 my $output_path = undef;
@@ -34,6 +35,7 @@ my $head_buf = "";
 my $in = *STDIN;
 
 my $size = $head_size;
+my $exists_lf = '';
 while () {
     if ($size <= 0) {
         last;
@@ -42,6 +44,9 @@ while () {
     my $l = sysread($in, $head_buf2, $size);
     if ($l == 0) {
         last;
+    }
+    if (!$exists_lf && $head_buf2 =~ /[\r\n]/) {
+        $exists_lf = 1;
     }
     $size -= $l;
     $head_buf .= $head_buf2;
@@ -108,6 +113,18 @@ sub guess_charencoding {
     }
 }
 
+sub guess_newline {
+    my ($head_buf) = @_;
+    if ($head_buf =~ /(\r\n?|\n)/) {
+        if ($1 eq "\r\n") {
+            return "dos";
+        } elsif ($1 eq "\r") {
+            return "mac";
+        }
+    }
+    return "unix";
+}
+
 if ($format eq '') {
     $format = guess_format($head_buf);
 }
@@ -116,8 +133,12 @@ if ($charencoding eq '') {
     ($head_buf, $charencoding, $utf8bom) = guess_charencoding($head_buf);
 }
 
+if ($newline eq '') {
+    $newline = guess_newline($head_buf);
+}
+
 open(my $format_result_fh, '>', $format_result_path) or die $!;
-print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom\n";
+print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline\n";
 close($format_result_fh);
 
 open(my $output_fh, '>', $output_path) or dir $!;

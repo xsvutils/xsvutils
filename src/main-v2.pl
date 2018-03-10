@@ -755,6 +755,7 @@ my $input_pipe_list = [{"prefetch" => 1,
                         "header" => $command_seq->{input_header},
                         "charencoding" => "",
                         "utf8bom" => "0",
+                        "newline" => "",
                        }];
     # Sample
     # [
@@ -765,6 +766,7 @@ my $input_pipe_list = [{"prefetch" => 1,
     #    "header" => "", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
     #    "charencoding" => "",
     #    "utf8bom" => "0",
+    #    "newline" => "unix",
     #  }
     # ]
 
@@ -814,7 +816,8 @@ sub extractNamedPipe {
                         "format" => "tsv",
                         "header" => "",
                         "charencoding" => "UTF-8",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     my $pipe_id_2 = scalar @$input_pipe_list;
                     push(@$input_pipe_list, {
@@ -823,7 +826,8 @@ sub extractNamedPipe {
                         "format" => "tsv",
                         "header" => "",
                         "charencoding" => "UTF-8",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     push(@$statement_list, {
                         "input_pipe_id" => $pipe_id_1,
@@ -845,7 +849,8 @@ sub extractNamedPipe {
                         "format" => $subquery->{format},
                         "header" => $subquery->{input_header},
                         "charencoding" => "",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     my $pipe_id_2 = scalar @$input_pipe_list;
                     push(@$input_pipe_list, {
@@ -854,7 +859,8 @@ sub extractNamedPipe {
                         "format" => "tsv",
                         "header" => "",
                         "charencoding" => "UTF-8",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     push(@$statement_list, {
                         "input_pipe_id" => $pipe_id_1,
@@ -877,7 +883,8 @@ sub extractNamedPipe {
                     "format" => "",
                     "header" => "",
                     "charencoding" => "",
-                    "utf8bom" => ""});
+                    "utf8bom" => "",
+                    "newline" => ""});
                 $curr_command->{file_pipe_id} = $pipe_id;
 
                 push(@$commands2, $curr_command);
@@ -909,6 +916,7 @@ sub prefetch_input_pipe_list {
                 $input->{charencoding} = 'UTF-8';
             }
             $input->{utf8bom} = '0';
+            $input->{newline} = 'unix';
             next;
         }
 
@@ -960,12 +968,13 @@ sub prefetch_input {
     close($format_fh);
 
     $format =~ s/\n\z//g;
-    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+)\z/) {
+    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+) newline:([^ ]+)\z/) {
         die "failed to guess format $input_pipe_path";
     }
     $input->{format}       = $1;
     $input->{charencoding} = $2;
     $input->{utf8bom}      = $3;
+    $input->{newline}      = $4;
 
     return $input;
 }
@@ -1001,17 +1010,7 @@ sub build_ircode_input {
         $ircode = [["cmd", "cat $source"]];
     }
 
-    if ($input_pipe->{utf8bom} eq "1") {
-        push(@$ircode, ["cmd", "tail -c+4"]);
-    }
-
-    if ($input_pipe->{charencoding} ne "UTF-8") {
-        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
-    }
-
-    if ($input_pipe->{format} eq "csv") {
-        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
-    }
+    push(@$ircode, @{build_ircode_input_format($input_pipe)});
 
     if ($input_pipe->{header} ne '') {
         my @headers = split(/,/, $input_pipe->{header});
@@ -1043,17 +1042,7 @@ sub build_ircode_command {
     if ($input_pipe_id eq "") {
         my $input_pipe = $input_pipe_list->[0];
 
-        if ($input_pipe->{utf8bom} eq "1") {
-            push(@$ircode, ["cmd", "tail -c+4"]);
-        }
-
-        if ($input_pipe->{charencoding} ne "UTF-8") {
-            push(@$ircode, ["cmd", "iconv -c -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
-        }
-
-        if ($input_pipe->{format} eq "csv") {
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
-        }
+        push(@$ircode, @{build_ircode_input_format($input_pipe)});
 
         if ($input_pipe->{header} ne '') {
             my @headers = split(/,/, $input_pipe->{header});
@@ -1292,6 +1281,30 @@ sub build_ircode_command {
     }
 
     $command_seq->{ircode} = ["pipe", $ircode];
+}
+
+sub build_ircode_input_format {
+    my ($input_pipe) = @_;
+    my $ircode = [];
+    if ($input_pipe->{utf8bom} eq "1") {
+        push(@$ircode, ["cmd", "tail -c+4"]);
+    }
+
+    if ($input_pipe->{newline} eq "dos" && $input_pipe->{format} ne "csv") {
+        push(@$ircode, ["cmd", "sed 's/\\r\$//g'"]);
+    } elsif ($input_pipe->{newline} eq "mac") {
+        push(@$ircode, ["cmd", "sed 's/\\r/\\n/g'"]);
+    }
+
+    if ($input_pipe->{charencoding} ne "UTF-8") {
+        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
+    }
+
+    if ($input_pipe->{format} eq "csv") {
+        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+    }
+
+    return $ircode;
 }
 
 build_ircode();
