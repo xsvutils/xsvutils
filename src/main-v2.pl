@@ -44,6 +44,8 @@ sub getHelpFilePath {
     my ($help_name) = @_;
     if ($help_name eq "main") {
         return "$TOOL_DIR/help-main.txt";
+    } elsif ($help_name eq "notfound") {
+        return "$TOOL_DIR/help-notfound.txt";
     } elsif (-e "$TOOL_DIR/help-cmd-${help_name}.txt") {
         return "$TOOL_DIR/help-cmd-${help_name}.txt";
     } elsif (-e "$TOOL_DIR/help-guide-${help_name}.txt") {
@@ -57,40 +59,31 @@ sub parseQueryForHelp {
     my ($argv) = @_;
     my @argv = @$argv;
     $argv = \@argv;
-    while () {
-        my $a;
-        if (@$argv) {
-            $a = shift(@$argv);
-        } else {
-            last;
-        }
-
-        if ($a eq "help" || $a eq "--help") {
+    if (@argv == 1) {
+        if ($argv[0] eq "help" || $argv[0] eq "--help") {
             $option_help = 1;
-            if (defined($help_document)) {
-                if (@$argv) {
-                    $option_help = undef;
-                }
-            } else {
-                if (@$argv) {
-                    my $a2 = shift(@$argv);
-                    if (getHelpFilePath($a2) && !@$argv) {
-                        $help_document = $a2;
-                    }
-                }
-            }
-            last;
-        } elsif ($a eq "--version") {
-            if (!@$argv) {
+        } elsif ($argv[0] eq "--version") {
+            $option_help = 1;
+            $help_document = "version";
+        }
+    } elsif (@argv == 2) {
+        if ($argv[0] eq "help" || $argv[0] eq "--help") {
+            my $a2 = $argv[1];
+            if (getHelpFilePath($a2)) {
                 $option_help = 1;
-                $help_document = "version";
-            }
-            last;
-        } else {
-            if (getHelpFilePath($a)) {
-                $help_document = $a;
+                $help_document = $a2;
             } else {
-                last;
+                $option_help = 1;
+                $help_document = "notfound";
+            }
+        } elsif ($argv[1] eq "help" || $argv[1] eq "--help") {
+            my $a2 = $argv[0];
+            if (getHelpFilePath($a2)) {
+                $option_help = 1;
+                $help_document = $a2;
+            } else {
+                $option_help = 1;
+                $help_document = "notfound";
             }
         }
     }

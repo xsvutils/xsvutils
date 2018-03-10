@@ -29,13 +29,13 @@ Available subcommands:
         insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
-        addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
-        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
-        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [EXPERIMENTAL]
-        addlinenum2 <NEW_COLUMN_NAME>                           [EXPERIMENTAL]
-        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [EXPERIMENTAL]
-        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [EXPERIMENTAL]
-        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [EXPERIMENTAL]
+        addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] 固定値のカラムを一番左に追加する
+        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED]
+        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [DEPRECATED]
+        addlinenum2 <NEW_COLUMN_NAME>                           [DEPRECATED]
+        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [DEPRECATED]
+        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [DEPRECATED]
+        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [DEPRECATED]
         uriparams <NAMES>                                       [EXPERIMENTAL]
         parseuriparams <NAMES>                                  [DEPRECATED]
 
@@ -47,15 +47,21 @@ Available subcommands:
         union <OTHER_FILE>              [EXPERIMENTAL]
 
     集計するコマンド
-        wcl                             レコード数を表示する
-        header                          カラムの一覧を表示する
-        summary                         データのサマリを表示する
+        wcl                             Print record count. レコード数を表示する
+        header                          Print column names. カラムの一覧を表示する
+        summary                         Print summary of data. データのサマリを表示する
         countcols                       カラム数を集計する
         facetcount                      カラムそれぞれのファセットカウントを集計する
         treetable                       [EXPERIMENTAL]
         crosstable                      [EXPERIMENTAL]
         wordsflags                      [EXPERIMENTAL]
         groupsum                        [EXPERIMENTAL]
+
+    各コマンドの詳しい使い方は
+        $ xsvutils help <SUBCOMMAND>
+    または
+        $ xsvutils <SUBCOMMAND> --help
+    で確認できる。
 
 DETAILS:
     See each document.
@@ -108,7 +114,6 @@ USAGE:
 
         $ xsvutils data.tsv cut $COLUMN
 
-
 Common options:
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
@@ -149,13 +154,6 @@ Common options:
 
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
-
-Character encoding:
-    入力の文字コードは UTF-8 が原則。
-
-    [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
-    オプションによる文字コード指定は未実装。
-    SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
 
 バージョン番号の方針:
     xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
