@@ -167,7 +167,23 @@ sub parseQuery {
             $command_name = $curr_command->{command};
         }
 
-        if ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
+        if (($command_name eq "head" || $command_name eq "limit") && $a eq "-n") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{count});
+            my $a2 = shift(@$argv);
+            die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
+            $curr_command->{count} = $a2;
+
+        } elsif (($command_name eq "head" || $command_name eq "limit") && $a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+            my $a2 = $1;
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a2;
+
+        } elsif (($command_name eq "head" || $command_name eq "limit") && !defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a;
+
+        } elsif ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = shift(@$argv);
@@ -233,8 +249,9 @@ sub parseQuery {
             $next_command = {command => "cat"};
             $last_command = $a;
 
-        } elsif ($a eq "take" || $a eq "head" || $a eq "limit") {
-            degradeMain();
+        } elsif ($a eq "head" || $a eq "limit") {
+            $next_command = {command => $a, count => undef};
+            $last_command = $a;
 
         } elsif ($a eq "drop" || $a eq "offset") {
             degradeMain();
@@ -434,23 +451,28 @@ sub parseQuery {
     my $commands2 = [];
     for my $curr_command (@$commands) {
         my $command_name = $curr_command->{command};
-=comment
-        if ($command_name eq "take") {
-            if ($curr_command->{1] eq "") {
-                $curr_command->{1] = "10";
+
+        if ($command_name eq "head" || $command_name eq "limit") {
+            if ($command_name eq "head" && !defined($curr_command->{count})) {
+                $curr_command->{count} = 10;
+            }
+            if (!defined($curr_command->{count})) {
+                die "subcommand \`limit\` needs -n option";
             }
             my $f = 1;
-            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+            if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "range") {
                 # 直前のサブコマンドと結合
                 my $prev = $commands2->[@$commands2 - 1];
-                if ($prev->[1] ne "" && $prev->[2] eq "") {
+                if ($prev->{start} ne "" && $prev->{end} eq "") {
                     $f = '';
-                    $prev->[2] = $prev->[1] + $curr_command->{1];
+                    $prev->{end} = $prev->{start} + $curr_command->{count};
                 }
             }
             if ($f) {
-                push(@$commands2, ["range", "", $curr_command->{1]]);
+                push(@$commands2, {command => "range", start => "", end => $curr_command->{count}});
             }
+
+=comment
         } elsif ($command_name eq "drop") {
             if ($curr_command->{1] eq "") {
                 $curr_command->{1] = "10";
@@ -477,7 +499,7 @@ sub parseQuery {
             }
             push(@$commands2, $c);
 =cut
-        if ($command_name eq "cut") {
+        } elsif ($command_name eq "cut") {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
             }
@@ -1061,27 +1083,28 @@ sub build_ircode_command {
 
     foreach my $curr_command (@{$command_seq->{commands}}) {
         my $command_name = $curr_command->{command};
-=comment
+
         if ($command_name eq "range") {
-            my $num1 = $curr_command->{1];
-            my $num2 = $curr_command->{2];
-            if ($num1 eq "") {
-                if ($num2 eq "") {
+            my $start = $curr_command->{start};
+            my $end = $curr_command->{end};
+            if ($start eq "") {
+                if ($end eq "") {
                     # nop
                 } else {
-                    my $arg = escape_for_bash('-n' . ($num2 + 1));
+                    my $arg = escape_for_bash('-n' . ($end + 1));
                     push(@$ircode, ["cmd", "head $arg"]);
                 }
             } else {
-                if ($num2 eq "") {
-                    my $arg = escape_for_bash(($num1 + 2) . ',$p');
+                if ($end eq "") {
+                    my $arg = escape_for_bash(($start + 2) . ',$p');
                     push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
                 } else {
-                    my $arg = escape_for_bash(($num1 + 2) . ',' . ($num2 + 1) . 'p');
+                    my $arg = escape_for_bash(($start + 2) . ',' . ($end + 1) . 'p');
                     push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
                 }
             }
 
+=comment
         } elsif ($command_name eq "where") {
             my $conds = '';
             for (my $i = 1; $i < @$t; $i++) {
@@ -1090,7 +1113,7 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
 
 =cut
-        if ($command_name eq "cut") {
+        } elsif ($command_name eq "cut") {
             my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
