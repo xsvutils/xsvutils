@@ -1,11 +1,11 @@
-insdeltasec subcommand
+inssecinterval subcommand
     [EXPERIMENTAL] [v2]
 
     日時のカラムからすぐ上のレコードとの差を秒数で計算して、新しいカラムとして追加する。
     新しいカラムは一番左に追加する。
 
     Usage:
-        $ xsvutils insdeltasec [--src] <SRC_COLUMN_NAME> [--dst] <DST_COLUMN_NAME>
+        $ xsvutils inssecinterval [--src] <SRC_COLUMN_NAME> [--dst] <DST_COLUMN_NAME>
 
     Parameter:
         <SRC_COLUMN_NAME>    計算元となる日時のカラム
@@ -24,7 +24,7 @@ insdeltasec subcommand
         | 2018-02-12T17:45:12 |
         | 2018-02-12T17:45:12 |
 
-        $ xsvutils example.tsv insdeltasec datetime interval
+        $ xsvutils example.tsv inssecinterval datetime interval
         | datetime            | interval |
         | 2018-02-12T17:45:00 |          |
         | 2018-02-12T17:45:10 | 10       |

@@ -199,23 +199,23 @@ sub parseQuery {
             }
             $curr_command->{cols} = $a;
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && $a eq "--src") {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && $a eq "--src") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{src});
             $curr_command->{src} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && $a eq "--dst") {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && $a eq "--dst") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{dst});
             $curr_command->{dst} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && !defined($curr_command->{src})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && !defined($curr_command->{src})) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --src or -i";
             }
             $curr_command->{src} = $a;
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "insdeltasec") && !defined($curr_command->{dst})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval") && !defined($curr_command->{dst})) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --dst or -i";
             }
@@ -286,8 +286,8 @@ sub parseQuery {
         } elsif ($a eq "insweek") {
             degradeMain();
 
-        } elsif ($a eq "insdeltasec") {
-            $next_command = {command => "insdeltasec", src => undef, dst => undef};
+        } elsif ($a eq "inssecinterval") {
+            $next_command = {command => "inssecinterval", src => undef, dst => undef};
             $last_command = $a;
 
         } elsif ($a eq "addconst") {
@@ -549,12 +549,12 @@ sub parseQuery {
             push(@$commands2, ["insweek", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
 
 =cut
-        } elsif ($command_name eq "insdeltasec") {
+        } elsif ($command_name eq "inssecinterval") {
             if (!defined($curr_command->{src})) {
-                die "subcommand \`insdeltasec\` needs --src option";
+                die "subcommand \`inssecinterval\` needs --src option";
             }
             if (!defined($curr_command->{dst})) {
-                die "subcommand \`insdeltasec\` needs --dst option";
+                die "subcommand \`inssecinterval\` needs --dst option";
             }
             push(@$commands2, $curr_command);
 
@@ -1147,10 +1147,10 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insweek.pl --name $name --src $src --start-day $start_day"]);
 
 =cut
-        } elsif ($command_name eq "insdeltasec") {
+        } elsif ($command_name eq "inssecinterval") {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdeltasec.pl --src $src --dst $dst"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/inssecinterval.pl --src $src --dst $dst"]);
 
 =comment
         } elsif ($command_name eq "addconst") {

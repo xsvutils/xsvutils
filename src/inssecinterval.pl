@@ -20,8 +20,8 @@ while (@ARGV) {
     }
 }
 
-die "subcommand `insdeltasec` requires option --name" unless defined $dst_column_name;
-die "subcommand `insdeltasec` requires option --src" unless defined $src_column_name;
+die "subcommand `inssecinterval` requires option --src" unless defined $src_column_name;
+die "subcommand `inssecinterval` requires option --dst" unless defined $dst_column_name;
 
 my $headers = undef;
 my $src_column_index = undef;

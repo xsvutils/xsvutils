@@ -4,6 +4,7 @@
 - add support CR, CRLF
 - add some subcommands on v2
 - add --src, --dst options of inshour, insdate subcommand on v2
+- rename subcommand name `insdeltasec` to `inssecinterval`
 
 ## version 0.2.2 (2018-03-07)
 - add `inshour` subcommand on v2

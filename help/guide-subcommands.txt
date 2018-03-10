@@ -17,7 +17,7 @@ Available subcommands:
     列を追加するサブコマンド
         insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
-        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL] [v2]
+        inssecinterval <SRC_COLUMN_NAME> <DST_COLUMN_NAME>      [EXPERIMENTAL] [v2]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED]
         addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [DEPRECATED]
