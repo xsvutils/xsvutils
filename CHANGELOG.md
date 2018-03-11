@@ -11,6 +11,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - rename subcommand name `insdeltasec` to `inssecinterval`
 - remove `addlinenum2` subcommand
 - add `inscopy` subcommand on v2
+- change `sort` subcommand without parameters
 
 ## version 0.2.2 (2018-03-07)
 - add `inshour` subcommand on v2

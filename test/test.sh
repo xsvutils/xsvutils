@@ -12,6 +12,7 @@ bash ./test/case-treetable.sh
 bash ./test/case-crosstable.sh
 bash ./test/case-wordsflags.sh
 bash ./test/case-addmap.sh
+bash ./test/case-sort.sh
 bash ./test/case-join.sh
 bash ./test/case-datetime.sh
 bash ./test/case-number.sh

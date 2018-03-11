@@ -143,13 +143,24 @@ sub parseQuery {
 
     my $last_command = "cat";
 
+    my @command_name_list = qw/
+        cat
+        head limit drop offset
+        where filter
+        cut
+        inshour insdate insweek inssecinterval inscopy
+        addconst addcopy addlinenum addnumsortable addcross addmap uriparams parseuriparams
+        update sort paste join union
+        wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
+    /;
+
     while () {
         my $a;
         if (@$argv) {
             $a = shift(@$argv);
         } else {
             if (defined($curr_command)) {
-                $a = "cat";
+                $a = "--cat";
             } else {
                 last;
             }
@@ -158,7 +169,7 @@ sub parseQuery {
         if ($a eq "]") {
             if (defined($curr_command)) {
                 unshift(@$argv, $a);
-                $a = "cat";
+                $a = "--cat";
             } else {
                 last;
             }
@@ -193,7 +204,7 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = shift(@$argv);
 
-        } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
+        } elsif ($command_name eq "cut" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --cols or -i";
             }
@@ -209,13 +220,13 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{dst});
             $curr_command->{dst} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{src})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{src}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --src or -i";
             }
             $curr_command->{src} = $a;
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{dst})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{dst}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --dst or -i";
             }
@@ -226,7 +237,7 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = shift(@$argv);
 
-        } elsif ($command_name eq "sort" && !defined($curr_command->{cols})) {
+        } elsif ($command_name eq "sort" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --cols or -i";
             }
@@ -244,7 +255,7 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{file});
             ($curr_command->{file}, $argv) = parseQuery($argv, "paste", '');
 
-        } elsif ($command_name eq "paste" && !defined($input) && !defined($curr_command->{file})) {
+        } elsif ($command_name eq "paste" && !defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
             $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
@@ -265,7 +276,7 @@ sub parseQuery {
         } elsif ($a eq "--explain") {
             $option_explain = 1;
 
-        } elsif ($a eq "cat") {
+        } elsif ($a eq "--cat" || $a eq "cat") {
             $next_command = {command => "cat"};
             $last_command = $a;
 
@@ -746,8 +757,11 @@ sub parseSortParams {
     my ($args) = @_;
     my @args = @$args;
     my $commands = [];
-    push(@$commands, {command => "_addlinenum2"});
-    my $c = 1;
+    my $c = 0;
+    if (@args) {
+        push(@$commands, {command => "_addlinenum2"});
+        $c++;
+    }
     while (@args) {
         my $a = pop(@args);
         if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
@@ -758,7 +772,9 @@ sub parseSortParams {
         $c++;
     }
     push(@$commands, {command => "sort"});
-    push(@$commands, {command => "removecol", count => $c});
+    if ($c > 0) {
+        push(@$commands, {command => "removecol", count => $c});
+    }
     $commands;
 }
 

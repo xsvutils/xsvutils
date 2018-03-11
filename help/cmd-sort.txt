@@ -21,5 +21,7 @@ sort subcommand
 
         $ xsvutils data.tsv sort hitnum:n,date
 
+    <COLUMNS> を指定されていない場合は単純に左のカラムからソートキーとして使われる。
+
     指定したソートキーがすべて同じ値のレコードがあれば、もとのファイルに現れた順番を維持する(安定ソート)。
 

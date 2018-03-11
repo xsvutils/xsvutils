@@ -965,8 +965,11 @@ sub parseSortParams {
     my ($args) = @_;
     my @args = @$args;
     my $commands = [];
-    push(@$commands, ["addlinenum2"]);
-    my $c = 1;
+    my $c = 0;
+    if (@args) {
+        push(@$commands, ["addlinenum2"]);
+        $c++;
+    }
     while (@args) {
         my $a = pop(@args);
         if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
@@ -977,7 +980,9 @@ sub parseSortParams {
         $c++;
     }
     push(@$commands, ["sort"]);
-    push(@$commands, ["removecol", $c]);
+    if ($c > 0) {
+        push(@$commands, ["removecol", $c]);
+    }
     $commands;
 }
 
