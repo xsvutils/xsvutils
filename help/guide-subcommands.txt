@@ -46,6 +46,9 @@ Available subcommands:
         wordsflags                      [EXPERIMENTAL] [v1]
         groupsum                        [EXPERIMENTAL] [v2]
 
+    その他のコマンド
+        tee <OTHER_FILE>                [EXPERIMENTAL] [v2] Output to next subcommand and other file
+
     各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>
     または

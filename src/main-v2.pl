@@ -124,7 +124,7 @@ sub parseQuery {
     # }
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
-    my ($argv, $subqueryCommandName, $outputOk) = @_;
+    my ($argv, $subqueryCommandName, $inputOk, $outputOk) = @_;
     my @argv = @$argv;
 
     ################################
@@ -152,6 +152,7 @@ sub parseQuery {
         addconst addcopy addlinenum addcross addmap uriparams parseuriparams
         update sort paste join union
         wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
+        tee
     /;
 
     while () {
@@ -281,9 +282,9 @@ sub parseQuery {
 
         } elsif ($command_name eq "paste" && $a eq "[") {
             die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "paste", '');
+            ($curr_command->{file}, $argv) = parseQuery($argv, "paste", 1, '');
 
-        } elsif ($command_name eq "paste" && !defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        } elsif ($command_name eq "paste" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
             $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
@@ -300,6 +301,18 @@ sub parseQuery {
 
         } elsif ($command_name eq "treetable" && $a eq "--multi-value-a") {
             $curr_command->{multi_value} = "a";
+
+        } elsif ($command_name eq "tee" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "tee" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv, "tee", '', 1);
+
+        } elsif ($command_name eq "tee" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+            $curr_command->{file} = $a;
 
         } elsif ($a eq "--explain") {
             $option_explain = 1;
@@ -421,11 +434,17 @@ sub parseQuery {
             $last_command = $a;
             $next_output_table = '';
 
+        } elsif ($a eq "tee") {
+            $next_command = {command => "tee", file => undef};
+            $last_command = $a;
+
         } elsif ($a eq "--tsv") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "duplicated option: $a" if defined($format);
             $format = "tsv";
 
         } elsif ($a eq "--csv") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "duplicated option: $a" if defined($format);
             $format = "csv";
 
@@ -445,6 +464,7 @@ sub parseQuery {
             $output_format = "table";
 
         } elsif ($a eq "-i") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "option -i needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input);
             $input = shift(@$argv);
@@ -459,16 +479,17 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "--header") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input_header);
             $input_header = shift(@$argv);
 
         } elsif ($a eq "--o-no-header") {
-            die "sub query must not have output option" if (!$outputOk);
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             $output_header_flag = '';
 
         } else {
-            if (!defined($input)) {
+            if ($inputOk && !defined($input)) {
                 if (-e $a) {
                     $input = $a;
                 } else {
@@ -755,6 +776,12 @@ sub parseQuery {
         } elsif ($command_name eq "groupsum") {
             push(@$commands2, $curr_command);
 
+        } elsif ($command_name eq "tee") {
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`tee\` needs --file option";
+            }
+            push(@$commands2, $curr_command);
+
         } else {
             die $command_name;
         }
@@ -801,7 +828,7 @@ my ($command_seq, $tail_argv);
 if ($option_help) {
     ($command_seq, $tail_argv) = (undef, undef);
 } else {
-    ($command_seq, $tail_argv) = parseQuery(\@ARGV, "", 1);
+    ($command_seq, $tail_argv) = parseQuery(\@ARGV, "", 1, 1);
 }
 
 
@@ -978,7 +1005,22 @@ sub extractNamedPipe {
 
                 push(@$commands2, $curr_command);
             }
-        } else {
+
+        } elsif ($command_name eq "tee") {
+            if (ref($curr_command->{file}) eq "HASH") {
+                my $subquery = $curr_command->{file};
+
+                extractNamedPipe($subquery);
+
+                die "sub query of `$command_name` must have output option" if ($subquery->{output} eq "");
+
+                die "TODO";
+
+            } else { # unless (ref($curr_command->{file}) eq "HASH")
+                push(@$commands2, $curr_command);
+            }
+
+        } else { # other command
             push(@$commands2, $curr_command);
         }
     }
@@ -1283,8 +1325,13 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
         } elsif ($command_name eq "tee") {
-            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
-            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            my $file;
+            if (defined($curr_command->{file_pipe_id})) {
+                my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+                $file = "$input_pipe_prefix1${file_pipe_id}";
+            } else {
+                $file = escape_for_bash($curr_command->{file});
+            }
             push(@$ircode, ["cmd", "tee $file"]);
 
         } elsif ($command_name eq "buffer") {
@@ -1560,7 +1607,7 @@ close($main_1_out);
 # 入出力を stdin, stdout に統一
 ################################################################################
 
-if (1) {
+{
     # 入力を stdin に統一
     my $pipe_id = 0;
     my $pipe_path = "$input_pipe_prefix2${pipe_id}_0";
