@@ -124,7 +124,7 @@ sub parseQuery {
     # }
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
-    my ($argv) = @_;
+    my ($argv, $subqueryCommandName, $outputOk) = @_;
     my @argv = @$argv;
 
     ################################
@@ -231,9 +231,9 @@ sub parseQuery {
 
         } elsif ($command_name eq "paste" && $a eq "[") {
             die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv);
+            ($curr_command->{file}, $argv) = parseQuery($argv, "paste", '');
 
-        } elsif ($command_name eq "paste" && !defined($curr_command->{file})) {
+        } elsif ($command_name eq "paste" && !defined($input) && !defined($curr_command->{file})) {
             $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
@@ -381,14 +381,17 @@ sub parseQuery {
             $format = "csv";
 
         } elsif ($a eq "--o-tsv") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "duplicated option: $a" if defined($output_format);
             $output_format = "tsv";
 
         } elsif ($a eq "--o-csv") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "duplicated option: $a" if defined($output_format);
             $output_format = "csv";
 
         } elsif ($a eq "--o-table") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "duplicated option: $a" if defined($output_format);
             $output_format = "table";
 
@@ -398,6 +401,7 @@ sub parseQuery {
             $input = shift(@$argv);
 
         } elsif ($a eq "-o") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "option -o needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($output);
             $output = shift(@$argv);
@@ -411,6 +415,7 @@ sub parseQuery {
             $input_header = shift(@$argv);
 
         } elsif ($a eq "--o-no-header") {
+            die "sub query must not have output option" if (!$outputOk);
             $output_header_flag = '';
 
         } else {
@@ -732,7 +737,7 @@ my ($command_seq, $tail_argv);
 if ($option_help) {
     ($command_seq, $tail_argv) = (undef, undef);
 } else {
-    ($command_seq, $tail_argv) = parseQuery(\@ARGV);
+    ($command_seq, $tail_argv) = parseQuery(\@ARGV, "", 1);
 }
 
 
@@ -825,19 +830,6 @@ sub extractNamedPipe {
             $command_name eq "union") {
             if (ref($curr_command->{file}) eq "HASH") {
                 my $subquery = $curr_command->{file};
-
-                if ($subquery->{output} ne "") {
-                    die "sub query of `$command_name` subcommand must not have output";
-                }
-                if ($subquery->{output_table} eq "") {
-                    die "sub query of `$command_name` subcommand must not have a command `$subquery->{last_command}`";
-                }
-                if ($subquery->{output_header_flag} eq "") {
-                    die "sub query of `$command_name` subcommand must not have an option --o-no-header";
-                }
-                if ($subquery->{output_format} eq "") {
-                    die "sub query of `$command_name` subcommand must not have an option --o-tsv or --o-csv";
-                }
 
                 extractNamedPipe($subquery);
 
