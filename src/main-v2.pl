@@ -208,6 +208,9 @@ sub parseQuery {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --cols or -i";
             }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --cols";
+            }
             $curr_command->{cols} = $a;
 
         } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--src") {
@@ -224,11 +227,17 @@ sub parseQuery {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --src or -i";
             }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --src";
+            }
             $curr_command->{src} = $a;
 
         } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{dst}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --dst or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --dst";
             }
             $curr_command->{dst} = $a;
 
@@ -240,6 +249,9 @@ sub parseQuery {
         } elsif ($command_name eq "sort" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --cols or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --cols";
             }
             $curr_command->{cols} = $a;
 
