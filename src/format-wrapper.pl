@@ -2,9 +2,12 @@ use strict;
 use warnings;
 use utf8;
 
+my $TOOL_DIR = $ENV{"TOOL_DIR"};
+
 my $format = "";
 my $charencoding = "";
 my $utf8bom = "";
+my $newline = "";
 
 my $format_result_path = undef;
 my $output_path = undef;
@@ -33,18 +36,77 @@ my $head_buf = "";
 
 my $in = *STDIN;
 
-my $size = $head_size;
+my $left_size = $head_size;
+my $exists_lf = '';
+my $gzip_flag = '';
 while () {
-    if ($size <= 0) {
+    if ($left_size <= 0) {
         last;
     }
     my $head_buf2;
-    my $l = sysread($in, $head_buf2, $size);
+    my $l = sysread($in, $head_buf2, $left_size);
     if ($l == 0) {
         last;
     }
-    $size -= $l;
+    if (!$exists_lf && $head_buf2 =~ /[\r\n]/) {
+        $exists_lf = 1;
+    }
     $head_buf .= $head_buf2;
+    if ($left_size >= $head_size - 2) {
+        if ($head_buf =~ /\A\x1F\x8B/) {
+            $gzip_flag = 1;
+            last;
+        }
+    }
+    $left_size -= $l;
+}
+
+if ($gzip_flag) {
+    my $CHILD1_READER;
+    my $PARENT_WRITER;
+    pipe($CHILD1_READER, $PARENT_WRITER);
+
+    my $pid1 = fork;
+    if (!defined $pid1) {
+        die $!;
+    } elsif ($pid1) {
+        # parent process
+        close $CHILD1_READER;
+        open(STDOUT, '>&=', fileno($PARENT_WRITER));
+        syswrite(STDOUT, $head_buf);
+        exec("cat");
+    }
+    # child1 process
+    close $PARENT_WRITER;
+    open(STDIN, '<&=', fileno($CHILD1_READER));
+
+    my $CHILD2_READER;
+    my $CHILD1_WRITER;
+    pipe($CHILD2_READER, $CHILD1_WRITER);
+
+    my $pid2 = fork;
+    if (!defined $pid2) {
+        die $!;
+    } elsif ($pid2) {
+        # parent(child1) process
+        close $CHILD2_READER;
+        open(STDOUT, '>&=', fileno($CHILD1_WRITER));
+        exec("gunzip", "-c");
+    }
+    # child2 process
+    close $CHILD1_WRITER;
+    open(STDIN, '<&=', fileno($CHILD2_READER));
+
+    my @options = ();
+    if ($format eq "tsv") {
+        push(@options, "--tsv");
+    } elsif ($format eq "csv") {
+        push(@options, "--csv");
+    }
+    push(@options, $format_result_path);
+    push(@options, $output_path);
+
+    exec("perl", "$TOOL_DIR/format-wrapper.pl", @options);
 }
 
 sub guess_format {
@@ -108,6 +170,18 @@ sub guess_charencoding {
     }
 }
 
+sub guess_newline {
+    my ($head_buf) = @_;
+    if ($head_buf =~ /(\r\n?|\n)/) {
+        if ($1 eq "\r\n") {
+            return "dos";
+        } elsif ($1 eq "\r") {
+            return "mac";
+        }
+    }
+    return "unix";
+}
+
 if ($format eq '') {
     $format = guess_format($head_buf);
 }
@@ -116,8 +190,12 @@ if ($charencoding eq '') {
     ($head_buf, $charencoding, $utf8bom) = guess_charencoding($head_buf);
 }
 
+if ($newline eq '') {
+    $newline = guess_newline($head_buf);
+}
+
 open(my $format_result_fh, '>', $format_result_path) or die $!;
-print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom\n";
+print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline\n";
 close($format_result_fh);
 
 open(my $output_fh, '>', $output_path) or dir $!;

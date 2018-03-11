@@ -1,0 +1,47 @@
+inshour subcommand
+    [EXPERIMENTAL] [v2]
+
+    日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する。
+    新しいカラムは一番左に追加する。
+
+    Usage:
+        $ xsvutils insdate [--src] <SRC_COLUMN_NAME> [--dst] <DST_COLUMN_NAME>
+
+    Parameter:
+        <SRC_COLUMN_NAME>    抽出元となる日時のカラム
+        <DST_COLUMN_NAME>    抽出先の新しい日時のカラム
+
+    Options:
+        --src <SRC_COLUMN_NAME>    [v2] 抽出元となる日時のカラム
+        --dst <DST_COLUMN_NAME>    [v2] 抽出先の新しい日時のカラム
+        --help                     Print help information about this subcommand.
+
+    Examples:
+        $ xsvutils example.tsv
+        | datetime            |
+        | 20180212            |
+        | 20180212T17         |
+        | 20180212T1745       |
+        | 20180212T174500     |
+        | 2018-02-12          |
+        | 2018-02-12T17       |
+        | 2018-02-12T17:45    |
+        | 2018-02-12T17:45:00 |
+        | 2018-02-12 17:45:00 |
+        | 2018/02/12          |
+        | 2018/02/12 17:45:00 |
+
+        $ xsvutils example.tsv inshour datetime date_hour
+        | date_hour     | datetime            |
+        | 2018-02-12T00 | 20180212            |
+        | 2018-02-12T17 | 20180212T17         |
+        | 2018-02-12T17 | 20180212T1745       |
+        | 2018-02-12T17 | 20180212T174500     |
+        | 2018-02-12T00 | 2018-02-12          |
+        | 2018-02-12T17 | 2018-02-12T17       |
+        | 2018-02-12T17 | 2018-02-12T17:45    |
+        | 2018-02-12T17 | 2018-02-12T17:45:00 |
+        | 2018-02-12T17 | 2018-02-12 17:45:00 |
+        | 2018-02-12T00 | 2018/02/12          |
+        | 2018-02-12T17 | 2018/02/12 17:45:00 |
+

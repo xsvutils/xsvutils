@@ -42,8 +42,15 @@ my $help_document = undef;
 
 sub getHelpFilePath {
     my ($help_name) = @_;
+
+    if ($help_name eq "limit") {
+        $help_name = "head";
+    }
+
     if ($help_name eq "main") {
         return "$TOOL_DIR/help-main.txt";
+    } elsif ($help_name eq "notfound") {
+        return "$TOOL_DIR/help-notfound.txt";
     } elsif (-e "$TOOL_DIR/help-cmd-${help_name}.txt") {
         return "$TOOL_DIR/help-cmd-${help_name}.txt";
     } elsif (-e "$TOOL_DIR/help-guide-${help_name}.txt") {
@@ -57,40 +64,31 @@ sub parseQueryForHelp {
     my ($argv) = @_;
     my @argv = @$argv;
     $argv = \@argv;
-    while () {
-        my $a;
-        if (@$argv) {
-            $a = shift(@$argv);
-        } else {
-            last;
-        }
-
-        if ($a eq "help" || $a eq "--help") {
+    if (@argv == 1) {
+        if ($argv[0] eq "help" || $argv[0] eq "--help") {
             $option_help = 1;
-            if (defined($help_document)) {
-                if (@$argv) {
-                    $option_help = undef;
-                }
-            } else {
-                if (@$argv) {
-                    my $a2 = shift(@$argv);
-                    if (getHelpFilePath($a2) && !@$argv) {
-                        $help_document = $a2;
-                    }
-                }
-            }
-            last;
-        } elsif ($a eq "--version") {
-            if (!@$argv) {
+        } elsif ($argv[0] eq "--version") {
+            $option_help = 1;
+            $help_document = "version";
+        }
+    } elsif (@argv == 2) {
+        if ($argv[0] eq "help" || $argv[0] eq "--help") {
+            my $a2 = $argv[1];
+            if (getHelpFilePath($a2)) {
                 $option_help = 1;
-                $help_document = "version";
-            }
-            last;
-        } else {
-            if (getHelpFilePath($a)) {
-                $help_document = $a;
+                $help_document = $a2;
             } else {
-                last;
+                $option_help = 1;
+                $help_document = "notfound";
+            }
+        } elsif ($argv[1] eq "help" || $argv[1] eq "--help") {
+            my $a2 = $argv[0];
+            if (getHelpFilePath($a2)) {
+                $option_help = 1;
+                $help_document = $a2;
+            } else {
+                $option_help = 1;
+                $help_document = "notfound";
             }
         }
     }
@@ -126,7 +124,7 @@ sub parseQuery {
     # }
     # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
 
-    my ($argv) = @_;
+    my ($argv, $subqueryCommandName, $inputOk, $outputOk) = @_;
     my @argv = @$argv;
 
     ################################
@@ -145,13 +143,25 @@ sub parseQuery {
 
     my $last_command = "cat";
 
+    my @command_name_list = qw/
+        cat
+        head limit drop offset
+        where filter
+        cut
+        inshour insdate insweek inssecinterval inscopy
+        addconst addcopy addlinenum addcross addmap uriparams parseuriparams
+        update sort paste join union
+        wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
+        tee
+    /;
+
     while () {
         my $a;
         if (@$argv) {
             $a = shift(@$argv);
         } else {
             if (defined($curr_command)) {
-                $a = "cat";
+                $a = "--cat";
             } else {
                 last;
             }
@@ -160,7 +170,7 @@ sub parseQuery {
         if ($a eq "]") {
             if (defined($curr_command)) {
                 unshift(@$argv, $a);
-                $a = "cat";
+                $a = "--cat";
             } else {
                 last;
             }
@@ -174,31 +184,93 @@ sub parseQuery {
             $command_name = $curr_command->{command};
         }
 
-        if ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
+        if (($command_name eq "head" || $command_name eq "limit") && $a eq "-n") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{count});
+            my $a2 = shift(@$argv);
+            die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
+            $curr_command->{count} = $a2;
+
+        } elsif (($command_name eq "head" || $command_name eq "limit") && $a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+            my $a2 = $1;
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a2;
+
+        } elsif (($command_name eq "head" || $command_name eq "limit") && !defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a;
+
+        } elsif ($command_name eq "offset" && $a eq "-n") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{count});
+            my $a2 = shift(@$argv);
+            die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
+            $curr_command->{count} = $a2;
+
+        } elsif ($command_name eq "offset" && $a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+            my $a2 = $1;
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a2;
+
+        } elsif ($command_name eq "offset" && !defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a;
+
+        } elsif ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = shift(@$argv);
 
-        } elsif ($command_name eq "cut" && !defined($curr_command->{cols})) {
+        } elsif ($command_name eq "cut" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --cols or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --cols";
+            }
             $curr_command->{cols} = $a;
 
-        } elsif ($command_name eq "inshour" && !defined($curr_command->{src})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--src") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{src});
+            $curr_command->{src} = shift(@$argv);
+
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--dst") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{dst});
+            $curr_command->{dst} = shift(@$argv);
+
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{src}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --src or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --src";
+            }
             $curr_command->{src} = $a;
 
-        } elsif ($command_name eq "inshour" && !defined($curr_command->{dst})) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{dst}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --dst or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --dst";
+            }
             $curr_command->{dst} = $a;
 
-        } elsif ($command_name eq "insdate" && !defined($curr_command->{src})) {
-            $curr_command->{src} = $a;
+        } elsif ($command_name eq "sort" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{cols});
+            $curr_command->{cols} = shift(@$argv);
 
-        } elsif ($command_name eq "insdate" && !defined($curr_command->{dst})) {
-            $curr_command->{dst} = $a;
-
-        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{src})) {
-            $curr_command->{src} = $a;
-
-        } elsif ($command_name eq "insdeltasec" && !defined($curr_command->{dst})) {
-            $curr_command->{dst} = $a;
+        } elsif ($command_name eq "sort" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --cols or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --cols";
+            }
+            $curr_command->{cols} = $a;
 
         } elsif ($command_name eq "paste" && $a eq "--right") {
             degradeMain();
@@ -210,9 +282,9 @@ sub parseQuery {
 
         } elsif ($command_name eq "paste" && $a eq "[") {
             die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv);
+            ($curr_command->{file}, $argv) = parseQuery($argv, "paste", 1, '');
 
-        } elsif ($command_name eq "paste" && !defined($curr_command->{file})) {
+        } elsif ($command_name eq "paste" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
             $curr_command->{file} = $a;
 
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
@@ -230,21 +302,32 @@ sub parseQuery {
         } elsif ($command_name eq "treetable" && $a eq "--multi-value-a") {
             $curr_command->{multi_value} = "a";
 
-        } elsif ($a eq "--help") {
-            $option_help = 1;
+        } elsif ($command_name eq "tee" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "tee" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv, "tee", '', 1);
+
+        } elsif ($command_name eq "tee" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+            $curr_command->{file} = $a;
 
         } elsif ($a eq "--explain") {
             $option_explain = 1;
 
-        } elsif ($a eq "cat") {
+        } elsif ($a eq "--cat" || $a eq "cat") {
             $next_command = {command => "cat"};
             $last_command = $a;
 
-        } elsif ($a eq "take" || $a eq "head" || $a eq "limit") {
-            degradeMain();
+        } elsif ($a eq "head" || $a eq "limit") {
+            $next_command = {command => $a, count => undef};
+            $last_command = $a;
 
-        } elsif ($a eq "drop" || $a eq "offset") {
-            degradeMain();
+        } elsif ($a eq "offset") {
+            $next_command = {command => $a, count => undef};
+            $last_command = $a;
 
         } elsif ($a eq "where" || $a eq "filter") {
             degradeMain();
@@ -264,8 +347,12 @@ sub parseQuery {
         } elsif ($a eq "insweek") {
             degradeMain();
 
-        } elsif ($a eq "insdeltasec") {
-            $next_command = {command => "insdeltasec", src => undef, dst => undef};
+        } elsif ($a eq "inssecinterval") {
+            $next_command = {command => "inssecinterval", src => undef, dst => undef};
+            $last_command = $a;
+
+        } elsif ($a eq "inscopy") {
+            $next_command = {command => "inscopy", src => undef, dst => undef};
             $last_command = $a;
 
         } elsif ($a eq "addconst") {
@@ -275,12 +362,6 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "addlinenum") {
-            degradeMain();
-
-        } elsif ($a eq "addlinenum2") {
-            degradeMain();
-
-        } elsif ($a eq "addnumsortable") {
             degradeMain();
 
         } elsif ($a eq "addcross") {
@@ -299,7 +380,8 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "sort") {
-            degradeMain();
+            $next_command = {command => "sort", cols => undef};
+            $last_command = $a;
 
         } elsif ($a eq "paste") {
             $next_command = {command => "paste", file => undef, "rule" => undef};
@@ -352,32 +434,43 @@ sub parseQuery {
             $last_command = $a;
             $next_output_table = '';
 
+        } elsif ($a eq "tee") {
+            $next_command = {command => "tee", file => undef};
+            $last_command = $a;
+
         } elsif ($a eq "--tsv") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "duplicated option: $a" if defined($format);
             $format = "tsv";
 
         } elsif ($a eq "--csv") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "duplicated option: $a" if defined($format);
             $format = "csv";
 
         } elsif ($a eq "--o-tsv") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "duplicated option: $a" if defined($output_format);
             $output_format = "tsv";
 
         } elsif ($a eq "--o-csv") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "duplicated option: $a" if defined($output_format);
             $output_format = "csv";
 
         } elsif ($a eq "--o-table") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "duplicated option: $a" if defined($output_format);
             $output_format = "table";
 
         } elsif ($a eq "-i") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "option -i needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input);
             $input = shift(@$argv);
 
         } elsif ($a eq "-o") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             die "option -o needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($output);
             $output = shift(@$argv);
@@ -386,15 +479,17 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "--header") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option: $a" if defined($input_header);
             $input_header = shift(@$argv);
 
         } elsif ($a eq "--o-no-header") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             $output_header_flag = '';
 
         } else {
-            if (!defined($input)) {
+            if ($inputOk && !defined($input)) {
                 if (-e $a) {
                     $input = $a;
                 } else {
@@ -441,50 +536,56 @@ sub parseQuery {
     my $commands2 = [];
     for my $curr_command (@$commands) {
         my $command_name = $curr_command->{command};
-=comment
-        if ($command_name eq "take") {
-            if ($curr_command->{1] eq "") {
-                $curr_command->{1] = "10";
+
+        if ($command_name eq "head" || $command_name eq "limit") {
+            if ($command_name eq "head" && !defined($curr_command->{count})) {
+                $curr_command->{count} = 10;
+            }
+            if (!defined($curr_command->{count})) {
+                die "subcommand \`limit\` needs -n option";
             }
             my $f = 1;
-            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+            if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "_range") {
                 # 直前のサブコマンドと結合
                 my $prev = $commands2->[@$commands2 - 1];
-                if ($prev->[1] ne "" && $prev->[2] eq "") {
+                if ($prev->{start} ne "" && $prev->{end} eq "") {
                     $f = '';
-                    $prev->[2] = $prev->[1] + $curr_command->{1];
+                    $prev->{end} = $prev->{start} + $curr_command->{count};
                 }
             }
             if ($f) {
-                push(@$commands2, ["range", "", $curr_command->{1]]);
+                push(@$commands2, {command => "_range", start => "", end => $curr_command->{count}});
             }
-        } elsif ($command_name eq "drop") {
-            if ($curr_command->{1] eq "") {
-                $curr_command->{1] = "10";
+
+        } elsif ($command_name eq "offset") {
+            if (!defined($curr_command->{count})) {
+                die "subcommand \`offset\` needs -n option";
             }
             my $f = 1;
-            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+            if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "_range") {
                 # 直前のサブコマンドと結合
                 my $prev = $commands2->[@$commands2 - 1];
-                if ($prev->[1] eq "" && $prev->[2] ne "") {
+                if ($prev->{start} eq "" && $prev->{end} ne "") {
                     $f = '';
-                    if ($prev->[2] <= $curr_command->{1]) {
-                        $prev->[2] = "0"; # drop all records
+                    if ($prev->{end} <= $curr_command->{count}) {
+                        $prev->{end} = "0"; # drop all records
                     } else {
-                        $prev->[1] = $curr_command->{1];
+                        $prev->{start} = $curr_command->{count};
                     }
                 }
             }
             if ($f) {
-                push(@$commands2, ["range", $curr_command->{1], ""]);
+                push(@$commands2, {command => "_range", start => $curr_command->{count}, end => ""});
             }
+
+=comment
         } elsif ($command_name eq "where") {
             if (@$c <= 1) {
                 die "subcommand \`where\` needs --cond option";
             }
             push(@$commands2, $c);
 =cut
-        if ($command_name eq "cut") {
+        } elsif ($command_name eq "cut") {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
             }
@@ -522,12 +623,21 @@ sub parseQuery {
             push(@$commands2, ["insweek", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
 
 =cut
-        } elsif ($command_name eq "insdeltasec") {
+        } elsif ($command_name eq "inssecinterval") {
             if (!defined($curr_command->{src})) {
-                die "subcommand \`insdeltasec\` needs --src option";
+                die "subcommand \`inssecinterval\` needs --src option";
             }
             if (!defined($curr_command->{dst})) {
-                die "subcommand \`insdeltasec\` needs --dst option";
+                die "subcommand \`inssecinterval\` needs --dst option";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "inscopy") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`inscopy\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`inscopy\` needs --dst option";
             }
             push(@$commands2, $curr_command);
 
@@ -540,14 +650,6 @@ sub parseQuery {
                 $curr_command->{2] = "";
             }
             push(@$commands2, ["addconst", $curr_command->{1], $curr_command->{2]]);
-        } elsif ($command_name eq "addcopy") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`addcopy\` needs --name option";
-            }
-            if (!defined($curr_command->{2])) {
-                die "subcommand \`addcopy\` needs --src option";
-            }
-            push(@$commands2, ["addcopy", $curr_command->{1], $curr_command->{2]]);
         } elsif ($command_name eq "addlinenum") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`addlinenum\` needs --name option";
@@ -556,19 +658,6 @@ sub parseQuery {
                 $curr_command->{2] = 1;
             }
             push(@$commands2, ["addlinenum", $curr_command->{1], $curr_command->{2]]);
-        } elsif ($command_name eq "addlinenum2") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`addlinenum2\` needs --name option";
-            }
-            push(@$commands2, ["addlinenum2", $curr_command->{1]]);
-        } elsif ($command_name eq "addnumsortable") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`addnumsortable\` needs --name option";
-            }
-            if (!defined($curr_command->{2])) {
-                die "subcommand \`addnumsortable\` needs --col option";
-            }
-            push(@$commands2, ["addnumsortable", $curr_command->{1], $curr_command->{2]]);
         } elsif ($command_name eq "removecol") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`removecol\` needs --count option";
@@ -615,13 +704,15 @@ sub parseQuery {
                 die "Illegal column name: $curr_command->{2]\n";
             }
             push(@$commands2, ["update", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
+=cut
+
         } elsif ($command_name eq "sort") {
-            if (defined($curr_command->{1])) {
-                push(@$commands2, @{parseSortParams([split(/,/, $curr_command->{1])])});
+            if (defined($curr_command->{cols})) {
+                push(@$commands2, @{parseSortParams([split(/,/, $curr_command->{cols})])});
             } else {
                 push(@$commands2, @{parseSortParams([])});
             }
-=cut
+
         } elsif ($command_name eq "paste") {
             if (!defined($curr_command->{file})) {
                 die "subcommand \`paste\` needs --file option";
@@ -685,6 +776,12 @@ sub parseQuery {
         } elsif ($command_name eq "groupsum") {
             push(@$commands2, $curr_command);
 
+        } elsif ($command_name eq "tee") {
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`tee\` needs --file option";
+            }
+            push(@$commands2, $curr_command);
+
         } else {
             die $command_name;
         }
@@ -702,11 +799,36 @@ sub parseQuery {
      $argv);
 }
 
+sub parseSortParams {
+    my ($args) = @_;
+    my @args = @$args;
+    my $commands = [];
+    my $c = 0;
+    if (@args) {
+        push(@$commands, {command => "_addlinenum2"});
+        $c++;
+    }
+    while (@args) {
+        my $a = pop(@args);
+        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
+            push(@$commands, {command => "_addnumsortable", src => $1, dst => ""});
+        } else {
+            push(@$commands, {command => "inscopy", src => $a, dst => ""});
+        }
+        $c++;
+    }
+    push(@$commands, {command => "sort"});
+    if ($c > 0) {
+        push(@$commands, {command => "removecol", count => $c});
+    }
+    $commands;
+}
+
 my ($command_seq, $tail_argv);
 if ($option_help) {
     ($command_seq, $tail_argv) = (undef, undef);
 } else {
-    ($command_seq, $tail_argv) = parseQuery(\@ARGV);
+    ($command_seq, $tail_argv) = parseQuery(\@ARGV, "", 1, 1);
 }
 
 
@@ -762,6 +884,7 @@ my $input_pipe_list = [{"prefetch" => 1,
                         "header" => $command_seq->{input_header},
                         "charencoding" => "",
                         "utf8bom" => "0",
+                        "newline" => "",
                        }];
     # Sample
     # [
@@ -772,6 +895,7 @@ my $input_pipe_list = [{"prefetch" => 1,
     #    "header" => "", # カンマ区切りでのヘッダ名の列、または空文字列はヘッダ行ありの意味
     #    "charencoding" => "",
     #    "utf8bom" => "0",
+    #    "newline" => "unix",
     #  }
     # ]
 
@@ -798,19 +922,6 @@ sub extractNamedPipe {
             if (ref($curr_command->{file}) eq "HASH") {
                 my $subquery = $curr_command->{file};
 
-                if ($subquery->{output} ne "") {
-                    die "sub query of `$command_name` subcommand must not have output";
-                }
-                if ($subquery->{output_table} eq "") {
-                    die "sub query of `$command_name` subcommand must not have a command `$subquery->{last_command}`";
-                }
-                if ($subquery->{output_header_flag} eq "") {
-                    die "sub query of `$command_name` subcommand must not have an option --o-no-header";
-                }
-                if ($subquery->{output_format} eq "") {
-                    die "sub query of `$command_name` subcommand must not have an option --o-tsv or --o-csv";
-                }
-
                 extractNamedPipe($subquery);
 
                 if ($subquery->{input} eq "") {
@@ -821,7 +932,8 @@ sub extractNamedPipe {
                         "format" => "tsv",
                         "header" => "",
                         "charencoding" => "UTF-8",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     my $pipe_id_2 = scalar @$input_pipe_list;
                     push(@$input_pipe_list, {
@@ -830,7 +942,8 @@ sub extractNamedPipe {
                         "format" => "tsv",
                         "header" => "",
                         "charencoding" => "UTF-8",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     push(@$statement_list, {
                         "input_pipe_id" => $pipe_id_1,
@@ -852,7 +965,8 @@ sub extractNamedPipe {
                         "format" => $subquery->{format},
                         "header" => $subquery->{input_header},
                         "charencoding" => "",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     my $pipe_id_2 = scalar @$input_pipe_list;
                     push(@$input_pipe_list, {
@@ -861,7 +975,8 @@ sub extractNamedPipe {
                         "format" => "tsv",
                         "header" => "",
                         "charencoding" => "UTF-8",
-                        "utf8bom" => ""});
+                        "utf8bom" => "",
+                        "newline" => ""});
 
                     push(@$statement_list, {
                         "input_pipe_id" => $pipe_id_1,
@@ -884,12 +999,28 @@ sub extractNamedPipe {
                     "format" => "",
                     "header" => "",
                     "charencoding" => "",
-                    "utf8bom" => ""});
+                    "utf8bom" => "",
+                    "newline" => ""});
                 $curr_command->{file_pipe_id} = $pipe_id;
 
                 push(@$commands2, $curr_command);
             }
-        } else {
+
+        } elsif ($command_name eq "tee") {
+            if (ref($curr_command->{file}) eq "HASH") {
+                my $subquery = $curr_command->{file};
+
+                extractNamedPipe($subquery);
+
+                die "sub query of `$command_name` must have output option" if ($subquery->{output} eq "");
+
+                die "TODO";
+
+            } else { # unless (ref($curr_command->{file}) eq "HASH")
+                push(@$commands2, $curr_command);
+            }
+
+        } else { # other command
             push(@$commands2, $curr_command);
         }
     }
@@ -916,6 +1047,7 @@ sub prefetch_input_pipe_list {
                 $input->{charencoding} = 'UTF-8';
             }
             $input->{utf8bom} = '0';
+            $input->{newline} = 'unix';
             next;
         }
 
@@ -967,12 +1099,13 @@ sub prefetch_input {
     close($format_fh);
 
     $format =~ s/\n\z//g;
-    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+)\z/) {
+    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+) newline:([^ ]+)\z/) {
         die "failed to guess format $input_pipe_path";
     }
     $input->{format}       = $1;
     $input->{charencoding} = $2;
     $input->{utf8bom}      = $3;
+    $input->{newline}      = $4;
 
     return $input;
 }
@@ -1008,17 +1141,7 @@ sub build_ircode_input {
         $ircode = [["cmd", "cat $source"]];
     }
 
-    if ($input_pipe->{utf8bom} eq "1") {
-        push(@$ircode, ["cmd", "tail -c+4"]);
-    }
-
-    if ($input_pipe->{charencoding} ne "UTF-8") {
-        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
-    }
-
-    if ($input_pipe->{format} eq "csv") {
-        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
-    }
+    push(@$ircode, @{build_ircode_input_format($input_pipe)});
 
     if ($input_pipe->{header} ne '') {
         my @headers = split(/,/, $input_pipe->{header});
@@ -1050,17 +1173,7 @@ sub build_ircode_command {
     if ($input_pipe_id eq "") {
         my $input_pipe = $input_pipe_list->[0];
 
-        if ($input_pipe->{utf8bom} eq "1") {
-            push(@$ircode, ["cmd", "tail -c+4"]);
-        }
-
-        if ($input_pipe->{charencoding} ne "UTF-8") {
-            push(@$ircode, ["cmd", "iconv -c -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
-        }
-
-        if ($input_pipe->{format} eq "csv") {
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
-        }
+        push(@$ircode, @{build_ircode_input_format($input_pipe)});
 
         if ($input_pipe->{header} ne '') {
             my @headers = split(/,/, $input_pipe->{header});
@@ -1079,27 +1192,28 @@ sub build_ircode_command {
 
     foreach my $curr_command (@{$command_seq->{commands}}) {
         my $command_name = $curr_command->{command};
-=comment
-        if ($command_name eq "range") {
-            my $num1 = $curr_command->{1];
-            my $num2 = $curr_command->{2];
-            if ($num1 eq "") {
-                if ($num2 eq "") {
+
+        if ($command_name eq "_range") {
+            my $start = $curr_command->{start};
+            my $end = $curr_command->{end};
+            if ($start eq "") {
+                if ($end eq "") {
                     # nop
                 } else {
-                    my $arg = escape_for_bash('-n' . ($num2 + 1));
+                    my $arg = escape_for_bash('-n' . ($end + 1));
                     push(@$ircode, ["cmd", "head $arg"]);
                 }
             } else {
-                if ($num2 eq "") {
-                    my $arg = escape_for_bash(($num1 + 2) . ',$p');
+                if ($end eq "") {
+                    my $arg = escape_for_bash(($start + 2) . ',$p');
                     push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
                 } else {
-                    my $arg = escape_for_bash(($num1 + 2) . ',' . ($num2 + 1) . 'p');
+                    my $arg = escape_for_bash(($start + 2) . ',' . ($end + 1) . 'p');
                     push(@$ircode, ["cmd", "sed -n -e 1p -e $arg"]);
                 }
             }
 
+=comment
         } elsif ($command_name eq "where") {
             my $conds = '';
             for (my $i = 1; $i < @$t; $i++) {
@@ -1108,7 +1222,7 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
 
 =cut
-        if ($command_name eq "cut") {
+        } elsif ($command_name eq "cut") {
             my $cols = escape_for_bash($curr_command->{cols});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
 
@@ -1130,10 +1244,15 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/insweek.pl --name $name --src $src --start-day $start_day"]);
 
 =cut
-        } elsif ($command_name eq "insdeltasec") {
+        } elsif ($command_name eq "inssecinterval") {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdeltasec.pl --src $src --dst $dst"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/inssecinterval.pl --src $src --dst $dst"]);
+
+        } elsif ($command_name eq "inscopy") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $dst --src $src"]);
 
 =comment
         } elsif ($command_name eq "addconst") {
@@ -1141,25 +1260,20 @@ sub build_ircode_command {
             my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addconst.pl --name $name --value $value"]);
 
-        } elsif ($command_name eq "addcopy") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            my $src = escape_for_bash($curr_command->{2]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $name --src $src"]);
-
         } elsif ($command_name eq "addlinenum") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $name --value $value"]);
+=cut
+        } elsif ($command_name eq "_addlinenum2") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name ''"]);
 
-        } elsif ($command_name eq "addlinenum2") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name $name"]);
-
-        } elsif ($command_name eq "addnumsortable") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            my $col = escape_for_bash($curr_command->{2]);
+        } elsif ($command_name eq "_addnumsortable") {
+            my $name  = escape_for_bash($curr_command->{dst});
+            my $col = escape_for_bash($curr_command->{src});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
 
+=comment
         } elsif ($command_name eq "addcross") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $cols = escape_for_bash($curr_command->{2]);
@@ -1174,12 +1288,14 @@ sub build_ircode_command {
                 $option .= " --default ". escape_for_bash($curr_command->{4]);
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl$option --name $name --src $src --file $file"]);
+=cut
 
         } elsif ($command_name eq "removecol") {
-            my $count  = escape_for_bash($curr_command->{1]);
+            my $count  = escape_for_bash($curr_command->{count});
             my $arg = '-f' . ($count + 1) . '-';
             push(@$ircode, ["cmd", "cut $arg"]);
 
+=comment
         } elsif ($command_name eq "uriparams") {
             push(@$ircode, ["cmd", "tail -n+2"]);
             push(@$ircode, ["cmd", "bash \$TOOL_DIR/pre-encode-percent.sh"]);
@@ -1203,14 +1319,19 @@ sub build_ircode_command {
             my $column = escape_for_bash($curr_command->{2]);
             my $value = escape_for_bash($curr_command->{3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
+=cut
 
         } elsif ($command_name eq "sort") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
-=cut
         } elsif ($command_name eq "tee") {
-            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
-            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            my $file;
+            if (defined($curr_command->{file_pipe_id})) {
+                my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+                $file = "$input_pipe_prefix1${file_pipe_id}";
+            } else {
+                $file = escape_for_bash($curr_command->{file});
+            }
             push(@$ircode, ["cmd", "tee $file"]);
 
         } elsif ($command_name eq "buffer") {
@@ -1299,6 +1420,30 @@ sub build_ircode_command {
     }
 
     $command_seq->{ircode} = ["pipe", $ircode];
+}
+
+sub build_ircode_input_format {
+    my ($input_pipe) = @_;
+    my $ircode = [];
+    if ($input_pipe->{utf8bom} eq "1") {
+        push(@$ircode, ["cmd", "tail -c+4"]);
+    }
+
+    if ($input_pipe->{newline} eq "dos" && $input_pipe->{format} ne "csv") {
+        push(@$ircode, ["cmd", "sed 's/\\r\$//g'"]);
+    } elsif ($input_pipe->{newline} eq "mac") {
+        push(@$ircode, ["cmd", "sed 's/\\r/\\n/g'"]);
+    }
+
+    if ($input_pipe->{charencoding} ne "UTF-8") {
+        push(@$ircode, ["cmd", "iconv -f $input_pipe->{charencoding} -t UTF-8//TRANSLIT"]);
+    }
+
+    if ($input_pipe->{format} eq "csv") {
+        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+    }
+
+    return $ircode;
 }
 
 build_ircode();
@@ -1462,7 +1607,7 @@ close($main_1_out);
 # 入出力を stdin, stdout に統一
 ################################################################################
 
-if (1) {
+{
     # 入力を stdin に統一
     my $pipe_id = 0;
     my $pipe_path = "$input_pipe_prefix2${pipe_id}_0";

@@ -1,0 +1,57 @@
+Available subcommands:
+    なにもしないサブコマンド
+        cat                             [v1/v2] Print data to the terminal
+
+    レコード選択に関するサブコマンド
+        head [<N>]                      [v1/v2] Print first N records
+        limit [<N>]                     [v1/v2] Print first N records
+        offset [<N>]                    [v1/v2] Print all except first N records
+        take [<N>]                      [DEPRECATED] [v1] Print first N records
+        drop [<N>]                      [DEPRECATED] [v1] Print all except first N records
+        where <CONDITION>               [EXPERIMENTAL] [v1]
+        filter <CONDITION>              [EXPERIMENTAL] [v1]
+
+    列の選択に関するサブコマンド
+        cut <COLUMNS>                   [v1/v2] Print specified columns
+
+    列を追加するサブコマンド
+        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [v1/v2] 日時のカラムから日付を抽出した値を新しいカラムとして追加する
+        inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
+        inssecinterval <SRC_COLUMN_NAME> <DST_COLUMN_NAME>      [EXPERIMENTAL] [v2]
+        inscopy <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] カラムをコピーする
+        addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] [v1] 固定値のカラムを一番左に追加する
+        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED] [v1]
+        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [DEPRECATED] [v1]
+        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [DEPRECATED] [v1]
+        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [DEPRECATED] [v1]
+        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [DEPRECATED] [v1]
+        uriparams <NAMES>                                       [EXPERIMENTAL] [v1]
+        parseuriparams <NAMES>                                  [DEPRECATED] [v1]
+
+    その他のデータを加工するコマンド
+        update <INDEX> <COLUMN> <VALUE> [v1] セルを指定して値を更新する
+        sort [<COLUMNS>]                [v1/v2] ソートする
+        paste <OTHER_FILE>              [EXPERIMENTAL] [v1/v2]
+        join <OTHER_FILE>               [EXPERIMENTAL] [v1]
+        union <OTHER_FILE>              [EXPERIMENTAL] [v1]
+
+    集計するコマンド
+        wcl                             [v1/v2] Print record count. レコード数を表示する
+        header                          [v1/v2] Print column names. カラムの一覧を表示する
+        summary                         [v1/v2] Print summary of data. データのサマリを表示する
+        countcols                       [v1/v2] カラム数を集計する
+        facetcount                      [v1/v2] カラムそれぞれのファセットカウントを集計する
+        treetable                       [EXPERIMENTAL] [v1/v2]
+        crosstable                      [EXPERIMENTAL] [v1]
+        wordsflags                      [EXPERIMENTAL] [v1]
+        groupsum                        [EXPERIMENTAL] [v2]
+
+    その他のコマンド
+        tee <OTHER_FILE>                [EXPERIMENTAL] [v2] Output to next subcommand and other file
+
+    各コマンドの詳細は
+        $ xsvutils help <SUBCOMMAND>
+    または
+        $ xsvutils <SUBCOMMAND> --help
+    で確認できる。
+

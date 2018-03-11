@@ -1,12 +1,17 @@
 # xsvutils
 
-Utilities for handling separated value data
-
+Utilities for handling separated value data.
+CSVファイルやTSVファイルをCUIで扱うツール。
 
 ## Usage
 
     $ xsvutils [FILENAME] [SUBCOMMAND] [OPTIONS...]
 
+To see help documents,
+
+    $ xsvutils --help
+    $ xsvutils --help usage
+    $ xsvutils --help subcommands
 
 ## Example
 
@@ -49,7 +54,7 @@ Retrieve specified columns.
 ヘッダ行のない3カラムからなるファイルに対して、カラム名をオプションで指定してから、
 name, id の2カラムのみを表示する。2カラムは元ファイルから順番を入れ替える。
 
-    $ xsvutils data.tsv --i-header id,name,comment cut name,id
+    $ xsvutils data.tsv --header id,name,comment cut name,id
 
 レコード数を数える。ヘッダ行は含まない。
 
@@ -58,6 +63,14 @@ name, id の2カラムのみを表示する。2カラムは元ファイルから
 ヘッダにあるカラム名の一覧を表示する。
 
     $ xsvutils data.tsv header
+
+
+## Install
+
+    $ git clone https://github.com/suzuki-navi/xsvutils.git
+    $ cd xsvutils
+    $ make
+    $ cp xsvutils ~/bin/    # copy xsvutils to your $PATH
 
 
 ## License

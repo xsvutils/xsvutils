@@ -9,4 +9,6 @@ join subcommand
         --left-outer
         --right-outer
         --full-outer
+        --help        Print help information about this subcommand.
+
 

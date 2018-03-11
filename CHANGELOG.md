@@ -1,16 +1,32 @@
 # CHANGELOG
 
+To see version information, `xsvutils --version`.
+
+To see compatibility information, `xsvutils help compatibility`.
+
+## version 0.2.3 (2018-03-11)
+- add support CR, CRLF
+- add some subcommands on v2
+- add --src, --dst options of inshour, insdate subcommand on v2
+- rename subcommand name `insdeltasec` to `inssecinterval`
+- remove `addlinenum2` subcommand
+- add `inscopy` subcommand on v2
+- change `sort` subcommand without parameters
+- remove `addnumsortable` subcommand
+- add support input of gz file on v2
+- add `tee` subcommand on v2
+
 ## version 0.2.2 (2018-03-07)
-- add `inshour` subcommand
-- add --weight option on `facetcount` subcommand
+- add `inshour` subcommand on v2
+- add --weight option on `facetcount` subcommand on v2
 - fix a bug on `join` subcommand
 
 ## version 0.2.1 (2018-02-27)
 - add --version option
 - split help document
 - add some subcommands on v2
-- add `insdeltasec` subcommand
-- add `groupsum` subcommand
+- add `insdeltasec` subcommand on v2
+- add `groupsum` subcommand on v2
 
 ## version 0.2.0 (2018-02-25)
 - add -v1, -v2 options

@@ -11,7 +11,8 @@ head, limit subcommand
         <N>       (optional) Print first N records (default is 10)
 
     Options:
-        -n <N>    Print first N records (default is 10)
+        -n <N>    Print first N records (default is 10 on head subcommand)
+        --help    Print help information about this subcommand.
 
     以下は同じ意味である。
 

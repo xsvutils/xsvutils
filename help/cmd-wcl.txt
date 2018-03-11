@@ -5,3 +5,6 @@ wcl subcommand
 
     データが大きい場合には、標準エラー出力に進捗表示をする。
 
+    Options:
+        --help    Print help information about this subcommand.
+

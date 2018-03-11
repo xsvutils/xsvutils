@@ -10,6 +10,7 @@ offset subcommand
 
     Options:
         -n <N>    Print all except first N records (default is 10)
+        --help    Print help information about this subcommand.
 
     以下は同じ意味である。
 

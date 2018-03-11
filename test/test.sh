@@ -4,13 +4,16 @@ if [ -e var/test ]; then
 fi
 mkdir -p var/test
 
-bash ./test/case-uriparams.sh
 bash ./test/case-bom.sh
+bash ./test/case-newline.sh
+bash ./test/case-range.sh
+bash ./test/case-uriparams.sh
 bash ./test/case-facetcount.sh
 bash ./test/case-treetable.sh
 bash ./test/case-crosstable.sh
 bash ./test/case-wordsflags.sh
 bash ./test/case-addmap.sh
+bash ./test/case-sort.sh
 bash ./test/case-join.sh
 bash ./test/case-datetime.sh
 bash ./test/case-number.sh

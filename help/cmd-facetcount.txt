@@ -4,5 +4,6 @@ facetcount subcommand
 
     Options:
         --multi-value-a  複数値A形式に対応した集計をする
-        --weight         1列目を重みとみなす
+        --weight         [v2] 1列目を重みとみなす
+        --help           Print help information about this subcommand.
 

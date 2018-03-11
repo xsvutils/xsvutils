@@ -62,7 +62,7 @@ if [ ! -e var/help-cmd-list.txt.tmp ] || ! diff -q var/help-cmd-list.txt var/hel
 fi
 
 (
-    #ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
+    ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
     echo version
     echo changelog
 ) | sort | column -c 80 > var/help-guide-list.txt.tmp
@@ -76,9 +76,14 @@ target/help-main.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/mai
 	bash etc/build-help-main-2.sh var/help-main.txt.tmp.1 > var/help-main.txt.tmp.2
 	cp var/help-main.txt.tmp.2 target/help-main.txt
 
+target/help-notfound.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/notfound.txt var/help-cmd-list.txt var/help-guide-list.txt
+	bash etc/build-help-main-1.sh help/notfound.txt > var/help-notfound.txt.tmp.1
+	bash etc/build-help-main-2.sh var/help-notfound.txt.tmp.1 > var/help-notfound.txt.tmp.2
+	cp var/help-notfound.txt.tmp.2 target/help-notfound.txt
+
 EOF
 
-for f in $(ls help | grep -v 'main\.txt'); do
+for f in $(ls help | grep -v -E -e '(main|notfound)\.txt'); do
 cat <<EOF
 target/help-$f: help/$f
 	cp help/$f target/help-$f

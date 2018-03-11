@@ -1,0 +1,16 @@
+document not found
+
+See overview document.
+    $ xsvutils help
+
+Or, see each document.
+    $ xsvutils help <DOCUMENT>
+
+<DOCUMENT> is either subcommand name or other document name.
+
+Subcommand names are following.
+    ####HELP_CMD_INDEX####
+
+Other <DOCUMENT> are following.
+    ####HELP_GUIDE_INDEX####
+

@@ -3,59 +3,45 @@ Utilities for handling separated value data
 EXAMPLES:
     $ xsvutils data.tsv                   # Print data to the terminal
     $ xsvutils data.csv                   # xsvutils can handle not only tsv format but csv format
-    $ xsvutils data.tsv cut id,name       # Print only columns `id,name` to the terminal
+    $ xsvutils data.tsv cut id,name       # Print only `id`, `name` columns to the terminal
     $ xsvutils data.tsv wcl               # Count records
     $ xsvutils data.tsv limit 100         # Print only first 100 records
-    $ xsvutils data.tsv cut id limit 100  # Print only column `id` of first 100 records
-    $ xsvutils data.csv > data.tsv        # Convert to tsv format
+    $ xsvutils data.tsv cut id limit 100  # Print only `id` column of first 100 records
+    $ xsvutils data.csv > data.tsv        # Convert csv format to tsv
 
-Available subcommands:
-    なにもしないサブコマンド
-        cat                             Print data to the terminal
-
+Commonly used subcommands:
     レコード選択に関するサブコマンド
-        head [<N>]                      Print first N records
-        limit [<N>]                     Print first N records
-        offset [<N>]                    Print all except first N records
-        take [<N>]                      [DEPRECATED] Print first N records
-        drop [<N>]                      [DEPRECATED] Print all except first N records
-        where <CONDITION>               [EXPERIMENTAL]
-        filter <CONDITION>              [EXPERIMENTAL]
+        limit [<N>]                     [v1/v2] Print first N records
+        offset [<N>]                    [v1/v2] Print all except first N records
 
     列の選択に関するサブコマンド
-        cut <COLUMNS>                   Print specified columns
-
-    列を追加するサブコマンド
-        insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
-        inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL]
-        insdeltasec <SRC_COLUMN_NAME> <DST_COLUMN_NAME>         [EXPERIMENTAL]
-        addconst <NEW_COLUMN_NAME> <VALUE>                      [EXPERIMENTAL] 固定値のカラムを一番左に追加する
-        addcopy <NEW_COLUMN_NAME> <SOURCE>                      [EXPERIMENTAL]
-        addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [EXPERIMENTAL]
-        addlinenum2 <NEW_COLUMN_NAME>                           [EXPERIMENTAL]
-        addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [EXPERIMENTAL]
-        addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [EXPERIMENTAL]
-        addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [EXPERIMENTAL]
-        uriparams <NAMES>                                       [EXPERIMENTAL]
-        parseuriparams <NAMES>                                  [DEPRECATED]
+        cut <COLUMNS>                   [v1/v2] Print specified columns
 
     その他のデータを加工するコマンド
-        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
-        sort [<COLUMNS>]                ソートする
-        paste <OTHER_FILE>              [EXPERIMENTAL]
-        join <OTHER_FILE>               [EXPERIMENTAL]
-        union <OTHER_FILE>              [EXPERIMENTAL]
+        update <INDEX> <COLUMN> <VALUE> [v1] セルを指定して値を更新する
+        sort [<COLUMNS>]                [v1/v2] ソートする
 
     集計するコマンド
-        wcl                             レコード数を表示する
-        header                          カラムの一覧を表示する
-        summary                         データのサマリを表示する
-        countcols                       カラム数を集計する
-        facetcount                      カラムそれぞれのファセットカウントを集計する
-        treetable                       [EXPERIMENTAL]
-        crosstable                      [EXPERIMENTAL]
-        wordsflags                      [EXPERIMENTAL]
-        groupsum                        [EXPERIMENTAL]
+        wcl                             [v1/v2] Print record count. レコード数を表示する
+        header                          [v1/v2] Print column names. カラムの一覧を表示する
+        summary                         [v1/v2] Print summary of data. データのサマリを表示する
+        countcols                       [v1/v2] カラム数を集計する
+        facetcount                      [v1/v2] カラムそれぞれのファセットカウントを集計する
+        treetable                       [EXPERIMENTAL] [v1/v2]
+        crosstable                      [EXPERIMENTAL] [v1]
+
+    `xsvutils help subcommands` ですべてのサブコマンドを確認できる。
+
+    各コマンドの詳細は
+        $ xsvutils help <SUBCOMMAND>
+    または
+        $ xsvutils <SUBCOMMAND> --help
+    で確認できる。
+
+USAGE
+    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
+
+    詳細は `xsvutils help usage` を見ること。
 
 DETAILS:
     See each document.
@@ -68,167 +54,6 @@ DETAILS:
 
     Other <DOCUMENT> are following.
         ####HELP_GUIDE_INDEX####
-
-USAGE:
-    $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
-
-    SUBCOMMAND には cut, limit などがある。
-
-    SUBCOMMAND は内容により複数を組み合わせることも可能。
-
-    以下の例では cut がサブコマンド、 id,name がcutサブコマンドのパラメータである。
-
-        $ xsvutils data.tsv cut id,name
-
-    以下の例では cut がサブコマンド、 id がcutサブコマンドのパラメータであり、
-    limit が次のサブコマンド、 100 がlimitサブコマンドのパラメータである。
-
-        $ xsvutils data.tsv cut id limit 100
-
-    標準出力が端末であれば端末に見やすく表示し、
-    標準出力がファイル等であればTSVフォーマットで出力する。
-    --o-csv オプションを指定し、標準出力が端末でない場合はCSVフォーマットで出力する。
-
-    SUBCOMMAND 省略時はcatが指定されたものと同じで、入力データの中身を加工せずにそのまま出力する。
-
-    サブコマンドによってはオプションやパラメータを受け付ける。
-
-    パラメータを受け付けるサブコマンドはすべて以下のようにオプションを使った同等の書き方も可能。
-
-        $ xsvutils data.tsv cut title         (パラメータでの指定)
-        $ xsvutils data.tsv cut --col title   (オプションでの指定)
-
-    都度コマンドラインからコマンドを入力する際には1つ目の書き方が短くて便利だが、
-    パラメータにどんな値が来るかわからない場合には別の解釈をされないようにオプションでの指定が必要。
-
-        $ xsvutils data.tsv cut --col $COLUMN
-
-    以下のように書いてしまうと、 $COLUMN が head という値の場合に、
-    それが cut のパラメータではなく head というサブコマンドになってしまうので、避けること。
-
-        $ xsvutils data.tsv cut $COLUMN
-
-
-Common options:
-    --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
-    --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
-    --o-tsv          出力はTSVフォーマット (default when stdout is file)
-    --o-csv          出力はCSVフォーマット (default is TSV format)
-    --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
-    -i <FILENAME>    Input from <FILENAME> (default is stdin)
-    -o <FILENAME>    Output to <FILENAME>  (default is stdout)
-
-    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
-                     ([DEPRECATED] --i-header も同じ。v2では --i-header は使えない)
-    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
-
-    --help           Print help information.
-    --version        Print version information.
-
-    xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
-    それらがない場合は標準入力が入力になる。
-    入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。
-
-    以下の2つの例では $INPUT が `head` などのサブコマンド名と偶然同じだった場合に、
-    1つ目ではエラーとなってしまうが、2つ目では意図したとおりに動く。
-
-        $ xsvutils $INPUT cut title
-        $ xsvutils -i $INPUT cut --col title
-
-    これら共通オプションは FILENAME, SUBCOMMAND の前に置くことも可能だが、
-    サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
-
-    以下は同じ意味になる。
-
-        $ xsvutils FILENAME
-        $ xsvutils FILENAME cat
-        $ xsvutils -i FILENAME
-        $ xsvutils -i FILENAME cat
-        $ xsvutils < FILENAME
-        $ xsvutils cat < FILENAME
-
-Common options for developer:
-    --explain 実行するスクリプトを標準エラー出力に出力する
-
-Character encoding:
-    入力の文字コードは UTF-8 が原則。
-
-    [EXPERIMENTAL] 入力の文字コードは UTF-8 / SHIFT-JIS の自動判定。
-    オプションによる文字コード指定は未実装。
-    SHIFT-JIS は内部でiconvコマンドを使用しており、巨大な入力の場合はメモリ消費に問題あり。
-
-v1 と v2:
-    コマンドラインパラメータのパースの実装に v1 と v2 がある。
-    v1 と v2 とではわずかに互換性のない違いがある。
-    このヘルプに [v2] と書かれている箇所は v2 の場合のみの記述である。
-
-    近い将来 v2 に統一する予定だが、現在はコマンドラインの内容によって v1 と v2 のどちらかが選択される。
-    v2自体はまだEXPERIMENTALの扱いである。
-
-    先頭のコマンドラインパラメータに -v1 オプションを使用した場合
-        v1 でパースされる。
-
-    先頭のコマンドラインパラメータに -v2 オプションを使用した場合
-        v2 でパースされる。
-        ただし、v2 でサポートされていないコマンドラインパラメータが存在した場合には
-        警告を標準エラー出力に出力し v1 でパースする。
-
-    それ以外の場合
-        デフォルトで v1 でパースされる。
-        2018年3月には、デフォルトで v2 に変更予定。
-        ただし、デフォルト変更後も、v2 でサポートされていないコマンドラインパラメータが存在した場合には
-        警告を標準エラー出力に出力し v1 でパースする。
-
-    2018年4月以降に v1 は廃止予定で、コマンドラインパラメータによらず v2 でパースされる予定。
-
-バージョン番号の方針:
-    xsvutilsはX.Y.Z の形式でバージョン番号を付与している。
-    (当面は 0.X.Y の形式)
-
-    コマンドラインインターフェースに互換性のない変更がある場合には X のバージョンを上げる。
-    (メジャーバージョンアップ)
-
-    サブコマンドやオプションが増えるなどで、互換性を維持した機能追加の場合には Y のバージョンを上げる。
-    (メジャーバージョンアップ)
-
-    互換性を維持したまま、バグ修正や若干の性能改善の場合には Z のバージョンを上げる。
-    (パッチバージョンアップ)
-    (当面は Z はバージョン番号に含めない)
-
-    ただし、ここでいう互換性があるかどうかは、下記の互換性に関する注意点を守っている場合に限る。
-
-互換性に関する注意点:
-
-    1.  将来のxsvutilsのバージョンで新しいサブコマンドができる可能性があるが、
-        xsvuitlsを使っているスクリプトの中で使用しているパラメータと同じサブコマンドができた場合、
-        動作が変わってしまうことに注意のこと。
-
-        以下のように書いた場合に将来 title というサブコマンドができた場合に、
-        cutのパラメータだったつもりのtitleがサブコマンドに変わってしまう。
-
-            $ xsvutils data.tsv cut title         (パラメータでの指定)
-
-        以下のように書けば将来も互換性を保てる。
-
-            $ xsvutils data.tsv cut --col title   (オプションでの指定)
-
-        xsvutilsはマイナーバージョンアップで新しいサブコマンドができる可能性がある。
-
-        v2 では `cut title` と書いても例え title というサブコマンドができても
-        title は cut のパラメータの扱いのままになる。
-
-
-    2.  このヘルプに EXPERIMENTAL と書かれている箇所は
-        まだ実装途中であったり、動作が不安定であったり、将来仕様変更する可能性の高い機能である。
-
-        xsvutilsはマイナーバージョンアップで EXPERIMENTAL と書かれている仕様を、
-        互換性なく変更する可能性がある。
-
-    3.  このヘルプに DEPRECATED と書かれている箇所は
-        廃止予定で互換性のためだけに残してある機能である。
-
-        xsvutilsはメジャーバージョンアップで DEPRECATED と書かれている仕様を、
-        廃止する可能性がある。
 
 License:
     This software is released under the MIT License, see LICENSE.txt.
