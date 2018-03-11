@@ -221,6 +221,17 @@ sub parseQuery {
             }
             $curr_command->{dst} = $a;
 
+        } elsif ($command_name eq "sort" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{cols});
+            $curr_command->{cols} = shift(@$argv);
+
+        } elsif ($command_name eq "sort" && !defined($curr_command->{cols})) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --cols or -i";
+            }
+            $curr_command->{cols} = $a;
+
         } elsif ($command_name eq "paste" && $a eq "--right") {
             degradeMain();
 
@@ -319,7 +330,8 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "sort") {
-            degradeMain();
+            $next_command = {command => "sort", cols => undef};
+            $last_command = $a;
 
         } elsif ($a eq "paste") {
             $next_command = {command => "paste", file => undef, "rule" => undef};
@@ -475,7 +487,7 @@ sub parseQuery {
                 die "subcommand \`limit\` needs -n option";
             }
             my $f = 1;
-            if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "range") {
+            if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "_range") {
                 # 直前のサブコマンドと結合
                 my $prev = $commands2->[@$commands2 - 1];
                 if ($prev->{start} ne "" && $prev->{end} eq "") {
@@ -484,7 +496,7 @@ sub parseQuery {
                 }
             }
             if ($f) {
-                push(@$commands2, {command => "range", start => "", end => $curr_command->{count}});
+                push(@$commands2, {command => "_range", start => "", end => $curr_command->{count}});
             }
 
 =comment
@@ -493,7 +505,7 @@ sub parseQuery {
                 $curr_command->{1] = "10";
             }
             my $f = 1;
-            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "range") {
+            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "_range") {
                 # 直前のサブコマンドと結合
                 my $prev = $commands2->[@$commands2 - 1];
                 if ($prev->[1] eq "" && $prev->[2] ne "") {
@@ -506,7 +518,7 @@ sub parseQuery {
                 }
             }
             if ($f) {
-                push(@$commands2, ["range", $curr_command->{1], ""]);
+                push(@$commands2, ["_range", $curr_command->{1], ""]);
             }
         } elsif ($command_name eq "where") {
             if (@$c <= 1) {
@@ -587,11 +599,6 @@ sub parseQuery {
                 $curr_command->{2] = 1;
             }
             push(@$commands2, ["addlinenum", $curr_command->{1], $curr_command->{2]]);
-        } elsif ($command_name eq "addlinenum2") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`addlinenum2\` needs --name option";
-            }
-            push(@$commands2, ["addlinenum2", $curr_command->{1]]);
         } elsif ($command_name eq "addnumsortable") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`addnumsortable\` needs --name option";
@@ -646,13 +653,15 @@ sub parseQuery {
                 die "Illegal column name: $curr_command->{2]\n";
             }
             push(@$commands2, ["update", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
+=cut
+
         } elsif ($command_name eq "sort") {
-            if (defined($curr_command->{1])) {
-                push(@$commands2, @{parseSortParams([split(/,/, $curr_command->{1])])});
+            if (defined($curr_command->{cols})) {
+                push(@$commands2, @{parseSortParams([split(/,/, $curr_command->{cols})])});
             } else {
                 push(@$commands2, @{parseSortParams([])});
             }
-=cut
+
         } elsif ($command_name eq "paste") {
             if (!defined($curr_command->{file})) {
                 die "subcommand \`paste\` needs --file option";
@@ -731,6 +740,26 @@ sub parseQuery {
       "output_format" => $output_format,
       "last_command" => $last_command},
      $argv);
+}
+
+sub parseSortParams {
+    my ($args) = @_;
+    my @args = @$args;
+    my $commands = [];
+    push(@$commands, {command => "_addlinenum2"});
+    my $c = 1;
+    while (@args) {
+        my $a = pop(@args);
+        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
+            push(@$commands, {command => "_addnumsortable", src => $1, dst => ""});
+        } else {
+            push(@$commands, {command => "inscopy", src => $a, dst => ""});
+        }
+        $c++;
+    }
+    push(@$commands, {command => "sort"});
+    push(@$commands, {command => "removecol", count => $c});
+    $commands;
 }
 
 my ($command_seq, $tail_argv);
@@ -1087,7 +1116,7 @@ sub build_ircode_command {
     foreach my $curr_command (@{$command_seq->{commands}}) {
         my $command_name = $curr_command->{command};
 
-        if ($command_name eq "range") {
+        if ($command_name eq "_range") {
             my $start = $curr_command->{start};
             my $end = $curr_command->{end};
             if ($start eq "") {
@@ -1158,16 +1187,16 @@ sub build_ircode_command {
             my $name  = escape_for_bash($curr_command->{1]);
             my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $name --value $value"]);
-
-        } elsif ($command_name eq "addlinenum2") {
-            my $name  = escape_for_bash($curr_command->{1]);
+=cut
+        } elsif ($command_name eq "_addlinenum2") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name ''"]);
 
-        } elsif ($command_name eq "addnumsortable") {
-            my $name  = escape_for_bash($curr_command->{1]);
-            my $col = escape_for_bash($curr_command->{2]);
+        } elsif ($command_name eq "_addnumsortable") {
+            my $name  = escape_for_bash($curr_command->{dst});
+            my $col = escape_for_bash($curr_command->{src});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
 
+=comment
         } elsif ($command_name eq "addcross") {
             my $name  = escape_for_bash($curr_command->{1]);
             my $cols = escape_for_bash($curr_command->{2]);
@@ -1182,12 +1211,14 @@ sub build_ircode_command {
                 $option .= " --default ". escape_for_bash($curr_command->{4]);
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl$option --name $name --src $src --file $file"]);
+=cut
 
         } elsif ($command_name eq "removecol") {
-            my $count  = escape_for_bash($curr_command->{1]);
+            my $count  = escape_for_bash($curr_command->{count});
             my $arg = '-f' . ($count + 1) . '-';
             push(@$ircode, ["cmd", "cut $arg"]);
 
+=comment
         } elsif ($command_name eq "uriparams") {
             push(@$ircode, ["cmd", "tail -n+2"]);
             push(@$ircode, ["cmd", "bash \$TOOL_DIR/pre-encode-percent.sh"]);
@@ -1211,11 +1242,11 @@ sub build_ircode_command {
             my $column = escape_for_bash($curr_command->{2]);
             my $value = escape_for_bash($curr_command->{3]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
+=cut
 
         } elsif ($command_name eq "sort") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
 
-=cut
         } elsif ($command_name eq "tee") {
             my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
             my $file = "$input_pipe_prefix1${file_pipe_id}";
