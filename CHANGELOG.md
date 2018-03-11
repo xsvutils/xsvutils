@@ -13,6 +13,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - add `inscopy` subcommand on v2
 - change `sort` subcommand without parameters
 - remove `addnumsortable` subcommand
+- add support input of gz file on v2
 
 ## version 0.2.2 (2018-03-07)
 - add `inshour` subcommand on v2
