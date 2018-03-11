@@ -149,7 +149,7 @@ sub parseQuery {
         where filter
         cut
         inshour insdate insweek inssecinterval inscopy
-        addconst addcopy addlinenum addnumsortable addcross addmap uriparams parseuriparams
+        addconst addcopy addlinenum addcross addmap uriparams parseuriparams
         update sort paste join union
         wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
     /;
@@ -320,9 +320,6 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "addlinenum") {
-            degradeMain();
-
-        } elsif ($a eq "addnumsortable") {
             degradeMain();
 
         } elsif ($a eq "addcross") {
@@ -610,14 +607,6 @@ sub parseQuery {
                 $curr_command->{2] = 1;
             }
             push(@$commands2, ["addlinenum", $curr_command->{1], $curr_command->{2]]);
-        } elsif ($command_name eq "addnumsortable") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`addnumsortable\` needs --name option";
-            }
-            if (!defined($curr_command->{2])) {
-                die "subcommand \`addnumsortable\` needs --col option";
-            }
-            push(@$commands2, ["addnumsortable", $curr_command->{1], $curr_command->{2]]);
         } elsif ($command_name eq "removecol") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`removecol\` needs --count option";

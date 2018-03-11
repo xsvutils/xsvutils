@@ -138,10 +138,6 @@ sub parseQuery {
             $next_command = ["addlinenum", undef, undef];
             $last_command = $a;
 
-        } elsif ($a eq "addnumsortable") {
-            $next_command = ["addnumsortable", undef, undef];
-            $last_command = $a;
-
         } elsif ($a eq "addcross") {
             $next_command = ["addcross", undef, undef];
             $last_command = $a;
@@ -450,31 +446,6 @@ sub parseQuery {
                 } elsif (!defined($curr_command->[2])) {
                     my $value = $a;
                     $curr_command->[2] = $value;
-                } else {
-                    die "Unknown argument: $a";
-                }
-
-            } elsif ($curr_command->[0] eq "addnumsortable") {
-                if ($a eq "--name") {
-                    die "option $a needs an argument" unless (@$argv);
-                    my $name = shift(@$argv);
-                    if (defined($curr_command->[1])) {
-                        die "duplicated option: --name";
-                    }
-                    $curr_command->[1] = $name;
-                } elsif ($a eq "--col") {
-                    die "option $a needs an argument" unless (@$argv);
-                    my $col = shift(@$argv);
-                    if (defined($curr_command->[2])) {
-                        die "duplicated option: --col";
-                    }
-                    $curr_command->[2] = $col;
-                } elsif (!defined($curr_command->[1])) {
-                    my $name = $a;
-                    $curr_command->[1] = $name;
-                } elsif (!defined($curr_command->[2])) {
-                    my $col = $a;
-                    $curr_command->[2] = $col;
                 } else {
                     die "Unknown argument: $a";
                 }
@@ -850,14 +821,6 @@ sub parseQuery {
                 $c->[2] = 1;
             }
             push(@$commands2, ["addlinenum", $c->[1], $c->[2]]);
-        } elsif ($c->[0] eq "addnumsortable") {
-            if (!defined($c->[1])) {
-                die "subcommand \`addnumsortable\` needs --name option";
-            }
-            if (!defined($c->[2])) {
-                die "subcommand \`addnumsortable\` needs --col option";
-            }
-            push(@$commands2, ["addnumsortable", $c->[1], $c->[2]]);
         } elsif ($c->[0] eq "removecol") {
             if (!defined($c->[1])) {
                 die "subcommand \`removecol\` needs --count option";
