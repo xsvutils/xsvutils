@@ -199,6 +199,22 @@ sub parseQuery {
             die "duplicated option -n" if defined($curr_command->{count});
             $curr_command->{count} = $a;
 
+        } elsif ($command_name eq "offset" && $a eq "-n") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{count});
+            my $a2 = shift(@$argv);
+            die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
+            $curr_command->{count} = $a2;
+
+        } elsif ($command_name eq "offset" && $a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+            my $a2 = $1;
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a2;
+
+        } elsif ($command_name eq "offset" && !defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
+            die "duplicated option -n" if defined($curr_command->{count});
+            $curr_command->{count} = $a;
+
         } elsif ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{cols});
@@ -296,8 +312,9 @@ sub parseQuery {
             $next_command = {command => $a, count => undef};
             $last_command = $a;
 
-        } elsif ($a eq "drop" || $a eq "offset") {
-            degradeMain();
+        } elsif ($a eq "offset") {
+            $next_command = {command => $a, count => undef};
+            $last_command = $a;
 
         } elsif ($a eq "where" || $a eq "filter") {
             degradeMain();
@@ -519,27 +536,28 @@ sub parseQuery {
                 push(@$commands2, {command => "_range", start => "", end => $curr_command->{count}});
             }
 
-=comment
-        } elsif ($command_name eq "drop") {
-            if ($curr_command->{1] eq "") {
-                $curr_command->{1] = "10";
+        } elsif ($command_name eq "offset") {
+            if (!defined($curr_command->{count})) {
+                die "subcommand \`offset\` needs -n option";
             }
             my $f = 1;
-            if (@$commands2 && $commands2->[@$commands2 - 1]->[0] eq "_range") {
+            if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "_range") {
                 # 直前のサブコマンドと結合
                 my $prev = $commands2->[@$commands2 - 1];
-                if ($prev->[1] eq "" && $prev->[2] ne "") {
+                if ($prev->{start} eq "" && $prev->{end} ne "") {
                     $f = '';
-                    if ($prev->[2] <= $curr_command->{1]) {
-                        $prev->[2] = "0"; # drop all records
+                    if ($prev->{end} <= $curr_command->{count}) {
+                        $prev->{end} = "0"; # drop all records
                     } else {
-                        $prev->[1] = $curr_command->{1];
+                        $prev->{start} = $curr_command->{count};
                     }
                 }
             }
             if ($f) {
-                push(@$commands2, ["_range", $curr_command->{1], ""]);
+                push(@$commands2, {command => "_range", start => $curr_command->{count}, end => ""});
             }
+
+=comment
         } elsif ($command_name eq "where") {
             if (@$c <= 1) {
                 die "subcommand \`where\` needs --cond option";
