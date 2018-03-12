@@ -5,6 +5,7 @@ To see version information, `xsvutils --version`.
 To see compatibility information, `xsvutils help compatibility`.
 
 ## version 0.2.4 (Unreleased)
+- add support subquery of `tee` subcommand
 
 ## version 0.2.3 (2018-03-11)
 - add support CR, CRLF

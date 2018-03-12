@@ -1014,8 +1014,24 @@ sub extractNamedPipe {
 
                 die "sub query of `$command_name` must have output option" if ($subquery->{output} eq "");
 
-                die "TODO";
+                my $pipe_id_1 = scalar @$input_pipe_list;
+                push(@$input_pipe_list, {
+                    "prefetch" => "",
+                    "source" => "",
+                    "format" => "tsv",
+                    "header" => "",
+                    "charencoding" => "UTF-8",
+                    "utf8bom" => "",
+                    "newline" => ""});
 
+                push(@$statement_list, {
+                    "input_pipe_id" => $pipe_id_1,
+                    "output_pipe_id" => undef,
+                    "query" => $subquery});
+
+                $curr_command->{file_pipe_id} = $pipe_id_1;
+
+                push(@$commands2, $curr_command);
             } else { # unless (ref($curr_command->{file}) eq "HASH")
                 push(@$commands2, $curr_command);
             }
@@ -1519,12 +1535,43 @@ sub joinShellscriptLinesSub {
     ];
 }
 
-my $main_1_source = "(\n";
+sub appendOutputCode {
+    my ($command_seq, $isOutputTty) = @_;
+    my $main_1_source = "";
 
-my $isPager = '';
-if ($isOutputTty && $command_seq->{output} eq "") {
-    $isPager = 1;
+    my $table_option = "";
+    my $last_command = $command_seq->{last_command};
+    if ($last_command ne "countcols") {
+        $table_option .= " --col-number";
+        $table_option .= " --record-number";
+    }
+    if ($last_command eq "summary") {
+        $table_option .= " --max-width 500";
+    }
+
+    my $isPager = '';
+    if ($isOutputTty && $command_seq->{output} eq "") {
+        $isPager = 1;
+    }
+
+    if ($isPager) {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+        $main_1_source = $main_1_source . " | less -SRX";
+
+    } else {
+        if (!$command_seq->{output_header_flag}) {
+            $main_1_source = $main_1_source . " | tail -n+2";
+        }
+        if ($command_seq->{output_format} eq "csv") {
+            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
+        } elsif ($command_seq->{output_format} eq "table") {
+            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+        }
+    }
+    return $main_1_source;
 }
+
+my $main_1_source = "(\n";
 
 my $exists_multijob = '';
 
@@ -1547,7 +1594,16 @@ foreach (my $pipe_id = 0; $pipe_id < @$input_pipe_list; $pipe_id++) {
 
 foreach my $s (@$statement_list) {
     my $output_pipe_id = $s->{output_pipe_id};
-    $main_1_source = $main_1_source . "    " . join("\n    ", @{irToShellscript($s->{query}->{ircode})}) . " > $input_pipe_prefix1${output_pipe_id} &\n\n";
+    $main_1_source = $main_1_source . "    " . join("\n    ", @{irToShellscript($s->{query}->{ircode})});
+    if (defined($output_pipe_id)) {
+        $main_1_source = $main_1_source . " > $input_pipe_prefix1${output_pipe_id}";
+    } elsif (defined($s->{query}->{output})) {
+        $main_1_source = $main_1_source . appendOutputCode($s->{query}, '');
+        $main_1_source = $main_1_source . " > " . escape_for_bash($s->{query}->{output});
+    } else {
+        die;
+    }
+    $main_1_source = $main_1_source . " &\n\n";
     $exists_multijob = 1;
 }
 
@@ -1560,33 +1616,7 @@ if ($exists_multijob) {
 
 $main_1_source = $main_1_source . ")";
 
-{
-    my $table_option = "";
-    my $last_command = $command_seq->{last_command};
-    if ($last_command ne "countcols") {
-        $table_option .= " --col-number";
-        $table_option .= " --record-number";
-    }
-    if ($last_command eq "summary") {
-        $table_option .= " --max-width 500";
-    }
-
-    if ($isPager) {
-        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
-        $main_1_source = $main_1_source . " | less -SRX";
-
-    } else {
-        if (!$command_seq->{output_header_flag}) {
-            $main_1_source = $main_1_source . " | tail -n+2";
-        }
-        if ($command_seq->{output_format} eq "csv") {
-            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
-        } elsif ($command_seq->{output_format} eq "table") {
-            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
-        }
-
-    }
-}
+$main_1_source = $main_1_source . appendOutputCode($command_seq, $isOutputTty);
 
 $main_1_source = $main_1_source . "\n";
 
