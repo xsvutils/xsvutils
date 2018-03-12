@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## version 0.2.4 (Unreleased)
+
 ## version 0.2.3 (2018-03-11)
 - add support CR, CRLF
 - add some subcommands on v2
