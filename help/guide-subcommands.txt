@@ -47,7 +47,7 @@ Available subcommands:
         groupsum                        [EXPERIMENTAL] [v2]
 
     その他のコマンド
-        tee <OTHER_FILE>                [EXPERIMENTAL] [v2] Output to next subcommand and other file
+        tee <ANOTHER_FILE>              [EXPERIMENTAL] [v2] Output to next subcommand and another file
 
     各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>

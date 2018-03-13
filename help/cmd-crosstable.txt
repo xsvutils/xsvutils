@@ -1,5 +1,5 @@
 crosstable subcommand
-    [EXPERIMENTAL]
+    [EXPERIMENTAL] [v1]
 
     左から2カラムでクロス集計する。
 
