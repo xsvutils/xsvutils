@@ -481,6 +481,11 @@ sub parseQuery {
             die "duplicated option: $a" if defined($output_format);
             $output_format = "table";
 
+        } elsif ($a eq "--o-diffable") {
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+            die "duplicated option: $a" if defined($output_format);
+            $output_format = "diffable";
+
         } elsif ($a eq "-i") {
             die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
             die "option -i needs an argument" unless (@$argv);
@@ -1598,6 +1603,8 @@ sub appendOutputCode {
             $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
         } elsif ($command_seq->{output_format} eq "table") {
             $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+        } elsif ($command_seq->{output_format} eq "diffable") {
+            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-diffable.pl";
         }
     }
     return $main_1_source;

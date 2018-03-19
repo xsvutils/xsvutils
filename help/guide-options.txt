@@ -2,8 +2,9 @@ Common options:
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
     --o-tsv          出力はTSVフォーマット (default when stdout is file)
-    --o-csv          出力はCSVフォーマット (default is TSV format)
+    --o-csv          出力はCSVフォーマット
     --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
+    --o-diffable     [v2] 出力は diffable なテキストフォーマット
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
@@ -35,6 +36,8 @@ Common options:
         $ xsvutils -i FILENAME cat
         $ xsvutils < FILENAME
         $ xsvutils cat < FILENAME
+
+    入出力フォーマットについて詳しくは `xsvutils help format` を参照のこと。
 
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
