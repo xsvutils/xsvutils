@@ -147,7 +147,7 @@ sub parseQuery {
         cat
         head limit drop offset
         where filter
-        cut
+        cut cols
         inshour insdate insweek inssecinterval inscopy insconst
         addconst addcopy addlinenum addcross addmap uriparams parseuriparams
         update sort paste join union
@@ -216,7 +216,7 @@ sub parseQuery {
             die "duplicated option -n" if defined($curr_command->{count});
             $curr_command->{count} = $a;
 
-        } elsif ($command_name eq "cut" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
+        } elsif (($command_name eq "cut" || $command_name eq "cols") && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{cols});
             $curr_command->{cols} = shift(@$argv);
@@ -229,6 +229,11 @@ sub parseQuery {
                 die "ambiguous parameter: $a, use --cols";
             }
             $curr_command->{cols} = $a;
+
+        } elsif ($command_name eq "cols" && $a eq "--head") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{head});
+            $curr_command->{head} = shift(@$argv);
 
         } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--src") {
             die "option $a needs an argument" unless (@$argv);
@@ -348,6 +353,10 @@ sub parseQuery {
 
         } elsif ($a eq "cut") {
             $next_command = {command => "cut", cols => undef};
+            $last_command = $a;
+
+        } elsif ($a eq "cols") {
+            $next_command = {command => "cols", cols => undef, head => undef};
             $last_command = $a;
 
         } elsif ($a eq "inshour") {
@@ -612,6 +621,9 @@ sub parseQuery {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
             }
+            push(@$commands2, {command => "cols", cols => $curr_command->{cols}, head => undef});
+
+        } elsif ($command_name eq "cols") {
             push(@$commands2, $curr_command);
 
         } elsif ($command_name eq "inshour") {
@@ -1270,9 +1282,15 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
 
 =cut
-        } elsif ($command_name eq "cut") {
-            my $cols = escape_for_bash($curr_command->{cols});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl --col $cols"]);
+        } elsif ($command_name eq "cols") {
+            my $option = "";
+            if (defined($curr_command->{cols})) {
+                $option .= " --col " . escape_for_bash($curr_command->{cols});
+            }
+            if (defined($curr_command->{head})) {
+                $option .= " --head " . escape_for_bash($curr_command->{head});
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl$option"]);
 
         } elsif ($command_name eq "inshour") {
             my $src = escape_for_bash($curr_command->{src});

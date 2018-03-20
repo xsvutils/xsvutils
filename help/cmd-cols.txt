@@ -1,0 +1,23 @@
+cols subcommand
+    [EXPERIMENTAL] [v2]
+
+    Print specified columns.
+
+    Usage:
+        $ xsvutils cols [--col <COLUMNS>] [--head <COLUMNS>] [option...]
+
+    Parameter:
+        <COLUMNS>         (optional) Print <COLUMNS>
+
+    Options:
+        --col <COLUMNS>    Print <COLUMNS>
+        --head <COLUMNS>   Move <COLUMSN> to the leftmost position.
+        --help             Print help information about this subcommand.
+
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME cols --col name1,name2,name3
+        $ xsvutils FILENAME cols --col name1..name3
+        $ xsvutils FILENAME cut name1,name2,name3
+

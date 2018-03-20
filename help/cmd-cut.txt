@@ -22,6 +22,8 @@ cut subcommand
         $ xsvutils FILENAME cut name1,name2,name3
         $ xsvutils FILENAME cut name1..name3
 
+    See also `git help cols`.
+
     Examples:
 
         Retrieve only 3 columns: foo, col1, col20
