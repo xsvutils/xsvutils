@@ -11,6 +11,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - add `cols` subcommand on v2
 - add some subcommands from v1 to v2
 - fix a bug of handling empty file on `join` subcommand
+- add --left-update, --right-update options on `cols` subcommand
 
 ## version 0.2.3 (2018-03-11)
 - add support CR, CRLF

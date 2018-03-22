@@ -235,6 +235,14 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{head});
             $curr_command->{head} = shift(@$argv);
 
+        } elsif ($command_name eq "cols" && $a eq "--left-update") {
+            die "duplicated option $a" if defined($curr_command->{update});
+            $curr_command->{update} = "left";
+
+        } elsif ($command_name eq "cols" && $a eq "--right-update") {
+            die "duplicated option $a" if defined($curr_command->{update});
+            $curr_command->{update} = "right";
+
         } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--src") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{src});
@@ -364,7 +372,7 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "cols") {
-            $next_command = {command => "cols", cols => undef, head => undef};
+            $next_command = {command => "cols", cols => undef, head => undef, update => undef};
             $last_command = $a;
 
         } elsif ($a eq "inshour") {
@@ -631,9 +639,12 @@ sub parseQuery {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
             }
-            push(@$commands2, {command => "cols", cols => $curr_command->{cols}, head => undef});
+            push(@$commands2, {command => "cols", cols => $curr_command->{cols}, head => undef, update => ""});
 
         } elsif ($command_name eq "cols") {
+            if (!defined($curr_command->{update})) {
+                $curr_command->{update} = "";
+            }
             push(@$commands2, $curr_command);
 
         } elsif ($command_name eq "inshour") {
@@ -1311,6 +1322,11 @@ sub build_ircode_command {
             }
             if (defined($curr_command->{head})) {
                 $option .= " --head " . escape_for_bash($curr_command->{head});
+            }
+            if ($curr_command->{update} eq "left") {
+                $option .= " --left-update";
+            } elsif ($curr_command->{update} eq "right") {
+                $option .= " --right-update";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl$option"]);
 
