@@ -10,6 +10,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - add --o-diffable option on v2
 - add `cols` subcommand on v2
 - add some subcommands from v1 to v2
+- fix a bug of handling empty file on `join` subcommand
 
 ## version 0.2.3 (2018-03-11)
 - add support CR, CRLF
