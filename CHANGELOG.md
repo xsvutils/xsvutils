@@ -9,10 +9,11 @@ To see compatibility information, `xsvutils help compatibility`.
 - add `insconst` subcommand on v2
 - add --o-diffable option on v2
 - add `cols` subcommand on v2
+- add some subcommands from v1 to v2
 
 ## version 0.2.3 (2018-03-11)
 - add support CR, CRLF
-- add some subcommands on v2
+- add some subcommands from v1 to v2
 - add --src, --dst options of inshour, insdate subcommand on v2
 - rename subcommand name `insdeltasec` to `inssecinterval`
 - remove `addlinenum2` subcommand
@@ -30,13 +31,13 @@ To see compatibility information, `xsvutils help compatibility`.
 ## version 0.2.1 (2018-02-27)
 - add --version option
 - split help document
-- add some subcommands on v2
+- add some subcommands from v1 to v2
 - add `insdeltasec` subcommand on v2
 - add `groupsum` subcommand on v2
 
 ## version 0.2.0 (2018-02-25)
 - add -v1, -v2 options
-- add some subcommands on v2
+- add some subcommands from v1 to v2
 
 ## version 0.1.1 (2018-02-18)
 - fix a bug of ratio of summary
