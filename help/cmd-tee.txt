@@ -1,0 +1,35 @@
+tee subcommand
+    [EXPERIMENTAL] [v2]
+
+    Output to next subcommand and another file
+
+    Usage:
+        $ xsvutils tee [--file] <ANOTHER_FILE>
+
+        <ANOTHER_FILE> にはファイル名の代わりに `[`, `]` で他のサブコマンド列やオプションを囲むことができる。
+
+        以下のように書くと、 QUERY1 の出力は QUERY2 の入力と QUERY3 の入力に接続される。
+
+            $ xsvutils QUERY1... tee [ QUERY2... ] QUERY3...
+
+        QUERY2 は -i オプションなど、入力を指定するオプションを持つことができず、
+        また、 -o オプションによって出力を指定することが必要である。
+
+    Parameter:
+        <ANOTHER_FILE>        (optional) another file to output
+
+    Options:
+        --file <ANOTHER_FILE> another file to output
+        --help                Print help information about this subcommand.
+
+    例
+        CSVファイルを data.tsv という名前でTSVに変換しつつ、id,name 列のみを端末に表示
+            $ xsvutils -v2 data.csv tee data.tsv cut id,name
+
+        CSVファイルを data.tsv という名前でTSVに変換し、 data.txt という名前で固定長テキストファイルにも変換
+            $ xsvutils -v2 data.csv tee data.tsv tee [ --o-table -o data.txt ]
+
+        facetcount を facetcount.txt というファイルに出力しつつ、レコード数を端末に出力
+            $ xsvutils -v2 data.tsv tee [ facetcount -o facetcount.txt ] wcl
+
+

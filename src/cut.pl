@@ -3,12 +3,21 @@ use warnings;
 use utf8;
 
 my $option_columns = undef;
+my $option_head = undef;
+my $option_update = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--col") {
         die "option --col needs an argument" unless (@ARGV);
         $option_columns = shift(@ARGV);
+    } elsif ($a eq "--head") {
+        die "option --head needs an argument" unless (@ARGV);
+        $option_head = shift(@ARGV);
+    } elsif ($a eq "--left-update") {
+        $option_update = "left";
+    } elsif ($a eq "--right-update") {
+        $option_update = "right";
     } else {
         die "Unknown argument: $a";
     }
@@ -16,6 +25,57 @@ while (@ARGV) {
 
 sub createColumnIndeces {
     my ($headers) = @_;
+    my $headerCount = @$headers;
+
+    my @columnIndeces = ();
+    if (defined($option_head)) {
+        push(@columnIndeces, @{createColumnIndecesSub($headers, $option_head)});
+    }
+    if (defined($option_columns)) {
+        push(@columnIndeces, @{createColumnIndecesSub($headers, $option_columns)});
+    } else {
+        for (my $i = 0; $i < $headerCount; $i++) {
+            if (!grep {$_ == $i} @columnIndeces) {
+                push(@columnIndeces, $i);
+            }
+        }
+    }
+
+    if ($option_update) {
+        my @columnIndeces2 = ();
+        my @c = ();
+        for (my $i = 0; $i < @columnIndeces; $i++) {
+            my $hi = $columnIndeces[$i];
+            my $h = $headers->[$hi];
+            if ($option_update eq "left") {
+                if (!grep {$_ eq $h} @c) {
+                    push(@columnIndeces2, $hi);
+                    push(@c, $h);
+                }
+            } elsif ($option_update eq "right") {
+                my $f = 1;
+                for (my $j = 0; $j < @columnIndeces2; $j++) {
+                    my $h2 = $c[$j];
+                    if ($h eq $h2) {
+                        $columnIndeces2[$j] = $hi;
+                        $f = '';
+                        last;
+                    }
+                }
+                if ($f) {
+                    push(@columnIndeces2, $hi);
+                    push(@c, $h);
+                }
+            }
+        }
+        @columnIndeces = @columnIndeces2;
+    }
+
+    \@columnIndeces;
+}
+
+sub createColumnIndecesSub {
+    my ($headers, $option_columns) = @_;
     my $headerCount = @$headers;
     my @columns2 = split(/,/, $option_columns);
     my @columns3 = ();

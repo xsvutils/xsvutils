@@ -1,0 +1,17 @@
+insconst subcommand
+    [EXPERIMENTAL] [v2]
+
+    固定値のカラムを新規に一番左に追加する。
+
+    Usage:
+        $ xsvutils insconst [--value] <VALUE> [--dst] <DST_COLUMN_NAME>
+
+    Parameter:
+        <VALUE>           固定値
+        <DST_COLUMN_NAME> 新しいカラム
+
+    Options:
+        --value <VALUE>         固定値
+        --dst <DST_COLUMN_NAME> 新しいカラム
+        --help                  Print help information about this subcommand.
+

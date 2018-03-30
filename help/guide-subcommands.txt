@@ -12,13 +12,15 @@ Available subcommands:
         filter <CONDITION>              [EXPERIMENTAL] [v1]
 
     列の選択に関するサブコマンド
-        cut <COLUMNS>                   [v1/v2] Print specified columns
+        cut <COLUMNS>                                           [v1/v2] Print specified columns
+        cols [--col <COLUMNS>] [--head <COLUMNS>]               [EXPERIMENTAL] [v2] Print specified columns
 
     列を追加するサブコマンド
         insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [v1/v2] 日時のカラムから日付を抽出した値を新しいカラムとして追加する
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         inssecinterval <SRC_COLUMN_NAME> <DST_COLUMN_NAME>      [EXPERIMENTAL] [v2]
         inscopy <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] カラムをコピーする
+        insconst <VALUE> <DST_COLUMN_NAME>                      [EXPERIMENTAL] [v2]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] [v1] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED] [v1]
         addlinenum <NEW_COLUMN_NAME> [<START_VALUE>]            [DEPRECATED] [v1]
@@ -47,7 +49,7 @@ Available subcommands:
         groupsum                        [EXPERIMENTAL] [v2]
 
     その他のコマンド
-        tee <OTHER_FILE>                [EXPERIMENTAL] [v2] Output to next subcommand and other file
+        tee <ANOTHER_FILE>              [EXPERIMENTAL] [v2] Output to next subcommand and another file
 
     各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>

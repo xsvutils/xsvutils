@@ -35,16 +35,16 @@ my $right_line = undef;
 my $left_id = undef;
 my $right_id = undef;
 
+my $left_eof = '';
+my $right_eof = '';
+
 while () {
     my $header_flag = '';
     if (!defined($left_header_count)) {
         $header_flag = 1;
     }
 
-    my $left_eof = '';
-    my $right_eof = '';
-
-    if (!defined($left_line)) {
+    if (!defined($left_line) && !$left_eof) {
         $left_line = <STDIN>;
 
         my @left_cols;
@@ -83,7 +83,7 @@ while () {
         }
     }
 
-    if (!defined($right_line)) {
+    if (!defined($right_line) && !$right_eof) {
         $right_line = <$right_in>;
 
         my @right_cols;
