@@ -11,7 +11,6 @@ import (
 
 const (
 	toolname = "xsvutils_sort"
-	source   = "/Users/yusuke/repo/xsvutils/golang/lib/fldsort/in.txt"
 )
 
 func writeRow(r string, w *bufio.Writer) error {
