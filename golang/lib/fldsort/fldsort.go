@@ -280,6 +280,7 @@ func FieldSort(
 	}
 	sc := bufio.NewScanner(f)
 	defer file.Close()
+	defer os.Remove(file.Name())
 
 	i := 0
 	for sc.Scan() {
