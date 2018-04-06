@@ -102,7 +102,7 @@ func Convert(in *os.File, out *os.File, query string, fullUrl bool, namesAction 
 				if multiValueB {
 					line[0] += name + ";";
 				} else {
-					if len(name) > 0 {
+					if len(name) > 0 && len(kv) == 2 && len(kv[1]) > 0 {
 						if len(line[0]) == 0 {
 							line[0] = name
 						} else {

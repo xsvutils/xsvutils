@@ -1,9 +1,9 @@
 id	querystring	names
 1	r=xxx	r
-2	q=&r=xxx	q;r
+2	q=&r=xxx	r
 3	q=aaa	q
 4	q=aaa&q=bbb&r=xxx	q;q;r
-5	q=&q=bbb&r=xxx	q;q;r
-6	q=aaa&q=&r=xxx	q;q;r
-7	q=&q=&r=xxx	q;q;r
+5	q=&q=bbb&r=xxx	q;r
+6	q=aaa&q=&r=xxx	q;r
+7	q=&q=&r=xxx	r
 10	q=a%20b%21c+d%25e%26f%3dg%5ch;i	q
