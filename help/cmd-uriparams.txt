@@ -1,5 +1,5 @@
 uriparams subcommand
-    [EXPERIMENTAL] [v2]
+    [EXPERIMENTAL] [v1]
 
     Options:
         --name  <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
