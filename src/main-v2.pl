@@ -573,6 +573,14 @@ sub parseQuery {
             die "duplicated option: $a" if defined($input_header);
             $input_header = shift(@$argv);
 
+        } elsif ($a eq "--ltsv") {
+            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option: $a" if defined($input_header);
+            die "duplicated option: $a" if defined($format);
+            $input_header = shift(@$argv);
+            $format = "ltsv";
+
         } elsif ($a eq "--o-no-header") {
             die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
             $output_header_flag = '';
@@ -1256,6 +1264,8 @@ sub prefetch_input {
             push(@command_line, '--tsv');
         } elsif ($input->{format} eq 'csv') {
             push(@command_line, '--csv');
+        } elsif ($input->{format} eq 'ltsv') {
+            push(@command_line, '--ltsv');
         }
         if ($input->{charencoding} eq '') {
             # TODO
@@ -1601,6 +1611,9 @@ sub build_ircode_input_format {
 
     if ($input_pipe->{format} eq "csv") {
         push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+    } elsif ($input_pipe->{format} eq "ltsv") {
+        my $ltsvheader = escape_for_bash($input_pipe->{header});
+        push(@$ircode, ["cmd", "perl \$TOOL_DIR/ltsv2tsv.pl --header $ltsvheader"]);
     }
 
     my $result = [@$ircode_orig];
