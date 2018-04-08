@@ -30,6 +30,9 @@ Input and Output format:
 
     LTSVファイルでは1行に同じ名前のラベルが複数あった場合は後のほうが優先される。
 
+    diffable な出力形式で実際に diff を取るには、2つのファイルのカラムの順番やレコードの順番が
+    合っている必要がある。
+
     Character encoding:
         入力の文字コードは UTF-8 が原則。
 
