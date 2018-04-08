@@ -27,7 +27,7 @@ Available subcommands:
         addnumsortable <NEW_COLUMN_NAME> <TARGET_COLUMN>        [DEPRECATED] [v1]
         addcross <NEW_COLUMN_NAME> <TARGET_COLUMNS>             [DEPRECATED] [v1]
         addmap <NEW_COLUMN_NAME> <SOURCE_COLUMN> <MAPPING_FILE> [DEPRECATED] [v1]
-        uriparams <NAMES>                                       [EXPERIMENTAL] [v1]
+        uriparams <NAMES>                                       [EXPERIMENTAL] [v1/v2]
         parseuriparams <NAMES>                                  [DEPRECATED] [v1]
 
     その他のデータを加工するコマンド

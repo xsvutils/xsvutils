@@ -4,6 +4,10 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## version 0.2.5 (2018/04/08)
+- fix a bug of removing temp files on `sort` subcommand
+- fix a bug of output of `uriparams --name-list`
+
 ## version 0.2.4 (2018/03/30)
 - add support subquery of `tee` subcommand on v2
 - add `insconst` subcommand on v2
