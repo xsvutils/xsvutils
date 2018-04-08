@@ -1467,7 +1467,8 @@ sub build_ircode_command {
 
         } elsif ($command_name eq "--uriparams") {
             push(@$ircode, ["cmd", "tail -n+2"]);
-            push(@$ircode, ["cmd", "bash \$TOOL_DIR/pre-encode-percent.sh"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/pre-encode-percent-1.pl"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/pre-encode-percent-2.pl"]);
             my $option = "";
             if ($curr_command->{names} eq "") {
                 $option .= " --names";

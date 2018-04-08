@@ -6,6 +6,7 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## version 0.2.6 (Unreleased)
 - add support LTSV format on v2
+- make `uriparams` slightly fast
 
 ## version 0.2.5 (2018/04/08)
 - fix a bug of removing temp files on `sort` subcommand
