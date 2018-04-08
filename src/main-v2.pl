@@ -1312,21 +1312,7 @@ sub build_ircode_input {
         $ircode = [["cmd", "cat $source"]];
     }
 
-    push(@$ircode, @{build_ircode_input_format($input_pipe)});
-
-    if ($input_pipe->{header} ne '') {
-        my @headers = split(/,/, $input_pipe->{header});
-        for my $h (@headers) {
-            unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
-                die "Illegal header: $h\n";
-            }
-        }
-        my $headers = escape_for_bash(join("\t", @headers));
-        $ircode = [["seq",
-                    [["cmd", "printf '%s' $headers"],
-                     ["cmd", "echo"],
-                     ["pipe", $ircode]]]];
-    }
+    $ircode = build_ircode_input_format($ircode, $input_pipe);
 
     $input_pipe->{ircode} = ["pipe", $ircode];
 }
@@ -1344,21 +1330,8 @@ sub build_ircode_command {
     if ($input_pipe_id eq "") {
         my $input_pipe = $input_pipe_list->[0];
 
-        push(@$ircode, @{build_ircode_input_format($input_pipe)});
+        $ircode = build_ircode_input_format($ircode, $input_pipe);
 
-        if ($input_pipe->{header} ne '') {
-            my @headers = split(/,/, $input_pipe->{header});
-            for my $h (@headers) {
-                unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
-                    die "Illegal header: $h\n";
-                }
-            }
-            my $headers = escape_for_bash(join("\t", @headers));
-            $ircode = [["seq",
-                        [["cmd", "printf '%s' $headers"],
-                         ["cmd", "echo"],
-                         ["pipe", $ircode]]]];
-        }
     }
 
     foreach my $curr_command (@{$command_seq->{commands}}) {
@@ -1610,7 +1583,7 @@ sub build_ircode_command {
 }
 
 sub build_ircode_input_format {
-    my ($input_pipe) = @_;
+    my ($ircode_orig, $input_pipe) = @_;
     my $ircode = [];
     if ($input_pipe->{utf8bom} eq "1") {
         push(@$ircode, ["cmd", "tail -c+4"]);
@@ -1630,7 +1603,23 @@ sub build_ircode_input_format {
         push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
     }
 
-    return $ircode;
+    my $result = [@$ircode_orig];
+    push(@$result, @$ircode);
+    if ($input_pipe->{header} ne '') {
+        my @headers = split(/,/, $input_pipe->{header});
+        for my $h (@headers) {
+            unless ($h =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal header: $h\n";
+            }
+        }
+        my $headers = escape_for_bash(join("\t", @headers));
+        $result = [["seq",
+                    [["cmd", "printf '%s' $headers"],
+                     ["cmd", "echo"],
+                     ["pipe", $result]]]];
+    }
+
+    return $result;
 }
 
 build_ircode();
