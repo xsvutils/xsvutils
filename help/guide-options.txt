@@ -1,6 +1,7 @@
 Common options:
     --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
+    --ltsv <HEADERS> [v2] 入力はTSVフォーマット (省略時はTSV/CSV自動判別)
     --o-tsv          出力はTSVフォーマット (default when stdout is file)
     --o-csv          出力はCSVフォーマット
     --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)

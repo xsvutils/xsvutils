@@ -3,6 +3,8 @@
 Utilities for handling separated value data.
 CSVファイルやTSVファイルをCUIで扱うツール。
 
+https://www.slideshare.net/suzuki-navi/xsvutils-overview
+
 ## Usage
 
     $ xsvutils [FILENAME] [SUBCOMMAND] [OPTIONS...]

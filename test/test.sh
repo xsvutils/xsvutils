@@ -6,6 +6,8 @@ mkdir -p var/test
 
 bash ./test/case-bom.sh
 bash ./test/case-newline.sh
+bash ./test/case-ltsv.sh
+
 bash ./test/case-range.sh
 bash ./test/case-uriparams.sh
 bash ./test/case-facetcount.sh

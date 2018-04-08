@@ -18,6 +18,8 @@ while (@ARGV) {
         $format = "tsv";
     } elsif ($a eq "--csv") {
         $format = "csv";
+    } elsif ($a eq "--ltsv") {
+        $format = "ltsv";
     } elsif (!defined($format_result_path)) {
         $format_result_path = $a;
     } elsif (!defined($output_path)) {
@@ -102,6 +104,8 @@ if ($gzip_flag) {
         push(@options, "--tsv");
     } elsif ($format eq "csv") {
         push(@options, "--csv");
+    } elsif ($format eq "ltsv") {
+        push(@options, "--ltsv");
     }
     push(@options, $format_result_path);
     push(@options, $output_path);

@@ -10,6 +10,10 @@ Input and Output format:
     csv format
         コンマ(,)区切りのファイル。
 
+    ltsv format [v2]
+        LTSVファイル。
+        入力のみ可能。
+
     table format
         固定長テキストのファイル。
         出力のみ可能。
@@ -20,9 +24,14 @@ Input and Output format:
         出力のみ可能。
 
     入力フォーマットはTSV/CSVを自動判別するが、自動判別させたくない場合は
-    --tsv, --csv いずれかのオプションを使う。
+    --tsv, --csv, --ltsv いずれかのオプションを使う。
 
     出力フォーマットは出力先が端末の場合はtable形式、そうでない場合はTSV形式になる。
+
+    LTSVファイルでは1行に同じ名前のラベルが複数あった場合は後のほうが優先される。
+
+    diffable な出力形式で実際に diff を取るには、2つのファイルのカラムの順番やレコードの順番が
+    合っている必要がある。
 
     Character encoding:
         入力の文字コードは UTF-8 が原則。
