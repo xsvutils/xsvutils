@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## version 0.2.7 (Unreleased)
+
 ## version 0.2.6 (2018/04/09)
 - add support LTSV format on v2
 - make `uriparams` slightly fast
