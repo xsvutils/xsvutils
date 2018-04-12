@@ -150,7 +150,7 @@ sub parseQuery {
         cut cols
         inshour insdate insweek inssecinterval inscopy insconst
         addconst addcopy addlinenum addcross addmap uriparams parseuriparams
-        update sort paste join union
+        update sort paste join union diff
         wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
         tee
     /;
@@ -346,6 +346,18 @@ sub parseQuery {
         } elsif ($command_name eq "paste" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
             $curr_command->{file} = $a;
 
+        } elsif ($command_name eq "diff" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "diff" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv, "diff", 1, '');
+
+        } elsif ($command_name eq "diff" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+            $curr_command->{file} = $a;
+
         } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
             die "duplicated option $a" if defined($curr_command->{multi_value});
             $curr_command->{multi_value} = "a";
@@ -474,6 +486,15 @@ sub parseQuery {
 
         } elsif ($a eq "union") {
             degradeMain();
+
+        } elsif ($a eq "diff") {
+            $next_command = {command => "diff", file => undef};
+            $last_command = $a;
+            $next_output_table = '';
+
+            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+            die "duplicated option: $a" if defined($output_format);
+            $output_format = "diff";
 
         } elsif ($a eq "wcl") {
             $next_command = {command => "wcl"};
@@ -627,6 +648,18 @@ sub parseQuery {
                     unshift(@$argv, "[");
                     unshift(@$argv, "paste");
                     $curr_command = undef;
+                    next;
+                }
+                if ($curr_command->{command} eq "diff" && ref($curr_command->{file}) ne "HASH") {
+                    unshift(@$argv, $a);
+                    unshift(@$argv, "]");
+                    unshift(@$argv, $curr_command->{file});
+                    unshift(@$argv, "-i");
+                    unshift(@$argv, "[");
+                    unshift(@$argv, "diff");
+                    $output_format = undef;
+                    $curr_command = undef;
+                    exit(1) if @$argv > 10;
                     next;
                 }
                 push(@$commands, $curr_command);
@@ -882,6 +915,12 @@ sub parseQuery {
             }
             push(@$commands2, ["union", $curr_command->{1]]);
 =cut
+        } elsif ($command_name eq "diff") {
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`diff\` needs --file option";
+            }
+            push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "wcl") {
             push(@$commands2, $curr_command);
 
@@ -1081,11 +1120,16 @@ sub extractNamedPipe {
         my $command_name = $curr_command->{command};
         if ($command_name eq "paste" ||
             $command_name eq "join" ||
-            $command_name eq "union") {
+            $command_name eq "union" ||
+            $command_name eq "diff") {
+
             if (ref($curr_command->{file}) eq "HASH") {
                 my $subquery = $curr_command->{file};
 
                 extractNamedPipe($subquery);
+                if ($command_name eq "diff") {
+                    $subquery->{output_format} = "diffable";
+                }
 
                 if ($subquery->{input} eq "") {
                     my $pipe_id_1 = scalar @$input_pipe_list;
@@ -1530,6 +1574,14 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $right"]);
 
 =cut
+        } elsif ($command_name eq "diff") {
+            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/to-diffable.pl"]);
+            push(@$ircode, ["cmd", "diff -u - $file"]);
+            push(@$ircode, ["cmd", "tail -n+3"]);
+            push(@$ircode, ["cmd", "(echo '--- '; echo '+++ '; cat)"]);
+
         } elsif ($command_name eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
 
@@ -1728,7 +1780,7 @@ sub appendOutputCode {
         $isPager = 1;
     }
 
-    if ($isPager) {
+    if ($isPager && $command_seq->{output_format} ne "diff") {
         $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
         $main_1_source = $main_1_source . " | less -SRX";
 
@@ -1771,10 +1823,10 @@ foreach (my $pipe_id = 0; $pipe_id < @$input_pipe_list; $pipe_id++) {
 foreach my $s (@$statement_list) {
     my $output_pipe_id = $s->{output_pipe_id};
     $main_1_source = $main_1_source . "    " . join("\n    ", @{irToShellscript($s->{query}->{ircode})});
+    $main_1_source = $main_1_source . appendOutputCode($s->{query}, '');
     if (defined($output_pipe_id)) {
         $main_1_source = $main_1_source . " > $input_pipe_prefix1${output_pipe_id}";
     } elsif (defined($s->{query}->{output})) {
-        $main_1_source = $main_1_source . appendOutputCode($s->{query}, '');
         $main_1_source = $main_1_source . " > " . escape_for_bash($s->{query}->{output});
     } else {
         die;
