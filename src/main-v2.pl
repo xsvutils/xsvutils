@@ -686,7 +686,7 @@ sub parseQuery {
         $input_header = "";
     }
     if (!defined($output_format)) {
-        $output_format = "tsv";
+        $output_format = "";
     }
 
     ################################
@@ -1780,22 +1780,36 @@ sub appendOutputCode {
         $isPager = 1;
     }
 
-    if ($isPager && $command_seq->{output_format} ne "diff") {
-        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
-        $main_1_source = $main_1_source . " | less -SRX";
-
-    } else {
-        if (!$command_seq->{output_header_flag}) {
-            $main_1_source = $main_1_source . " | tail -n+2";
-        }
-        if ($command_seq->{output_format} eq "csv") {
-            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
-        } elsif ($command_seq->{output_format} eq "table") {
-            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
-        } elsif ($command_seq->{output_format} eq "diffable") {
-            $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-diffable.pl";
+    my $output_format = $command_seq->{output_format};
+    if ($output_format eq "") {
+        if ($isPager) {
+            $output_format = "table";
+        } else {
+            $output_format = "tsv";
         }
     }
+
+    if (!$command_seq->{output_header_flag} && !($isPager && $output_format eq "table")) {
+        $main_1_source = $main_1_source . " | tail -n+2";
+    }
+    if ($output_format eq "tsv") {
+        # no operation
+    } elsif ($output_format eq "csv") {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-csv.pl";
+    } elsif ($output_format eq "table") {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/table.pl$table_option";
+    } elsif ($output_format eq "diffable") {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-diffable.pl";
+    } elsif ($output_format eq "diff") {
+        # no operation
+    } else {
+        die;
+    }
+
+    if ($isPager) {
+        $main_1_source = $main_1_source . " | less -SRX";
+    }
+
     return $main_1_source;
 }
 
