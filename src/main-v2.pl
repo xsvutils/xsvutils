@@ -216,6 +216,25 @@ sub parseQuery {
             die "duplicated option -n" if defined($curr_command->{count});
             $curr_command->{count} = $a;
 
+        } elsif (($command_name eq "where" || $command_name eq "filter") &&
+                 !defined($curr_command->{operator}) &&
+                 $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
+                 @$argv >= 2 &&
+                 $argv->[0] =~ /\A([!=]=|[><]=?)\z/ &&
+                 $argv->[1] =~ /\A(0|[1-9][0-9]*)\z/) {
+            $curr_command->{col} = $a;
+            $curr_command->{operator} = shift(@$argv);
+            $curr_command->{value} = shift(@$argv);
+
+        } elsif (($command_name eq "where" || $command_name eq "filter") &&
+                 !defined($curr_command->{operator}) &&
+                 $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
+                 @$argv >= 2 &&
+                 $argv->[0] =~ /\A(eq|ne|[gl][et])\z/) {
+            $curr_command->{col} = $a;
+            $curr_command->{operator} = shift(@$argv);
+            $curr_command->{value} = shift(@$argv);
+
         } elsif (($command_name eq "cut" || $command_name eq "cols") && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{cols});
@@ -409,7 +428,8 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "where" || $a eq "filter") {
-            degradeMain();
+            $next_command = {command => $a, col => undef, operator => undef, value => undef};
+            $last_command = $a;
 
         } elsif ($a eq "cut") {
             $next_command = {command => "cut", cols => undef};
@@ -702,7 +722,7 @@ sub parseQuery {
                 $curr_command->{count} = 10;
             }
             if (!defined($curr_command->{count})) {
-                die "subcommand \`limit\` needs -n option";
+                die "subcommand \`$command_name\` needs -n option";
             }
             my $f = 1;
             if (@$commands2 && $commands2->[@$commands2 - 1]->{command} eq "_range") {
@@ -738,13 +758,15 @@ sub parseQuery {
                 push(@$commands2, {command => "_range", start => $curr_command->{count}, end => ""});
             }
 
-=comment
-        } elsif ($command_name eq "where") {
-            if (@$c <= 1) {
-                die "subcommand \`where\` needs --cond option";
+        } elsif ($command_name eq "where" || $command_name eq "filter") {
+            if (!defined($curr_command->{operator})) {
+                die "subcommand \`$command_name\` needs condition";
             }
-            push(@$commands2, $c);
-=cut
+            push(@$commands2, {command => "where",
+                               col => $curr_command->{col},
+                               operator => $curr_command->{operator},
+                               value => $curr_command->{value}});
+
         } elsif ($command_name eq "cut") {
             if (!defined($curr_command->{cols})) {
                 die "subcommand \`cut\` needs --cols option";
@@ -1411,15 +1433,13 @@ sub build_ircode_command {
                 }
             }
 
-=comment
         } elsif ($command_name eq "where") {
-            my $conds = '';
-            for (my $i = 1; $i < @$t; $i++) {
-                $conds .= ' ' . escape_for_bash($curr_command->{$i]);
-            }
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
+            my $option = "";
+            $option .= ' ' . escape_for_bash($curr_command->{col});
+            $option .= ' ' . escape_for_bash($curr_command->{operator});
+            $option .= ' ' . escape_for_bash($curr_command->{value});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$option"]);
 
-=cut
         } elsif ($command_name eq "cols") {
             my $option = "";
             if (defined($curr_command->{cols})) {

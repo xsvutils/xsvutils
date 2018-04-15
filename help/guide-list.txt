@@ -8,8 +8,8 @@ Available subcommands:
         offset [<N>]                    [v1/v2] Print all except first N records
         take [<N>]                      [DEPRECATED] [v1] Print first N records
         drop [<N>]                      [DEPRECATED] [v1] Print all except first N records
-        where <CONDITION>               [EXPERIMENTAL] [v1]
-        filter <CONDITION>              [EXPERIMENTAL] [v1]
+        where <CONDITION>               [EXPERIMENTAL] [v1/v2]
+        filter <CONDITION>              [EXPERIMENTAL] [v1/v2]
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                                           [v1/v2] Print specified columns
