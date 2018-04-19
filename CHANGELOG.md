@@ -9,6 +9,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - enable output csv format on terminal
 - add facetcount ratio2 column
 - add `filter`, `where` subcommand on v2
+- change --o-diffable format
 
 ## version 0.2.6 (2018/04/09)
 - add support LTSV format on v2
