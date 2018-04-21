@@ -34,7 +34,7 @@ Available subcommands:
         update <INDEX> <COLUMN> <VALUE> [v1] セルを指定して値を更新する
         sort [<COLUMNS>]                [v1/v2] ソートする
         paste <OTHER_FILE>              [EXPERIMENTAL] [v1/v2]
-        join <OTHER_FILE>               [EXPERIMENTAL] [v1]
+        join <OTHER_FILE>               [EXPERIMENTAL] [v1/v2]
         union <OTHER_FILE>              [EXPERIMENTAL] [v1]
         diff <OTHER_FILE>               [EXPERIMENTAL] [v2]
 

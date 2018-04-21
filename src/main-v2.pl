@@ -365,6 +365,37 @@ sub parseQuery {
         } elsif ($command_name eq "paste" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
             $curr_command->{file} = $a;
 
+        } elsif ($command_name eq "join" && $a eq "--right") {
+            degradeMain();
+
+        } elsif ($command_name eq "join" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "join" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv, "join", 1, '');
+
+        } elsif ($command_name eq "join" && $a eq "--inner") {
+            die "duplicated option $a" if defined($curr_command->{rule});
+            $curr_command->{rule} = $a;
+
+        } elsif ($command_name eq "join" && $a eq "--left-outer") {
+            die "duplicated option $a" if defined($curr_command->{rule});
+            $curr_command->{rule} = $a;
+
+        } elsif ($command_name eq "join" && $a eq "--right-outer") {
+            die "duplicated option $a" if defined($curr_command->{rule});
+            $curr_command->{rule} = $a;
+
+        } elsif ($command_name eq "join" && $a eq "--full-outer") {
+            die "duplicated option $a" if defined($curr_command->{rule});
+            $curr_command->{rule} = $a;
+
+        } elsif ($command_name eq "join" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+            $curr_command->{file} = $a;
+
         } elsif ($command_name eq "diff" && $a eq "--file") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{file});
@@ -498,11 +529,12 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "paste") {
-            $next_command = {command => "paste", file => undef, "rule" => undef};
+            $next_command = {command => "paste", file => undef};
             $last_command = $a;
 
         } elsif ($a eq "join") {
-            degradeMain();
+            $next_command = {command => "join", file => undef, "rule" => undef};
+            $last_command = $a;
 
         } elsif ($a eq "union") {
             degradeMain();
@@ -925,12 +957,16 @@ sub parseQuery {
             }
             push(@$commands2, $curr_command);
 
-=comment
         } elsif ($command_name eq "join") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`join\` needs --right option";
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`join\` needs --file option";
             }
-            push(@$commands2, ["join", $curr_command->{1], $curr_command->{2]]);
+            if (!defined($curr_command->{rule})) {
+                die "subcommand \`join\` needs --inner, --left-outer, --right-outer or --full-outer option";
+            }
+            push(@$commands2, $curr_command);
+
+=comment
         } elsif ($command_name eq "union") {
             if (!defined($curr_command->{1])) {
                 die "subcommand \`union\` needs --right option";
@@ -1580,14 +1616,13 @@ sub build_ircode_command {
             my $file = "$input_pipe_prefix1${file_pipe_id}";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/paste.pl --right $file"]);
 
-=comment
         } elsif ($command_name eq "join") {
-            my $option = "";
-            $option .= " --" . $curr_command->{2];
-            my $right = escape_for_bash($curr_command->{1]);
-            $right = "$input_pipe_prefix${right}";
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/join.pl$option --right $right"]);
+            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            my $option = " " . $curr_command->{rule};
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/join.pl$option --right $file"]);
 
+=comment
         } elsif ($command_name eq "union") {
             my $right = escape_for_bash($curr_command->{1]);
             $right = "$input_pipe_prefix${right}";
