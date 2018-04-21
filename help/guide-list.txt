@@ -45,7 +45,7 @@ Available subcommands:
         countcols                       [v1/v2] カラム数を集計する
         facetcount                      [v1/v2] カラムそれぞれのファセットカウントを集計する
         treetable                       [EXPERIMENTAL] [v1/v2]
-        crosstable                      [EXPERIMENTAL] [v1]
+        crosstable                      [EXPERIMENTAL] [v1/v2]
         wordsflags                      [EXPERIMENTAL] [v1]
         groupsum                        [EXPERIMENTAL] [v2]
 
