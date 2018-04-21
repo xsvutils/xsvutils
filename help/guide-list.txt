@@ -20,6 +20,7 @@ Available subcommands:
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         inssecinterval <SRC_COLUMN_NAME> <DST_COLUMN_NAME>      [EXPERIMENTAL] [v2]
         inscopy <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] カラムをコピーする
+        insmap <SRC_COLUMN_NAME> <DST_COLUMN_NAME> <MAPPING_FILE> [EXPERIMENTAL] [v2]
         insconst <VALUE> <DST_COLUMN_NAME>                      [EXPERIMENTAL] [v2]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] [v1] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED] [v1]

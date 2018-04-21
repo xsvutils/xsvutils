@@ -70,7 +70,7 @@ my $src_column_index = undef;
         }
     }
     if (!defined($src_column_index)) {
-        die "Column not found: $src_column_index\n";
+        die "Column not found: $src_column_name\n";
     }
 
     unshift(@cols, $name);

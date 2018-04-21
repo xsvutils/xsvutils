@@ -148,7 +148,7 @@ sub parseQuery {
         head limit drop offset
         where filter
         cut cols
-        inshour insdate insweek inssecinterval inscopy insconst
+        inshour insdate insweek inssecinterval inscopy insmap insconst
         addconst addcopy addlinenum addcross addmap uriparams parseuriparams
         update sort paste join union diff
         wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
@@ -262,7 +262,7 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{update});
             $curr_command->{update} = "right";
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && $a eq "--src") {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap") && $a eq "--src") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{src});
             $curr_command->{src} = shift(@$argv);
@@ -272,12 +272,12 @@ sub parseQuery {
             die "duplicated option $a" if defined($curr_command->{value});
             $curr_command->{value} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insconst") && $a eq "--dst") {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap" || $command_name eq "insconst") && $a eq "--dst") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{dst});
             $curr_command->{dst} = shift(@$argv);
 
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy") && !defined($curr_command->{src}) && $a !~ /\A-/) {
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap") && !defined($curr_command->{src}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
                 die "ambiguous parameter: $a, use --src or -i";
             }
@@ -285,6 +285,32 @@ sub parseQuery {
                 die "ambiguous parameter: $a, use --src";
             }
             $curr_command->{src} = $a;
+
+        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap" || $command_name eq "insconst") && !defined($curr_command->{dst}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --dst or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --dst";
+            }
+            $curr_command->{dst} = $a;
+
+        } elsif ($command_name eq "insmap" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "insmap" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv, "inscopy", 1, '');
+
+        } elsif ($command_name eq "insmap" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+            $curr_command->{file} = $a;
+
+        } elsif ($command_name eq "insmap" && $a eq "--default") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{default});
+            $curr_command->{default} = shift(@$argv);
 
         } elsif ($command_name eq "insconst" && !defined($curr_command->{value}) && $a !~ /\A-/) {
             if (!defined($input) && -e $a) {
@@ -294,15 +320,6 @@ sub parseQuery {
                 die "ambiguous parameter: $a, use --value";
             }
             $curr_command->{value} = $a;
-
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insconst") && !defined($curr_command->{dst}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --dst or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --dst";
-            }
-            $curr_command->{dst} = $a;
 
         } elsif (($command_name eq "uriparams" || $command_name eq "--uriparams") && ($a eq "--name" || $a eq "--names")) {
             die "option $a needs an argument" unless (@$argv);
@@ -544,6 +561,10 @@ sub parseQuery {
 
         } elsif ($a eq "inscopy") {
             $next_command = {command => "inscopy", src => undef, dst => undef};
+            $last_command = $a;
+
+        } elsif ($a eq "insmap") {
+            $next_command = {command => "insmap", src => undef, dst => undef, file => undef, default => undef};
             $last_command = $a;
 
         } elsif ($a eq "insconst") {
@@ -920,6 +941,21 @@ sub parseQuery {
             }
             push(@$commands2, $curr_command);
 
+        } elsif ($command_name eq "insmap") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`insmap\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`insmap\` needs --dst option";
+            }
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`insmap\` needs --file option";
+            }
+            if (!defined($curr_command->{default})) {
+                $curr_command->{default} = "";
+            }
+            push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "insconst") {
             if (!defined($curr_command->{value})) {
                 die "subcommand \`insconst\` needs --value option";
@@ -1232,7 +1268,8 @@ sub extractNamedPipe {
     for (my $i = 0; $i < @{$command_seq->{commands}}; $i++) {
         my $curr_command = $command_seq->{commands}->[$i];
         my $command_name = $curr_command->{command};
-        if ($command_name eq "paste" ||
+        if ($command_name eq "insmap" ||
+            $command_name eq "paste" ||
             $command_name eq "join" ||
             $command_name eq "union" ||
             $command_name eq "diff") {
@@ -1574,6 +1611,19 @@ sub build_ircode_command {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $dst --src $src"]);
+
+        } elsif ($command_name eq "insmap") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst  = escape_for_bash($curr_command->{dst});
+
+            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+            my $file = "$input_pipe_prefix1${file_pipe_id}";
+
+            my $option = "";
+            if ($curr_command->{default} ne "") {
+                $option .= " --default ". escape_for_bash($curr_command->{default});
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addmap.pl$option --name $dst --src $src --file $file"]);
 
         } elsif ($command_name eq "insconst") {
             my $value = escape_for_bash($curr_command->{value});
