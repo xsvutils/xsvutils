@@ -336,6 +336,48 @@ sub parseQuery {
         } elsif ($command_name eq "uriparams" && !defined($curr_command->{names}) && $a !~ /\A-/) {
             $curr_command->{names} = $a;
 
+        } elsif ($command_name eq "update" && $a eq "--index") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{index});
+            $curr_command->{index} = shift(@$argv);
+
+        } elsif ($command_name eq "update" && $a eq "--col") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{col});
+            $curr_command->{col} = shift(@$argv);
+
+        } elsif ($command_name eq "update" && $a eq "--value") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{value});
+            $curr_command->{value} = shift(@$argv);
+
+        } elsif ($command_name eq "update" && !defined($curr_command->{index}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --index or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --index";
+            }
+            $curr_command->{index} = $a
+
+        } elsif ($command_name eq "update" && !defined($curr_command->{col}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --col or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --col";
+            }
+            $curr_command->{col} = $a
+
+        } elsif ($command_name eq "update" && !defined($curr_command->{value}) && $a !~ /\A-/) {
+            if (!defined($input) && -e $a) {
+                die "ambiguous parameter: $a, use --value or -i";
+            }
+            if (grep {$_ eq $a} @command_name_list) {
+                die "ambiguous parameter: $a, use --value";
+            }
+            $curr_command->{value} = $a
+
         } elsif ($command_name eq "sort" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{cols});
@@ -537,7 +579,8 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "update") {
-            degradeMain();
+            $next_command = {command => "update", index => undef, col => undef, value => undef};
+            $last_command = $a;
 
         } elsif ($a eq "sort") {
             $next_command = {command => "sort", cols => undef};
@@ -940,25 +983,23 @@ sub parseQuery {
             }
             push(@$commands2, $curr_command);
 
-=comment
         } elsif ($command_name eq "update") {
-            if (!defined($curr_command->{1])) {
+            if (!defined($curr_command->{index})) {
                 die "subcommand \`update\` needs --index option";
             }
-            if (!defined($curr_command->{2])) {
+            if (!defined($curr_command->{col})) {
                 die "subcommand \`update\` needs --col option";
             }
-            if (!defined($curr_command->{3])) {
+            if (!defined($curr_command->{value})) {
                 die "subcommand \`update\` needs --value option";
             }
-            if ($curr_command->{1] !~ /\A(0|[1-9][0-9]*)\z/) {
-                die "option --index needs a number argument: '$curr_command->{1]'";
+            if ($curr_command->{index} !~ /\A(0|[1-9][0-9]*)\z/) {
+                die "option --index needs a number argument: '$curr_command->{index}'";
             }
-            if ($curr_command->{2] !~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
-                die "Illegal column name: $curr_command->{2]\n";
+            if ($curr_command->{col} !~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/) {
+                die "Illegal column name: $curr_command->{col}\n";
             }
-            push(@$commands2, ["update", $curr_command->{1], $curr_command->{2], $curr_command->{3]]);
-=cut
+            push(@$commands2, $curr_command);
 
         } elsif ($command_name eq "sort") {
             if (defined($curr_command->{cols})) {
@@ -1599,13 +1640,11 @@ sub build_ircode_command {
                 push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]); # TODO $colsもデコードされてしまう問題あり
             }
 
-=comment
         } elsif ($command_name eq "update") {
-            my $index = escape_for_bash($curr_command->{1]);
-            my $column = escape_for_bash($curr_command->{2]);
-            my $value = escape_for_bash($curr_command->{3]);
+            my $index = escape_for_bash($curr_command->{index});
+            my $column = escape_for_bash($curr_command->{col});
+            my $value = escape_for_bash($curr_command->{value});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
-=cut
 
         } elsif ($command_name eq "sort") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
