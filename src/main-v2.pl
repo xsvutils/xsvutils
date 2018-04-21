@@ -396,6 +396,21 @@ sub parseQuery {
         } elsif ($command_name eq "join" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
             $curr_command->{file} = $a;
 
+        } elsif ($command_name eq "union" && $a eq "--right") {
+            degradeMain();
+
+        } elsif ($command_name eq "union" && $a eq "--file") {
+            die "option $a needs an argument" unless (@$argv);
+            die "duplicated option $a" if defined($curr_command->{file});
+            $curr_command->{file} = shift(@$argv);
+
+        } elsif ($command_name eq "union" && $a eq "[") {
+            die "duplicated option $a" if defined($curr_command->{file});
+            ($curr_command->{file}, $argv) = parseQuery($argv, "union", 1, '');
+
+        } elsif ($command_name eq "union" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+            $curr_command->{file} = $a;
+
         } elsif ($command_name eq "diff" && $a eq "--file") {
             die "option $a needs an argument" unless (@$argv);
             die "duplicated option $a" if defined($curr_command->{file});
@@ -537,7 +552,8 @@ sub parseQuery {
             $last_command = $a;
 
         } elsif ($a eq "union") {
-            degradeMain();
+            $next_command = {command => "union", file => undef};
+            $last_command = $a;
 
         } elsif ($a eq "diff") {
             $next_command = {command => "diff", file => undef};
@@ -966,13 +982,12 @@ sub parseQuery {
             }
             push(@$commands2, $curr_command);
 
-=comment
         } elsif ($command_name eq "union") {
-            if (!defined($curr_command->{1])) {
-                die "subcommand \`union\` needs --right option";
+            if (!defined($curr_command->{file})) {
+                die "subcommand \`union\` needs --file option";
             }
-            push(@$commands2, ["union", $curr_command->{1]]);
-=cut
+            push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "diff") {
             if (!defined($curr_command->{file})) {
                 die "subcommand \`diff\` needs --file option";
@@ -1622,13 +1637,11 @@ sub build_ircode_command {
             my $option = " " . $curr_command->{rule};
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/join.pl$option --right $file"]);
 
-=comment
         } elsif ($command_name eq "union") {
-            my $right = escape_for_bash($curr_command->{1]);
-            $right = "$input_pipe_prefix${right}";
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $right"]);
+            my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
+            my $file = "$input_pipe_prefix1${file_pipe_id}";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/union.pl - $file"]);
 
-=cut
         } elsif ($command_name eq "diff") {
             my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
             my $file = "$input_pipe_prefix1${file_pipe_id}";
