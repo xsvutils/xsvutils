@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## version 0.2.7 (Unreleased)
+## version 0.2.7 (2018/04/22)
 - add `diff` subcommand on v2
 - enable output csv format on terminal
 - add facetcount ratio2 column
