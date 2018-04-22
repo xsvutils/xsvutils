@@ -667,6 +667,10 @@ sub parseQuery {
             degradeMain();
 
         } elsif ($a eq "groupsum") {
+            if (!@$argv || $argv->[0] ne "-v2") {
+                die "\`groupsum\` subcommand needs \`-v2\`";
+            }
+            shift(@$argv);
             $next_command = {command => "groupsum"};
             $last_command = $a;
             $next_output_table = '';
