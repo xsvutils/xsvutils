@@ -1,5 +1,4 @@
 sort subcommand
-
     Sort by specified columns.
     ソートする。
 

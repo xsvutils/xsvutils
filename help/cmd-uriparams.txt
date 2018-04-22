@@ -1,5 +1,5 @@
 uriparams subcommand
-    [EXPERIMENTAL]
+    GETパラメータ形式の文字列から値を抽出する。
 
     Options:
         --name  <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定

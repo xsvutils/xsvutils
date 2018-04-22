@@ -1,6 +1,4 @@
 cols subcommand
-    [EXPERIMENTAL] [v2]
-
     Print specified columns.
 
     Usage:

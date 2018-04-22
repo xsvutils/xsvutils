@@ -1,0 +1,7 @@
+diff subcommand
+    Compare two inputs cell by cell
+
+    Options:
+        --file <OTHER_FILE>
+        --help        Print help information about this subcommand.
+

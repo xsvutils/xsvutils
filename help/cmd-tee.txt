@@ -1,6 +1,4 @@
 tee subcommand
-    [EXPERIMENTAL] [v2]
-
     Output to next subcommand and another file
 
     Usage:
