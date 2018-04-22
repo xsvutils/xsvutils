@@ -1359,7 +1359,7 @@ sub build_ircode_command {
             for (my $i = 1; $i < @$t; $i++) {
                 $conds .= ' ' . escape_for_bash($t->[$i]);
             }
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/where.pl$conds"]);
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/where-v1.pl$conds"]);
 
         } elsif ($command eq "cut") {
             my $cols = escape_for_bash($t->[1]);

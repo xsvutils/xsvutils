@@ -1,7 +1,7 @@
 USAGE:
     $ xsvutils [[-i] <FILENAME>] [<SUBCOMMAND>] [<OPTION>|<PARAMETER>...] ...
 
-    SUBCOMMAND には cut, limit などがある。`xsvutils help subcommands` でサブコマンドの一覧を確認できる。
+    SUBCOMMAND には cut, limit などがある。`xsvutils help list` でサブコマンドの一覧を確認できる。
 
     オプションについての詳細は `xsvutils help options` を見ること。
 

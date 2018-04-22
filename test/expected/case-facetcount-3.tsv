@@ -1,6 +1,6 @@
-column	value	count	ratio
-count	1	4	 80.00%
-count	3	1	 20.00%
-name	aaa	2	 40.00%
-name	ccc	2	 40.00%
-name	bbb	1	 20.00%
+column	value	count	ratio	ratio2
+count	1	4	 80.00%	 80.00%
+count	3	1	 20.00%	 20.00%
+name	aaa	2	 40.00%	 40.00%
+name	ccc	2	 40.00%	 40.00%
+name	bbb	1	 20.00%	 20.00%

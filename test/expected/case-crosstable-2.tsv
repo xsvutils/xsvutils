@@ -1,4 +1,4 @@
-col1	count	value3	value1	value4	value2	value5
-	10	5	2	2	1	1
-aaa	6	2	1	2	1	1
+col1	count	value3	value4	value1	value2	value5
+	10	5	2	1	1	1
+aaa	6	2	2	0	1	1
 bbb	5	3	1	1	0	0

@@ -11,7 +11,7 @@ foreach my $s (@$sources) {
     if ($s eq '-') {
         $fh = *STDIN;
     } else {
-        open($fh, '<', $s) or die $!;
+        open($fh, '<', $s) or die "Cannot open `$s`, $!";
     }
 
     my $line = <$fh>;

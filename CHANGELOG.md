@@ -4,6 +4,16 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## version 0.2.7 (2018/04/22)
+- add `diff` subcommand on v2
+- enable output csv format on terminal
+- add facetcount ratio2 column
+- add `filter`, `where` subcommand on v2
+- change --o-diffable format
+- add some subcommands from v1 to v2
+- add `insmap` subcommand on v2
+- add `-v2` option of `groupsum` subcommand
+
 ## version 0.2.6 (2018/04/09)
 - add support LTSV format on v2
 - make `uriparams` slightly fast

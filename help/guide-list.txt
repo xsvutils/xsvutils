@@ -8,8 +8,8 @@ Available subcommands:
         offset [<N>]                    [v1/v2] Print all except first N records
         take [<N>]                      [DEPRECATED] [v1] Print first N records
         drop [<N>]                      [DEPRECATED] [v1] Print all except first N records
-        where <CONDITION>               [EXPERIMENTAL] [v1]
-        filter <CONDITION>              [EXPERIMENTAL] [v1]
+        where <CONDITION>               [EXPERIMENTAL] [v1/v2]
+        filter <CONDITION>              [EXPERIMENTAL] [v1/v2]
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                                           [v1/v2] Print specified columns
@@ -20,6 +20,7 @@ Available subcommands:
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         inssecinterval <SRC_COLUMN_NAME> <DST_COLUMN_NAME>      [EXPERIMENTAL] [v2]
         inscopy <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             [EXPERIMENTAL] [v2] カラムをコピーする
+        insmap <SRC_COLUMN_NAME> <DST_COLUMN_NAME> <MAPPING_FILE> [EXPERIMENTAL] [v2]
         insconst <VALUE> <DST_COLUMN_NAME>                      [EXPERIMENTAL] [v2]
         addconst <NEW_COLUMN_NAME> <VALUE>                      [DEPRECATED] [v1] 固定値のカラムを一番左に追加する
         addcopy <NEW_COLUMN_NAME> <SOURCE>                      [DEPRECATED] [v1]
@@ -31,11 +32,12 @@ Available subcommands:
         parseuriparams <NAMES>                                  [DEPRECATED] [v1]
 
     その他のデータを加工するコマンド
-        update <INDEX> <COLUMN> <VALUE> [v1] セルを指定して値を更新する
+        update <INDEX> <COLUMN> <VALUE> [v1/v2] セルを指定して値を更新する
         sort [<COLUMNS>]                [v1/v2] ソートする
         paste <OTHER_FILE>              [EXPERIMENTAL] [v1/v2]
-        join <OTHER_FILE>               [EXPERIMENTAL] [v1]
-        union <OTHER_FILE>              [EXPERIMENTAL] [v1]
+        join <OTHER_FILE>               [EXPERIMENTAL] [v1/v2]
+        union <OTHER_FILE>              [EXPERIMENTAL] [v1/v2]
+        diff <OTHER_FILE>               [EXPERIMENTAL] [v2]
 
     集計するコマンド
         wcl                             [v1/v2] Print record count. レコード数を表示する
@@ -44,7 +46,7 @@ Available subcommands:
         countcols                       [v1/v2] カラム数を集計する
         facetcount                      [v1/v2] カラムそれぞれのファセットカウントを集計する
         treetable                       [EXPERIMENTAL] [v1/v2]
-        crosstable                      [EXPERIMENTAL] [v1]
+        crosstable                      [EXPERIMENTAL] [v1/v2]
         wordsflags                      [EXPERIMENTAL] [v1]
         groupsum                        [EXPERIMENTAL] [v2]
 

@@ -1,6 +1,4 @@
 update subcommand
-    [v1]
-
     セルを指定して値を更新する
 
     Options:

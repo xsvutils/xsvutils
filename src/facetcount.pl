@@ -20,6 +20,7 @@ my $headers = undef;
 my $header_count = 0;
 
 my $facetcount = [];
+my $facetcount2 = [];
 
 my $record_count = 0;
 my $sum = 0;
@@ -43,6 +44,7 @@ $SIG{INT} = \&interrupt;
 
     for (my $i = 0; $i < $header_count; $i++) {
         push(@$facetcount, {});
+        push(@$facetcount2, 0);
     }
 }
 
@@ -66,6 +68,9 @@ while (my $line = <STDIN>) {
     $sum += $weight;
     for (; $i < $header_count; $i++) {
         my $v = $cols[$i];
+        if ($v ne "") {
+            $facetcount2->[$i] += $weight;
+        }
         if ($multiValueFlag eq "a") {
             # TODO セミコロンのエスケープ解除
             my %vs_map = map { $_ => 1 } (grep { $_ ne "" } split(/;/, $v, -1));
@@ -96,7 +101,7 @@ while (my $line = <STDIN>) {
 }
 $record_count--;
 
-print "column\tvalue\tcount\tratio\n";
+print "column\tvalue\tcount\tratio\tratio2\n";
 
 my $i = 0;
 if ($weightFlag) {
@@ -105,12 +110,14 @@ if ($weightFlag) {
 for (; $i < $header_count; $i++) {
     my $col_name = $headers->[$i];
     my $fc = $facetcount->[$i];
+    my $sum2 = $facetcount2->[$i];
     my $values = [keys(%$fc)];
     $values = [sort { my $r = $fc->{$b} <=> $fc->{$a}; if ($r == 0) { $r = $a cmp $b; } $r; } @$values];
     foreach my $v (@$values) {
         my $c = $fc->{$v};
         my $ratio = sprintf("%6.2f%%", 100 * $c / $sum);
-        print "$col_name\t$v\t$c\t$ratio\n";
+        my $ratio2 = sprintf("%6.2f%%", 100 * $c / $sum2);
+        print "$col_name\t$v\t$c\t$ratio\t$ratio2\n";
     }
 }
 

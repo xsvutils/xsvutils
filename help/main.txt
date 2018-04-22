@@ -30,7 +30,7 @@ Commonly used subcommands:
         treetable                       [EXPERIMENTAL] [v1/v2]
         crosstable                      [EXPERIMENTAL] [v1]
 
-    `xsvutils help subcommands` ですべてのサブコマンドを確認できる。
+    `xsvutils help list` ですべてのサブコマンドを確認できる。
 
     各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>

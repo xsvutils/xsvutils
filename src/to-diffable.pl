@@ -19,25 +19,34 @@ my $headerCount = 0;
     print "\n";
 }
 
-while (my $line = <STDIN>) {
-    $line =~ s/\n\z//g;
-    my @cols = split(/\t/, $line, -1);
+if (@headers == 1) {
+    while (my $line = <STDIN>) {
+        $line =~ s/\n\z//g;
+        my @cols = split(/\t/, $line, -1);
 
-    my $id = $cols[0];
-
-    my $i = 0;
-    while () {
-        last if ($i >= @cols);
-        my $h;
-        if ($i < @headers) {
-            $h = $headers[$i];
-        } else {
-            $h = "";
-        }
-        my $v = $cols[$i];
-        print "$id:$h:$v\n";
-        $i++;
+        print "$cols[0]\n";
     }
-    print "\n";
+} else {
+    while (my $line = <STDIN>) {
+        $line =~ s/\n\z//g;
+        my @cols = split(/\t/, $line, -1);
+
+        my $id = $cols[0];
+
+        my $i = 1;
+        while () {
+            last if ($i >= @cols);
+            my $h;
+            if ($i < @headers) {
+                $h = $headers[$i];
+            } else {
+                $h = "";
+            }
+            my $v = $cols[$i];
+            print "$id:$h:$v\n";
+            $i++;
+        }
+        print "\n";
+    }
 }
 
