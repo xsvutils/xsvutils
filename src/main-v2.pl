@@ -1059,7 +1059,7 @@ sub parseQuery {
                 die "subcommand \`join\` needs --file option";
             }
             if (!defined($curr_command->{rule})) {
-                die "subcommand \`join\` needs --inner, --left-outer, --right-outer or --full-outer option";
+                $curr_command->{rule} = "--inner";
             }
             push(@$commands2, $curr_command);
 
