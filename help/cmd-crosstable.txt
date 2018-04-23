@@ -1,6 +1,4 @@
 crosstable subcommand
-    [EXPERIMENTAL] [v1]
-
     左から2カラムでクロス集計する。
 
     Options:

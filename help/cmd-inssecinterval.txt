@@ -1,6 +1,4 @@
 inssecinterval subcommand
-    [EXPERIMENTAL] [v2]
-
     日時のカラムからすぐ上のレコードとの差を秒数で計算して、新しいカラムとして追加する。
     新しいカラムは一番左に追加する。
 

@@ -1,5 +1,5 @@
 summary subcommand
-
+    Print summary of data.
     データのカラムごとのサマリを表示する。
 
     出力は右から、カラムの位置、カラム名、データが含まれている割合、値の例の列挙である。

@@ -1,8 +1,7 @@
 paste subcommand
-    [EXPERIMENTAL]
-
     Merge records of two inputs.
 
     Options:
+        --file <OTHER_FILE>
         --help    Print help information about this subcommand.
 

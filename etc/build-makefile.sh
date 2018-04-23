@@ -1,12 +1,22 @@
 
 
-TARGET_SOURCES=$(echo $((echo target/golang.bin; ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g'; echo target/help-guide-version.txt; echo target/help-guide-changelog.txt) | LC_ALL=C sort))
+TARGET_SOURCES1=$(echo $((
+            echo target/golang.bin;
+            ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            echo target/help-guide-version.txt;
+            echo target/help-guide-changelog.txt) | LC_ALL=C sort))
+TARGET_SOURCES2=$(echo $((
+            echo target/golang.bin;
+            ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            echo target/help-guide-version.txt;
+            echo target/help-guide-changelog.txt) | LC_ALL=C sort))
+
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
-RM_TARGET=$(diff -u <(ls $TARGET_SOURCES 2>/dev/null) <(ls target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
+RM_TARGET=$(diff -u <(ls $TARGET_SOURCES1 2>/dev/null) <(ls -d target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
 if [ -n "$RM_TARGET" ]; then
-    echo rm $RM_TARGET >&2
-    rm $RM_TARGET >&2
+    echo rm -r $RM_TARGET >&2
+    rm -r $RM_TARGET >&2
 fi
 
 if ! which go >/dev/null; then
@@ -31,8 +41,8 @@ xsvutils: src/boot.sh var/TARGET_VERSION_HASH
 EOF
 
 cat <<EOF
-var/TARGET_VERSION_HASH: $TARGET_SOURCES
-	cat $TARGET_SOURCES | shasum | cut -b1-40 > var/TARGET_VERSION_HASH.tmp
+var/TARGET_VERSION_HASH: $TARGET_SOURCES2
+	cat \$\$(find $TARGET_SOURCES1 -type f) | shasum | cut -b1-40 > var/TARGET_VERSION_HASH.tmp
 	mv var/TARGET_VERSION_HASH.tmp var/TARGET_VERSION_HASH
 
 EOF

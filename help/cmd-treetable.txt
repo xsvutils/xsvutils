@@ -1,6 +1,4 @@
 treetable subcommand
-    [EXPERIMENTAL]
-
     左のカラムから順番にカラム組み合わせのファセットカウントを集計する。
 
     Options:

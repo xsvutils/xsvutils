@@ -1,6 +1,4 @@
 insconst subcommand
-    [EXPERIMENTAL] [v2]
-
     固定値のカラムを新規に一番左に追加する。
 
     Usage:

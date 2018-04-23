@@ -19,7 +19,7 @@ if (-t STDOUT) {
 
 my @originalArgv = @ARGV;
 sub degradeMain {
-    #print STDERR "warning: degrade to v1 (@originalArgv)\n";
+    print STDERR "warning: degrade to v1 (@originalArgv)\n";
     exec("perl", "$TOOL_DIR/main-v1.pl", @originalArgv);
 }
 
@@ -1059,7 +1059,7 @@ sub parseQuery {
                 die "subcommand \`join\` needs --file option";
             }
             if (!defined($curr_command->{rule})) {
-                die "subcommand \`join\` needs --inner, --left-outer, --right-outer or --full-outer option";
+                $curr_command->{rule} = "--inner";
             }
             push(@$commands2, $curr_command);
 

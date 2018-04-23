@@ -1,5 +1,5 @@
 header subcommand
-
+    Print column names.
     カラムの一覧を表示する
 
     Options:

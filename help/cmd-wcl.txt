@@ -1,5 +1,4 @@
 wcl subcommand
-
     Print record count excluding header line.
     レコード数を表示する。ヘッダ行は含まない。
 

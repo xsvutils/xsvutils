@@ -1,5 +1,4 @@
 facetcount subcommand
-
     カラムそれぞれのファセットカウントを集計する
 
     Options:
