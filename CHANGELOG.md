@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## version 0.3.0 (Unreleased)
+## version 0.3.0 (2018/04/23)
 - change default parse from v1 to v2
 
 ## version 0.2.7 (2018/04/22)
