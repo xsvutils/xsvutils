@@ -3,13 +3,13 @@
 TARGET_SOURCES1=$(echo $((
             echo target/golang.bin;
             echo target/java;
-            ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
             echo target/golang.bin;
             echo target/java/bin/xsvutils-java;
-            ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 
@@ -121,23 +121,23 @@ var/GOLANG_VERSION_HASH: $GOLANG_SOURCES
 
 EOF
 
-JAVA_RM_TARGET=$(diff -u <(ls java 2>/dev/null) <(ls var/sbt/src/main/java 2>/dev/null) | tail -n+4 | grep -E '^\+' | cut -b2- | sed 's/^/var\/sbt\/src\/main\/java\//g')
+JAVA_RM_TARGET=$(diff -u <(ls src/*.scala 2>/dev/null | sed 's/^src\///g') <(ls var/sbt/src/main/java 2>/dev/null) | tail -n+4 | grep -E '^\+' | cut -b2- | sed 's/^/var\/sbt\/src\/main\/java\//g')
 if [ -n "$JAVA_RM_TARGET" ]; then
     echo rm -r $JAVA_RM_TARGET >&2
     rm -r $JAVA_RM_TARGET >&2
 fi
 
-for f in $(ls java); do
+for f in $(ls src/*.scala | sed 's/^src\///g'); do
     cat <<EOF
-var/sbt/src/main/java/$f: java/$f
+var/sbt/src/main/java/$f: src/$f
 	mkdir -p var/sbt/src/main/java
-	cp java/$f var/sbt/src/main/java/$f
+	cp src/$f var/sbt/src/main/java/$f
 
 EOF
 done
 
 cat <<EOF
-var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT.zip: var/sbt/sbt/bin/sbt var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls java | sed 's/^/var\/sbt\/src\/main\/java\//g'))
+var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT.zip: var/sbt/sbt/bin/sbt var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls src/*.scala | sed 's/^src\///g' | sed 's/^/var\/sbt\/src\/main\/java\//g'))
 	cd var/sbt; ./sbt/bin/sbt compile
 	cd var/sbt; ./sbt/bin/sbt universal:packageBin
 
