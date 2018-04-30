@@ -14,16 +14,14 @@ object FacetCount {
 			}
 			val outBody = out.head(Array("column", "number", "value", "count", "ratio1", "ratio2"));
 			Body(multiValueFlag, weightFlag,
-				colNames,
-				0.0, IndexedSeq.fill(colNames.size)(PeriodColumnResult()),
+				colNames, PeriodResult(colNames.size),
 				outBody);
 		}
 
 	}
 
 	case class Body (multiValueFlag: Option[MultiValueFlag], weightFlag: Boolean,
-		colNames: Seq[String],
-		recordCount: Double, columnResults: Seq[PeriodColumnResult],
+		colNames: Seq[String], periodResult: PeriodResult,
 		out: PipeBody) extends PipeBody {
 
 		def next(cols: Seq[String]): PipeBody = {
@@ -32,25 +30,21 @@ object FacetCount {
 			} else {
 				(1.0, 0);
 			}
-			val recordCount2 = recordCount + weight;
-			val columnResults2 = (0 until colNames.size).map { i =>
-				val col = cols(i + offset);
-				columnResults(i).next(weight, col, multiValueFlag);
-			}
-			Body(multiValueFlag, weightFlag, colNames, recordCount2, columnResults2, out);
+			val result2 = periodResult.next(weight, cols, offset, multiValueFlag);
+			Body(multiValueFlag, weightFlag, colNames, result2, out);
 		}
 
 		def close() {
 			val outClose = (0 until colNames.size).foldLeft(out) { (out, i) =>
 				val colName = colNames(i);
-				val result = columnResults(i);
+				val result = periodResult.columnResults(i);
 				val map = result.map;
 				map.keySet.toSeq.sortBy(v => (- map(v), v)).zipWithIndex.foldLeft(out) { (out, t) =>
 					val (value, number) = t;
 					val numberStr = (number + 1).toString;
 					val count = map(value);
 					val countStr = Util.doubleToString(count);
-					val ratio1Str = Util.percentToString(count / recordCount);
+					val ratio1Str = Util.percentToString(count / periodResult.recordCount);
 					val ratio2Str = Util.percentToString(count / result.sum);
 					out.next(Array(colName, numberStr, value, countStr, ratio1Str, ratio2Str));
 				}
@@ -58,6 +52,21 @@ object FacetCount {
 			outClose.close();
 		}
 
+	}
+
+	case class PeriodResult (recordCount: Double, columnResults: Seq[PeriodColumnResult]) {
+		def next(weight: Double, cols: Seq[String], offset: Int, multiValueFlag: Option[MultiValueFlag]): PeriodResult = {
+			val recordCount2 = recordCount + weight;
+			val columnResults2 = (0 until columnResults.size).map { i =>
+				val col = cols(i + offset);
+				columnResults(i).next(weight, col, multiValueFlag);
+			}
+			PeriodResult(recordCount2, columnResults2);
+		}
+	}
+
+	object PeriodResult {
+		def apply(colCount: Int): PeriodResult = PeriodResult(0.0, IndexedSeq.fill(colCount)(PeriodColumnResult()));
 	}
 
 	case class PeriodColumnResult (map: Map[String, Double], sum: Double) {
