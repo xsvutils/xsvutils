@@ -13,7 +13,7 @@ case class FacetCountHead (multiValueFlag: Option[MultiValueFlag], weightFlag: B
 		val outBody = out.head(Array("column", "value", "count", "ratio", "ratio2"));
 		FacetCountBody(multiValueFlag, weightFlag,
 			colNames,
-			0.0, IndexedSeq.fill(colNames.size)(Map.empty), IndexedSeq.fill(colNames.size)(0.0),
+			0.0, IndexedSeq.fill(colNames.size)(ColumnResult()),
 			outBody);
 	}
 
@@ -21,7 +21,7 @@ case class FacetCountHead (multiValueFlag: Option[MultiValueFlag], weightFlag: B
 
 case class FacetCountBody (multiValueFlag: Option[MultiValueFlag], weightFlag: Boolean,
 	colNames: Seq[String],
-	recordCount: Double, totalMap: Seq[Map[String, Double]], totalSum: Seq[Double],
+	recordCount: Double, columnResults: Seq[ColumnResult],
 	out: PipeBody) extends PipeBody {
 
 	def next(cols: Seq[String]): PipeBody = {
@@ -30,53 +30,51 @@ case class FacetCountBody (multiValueFlag: Option[MultiValueFlag], weightFlag: B
 		} else {
 			(1.0, 0);
 		}
-		val totalMap2: Seq[Map[String, Double]] = (0 until colNames.size).map { i =>
-			val map = totalMap(i);
-			val value = cols(i + offset);
-			multiValueFlag match {
-				case Some(MultiValueA) =>
-					val values = value.split(";", -1).toSet.filter(!_.isEmpty);
-					values.foldLeft(map) { (map, value) =>
-						map.get(value) match {
-							case Some(c) => map + (value -> (c + weight));
-							case None => map + (value -> weight);
-						}
-					}
-				case Some(MultiValueB) =>
-					throw new Error();
-				case None =>
-					map.get(value) match {
-						case Some(c) => map + (value -> (c + weight));
-						case None => map + (value -> weight);
-					}
-			}
+		val recordCount2 = recordCount + weight;
+		val columnResults2 = (0 until colNames.size).map { i =>
+			val col = cols(i + offset);
+			columnResults(i).next(weight, col, multiValueFlag);
 		}
-		val totalSum2: Seq[Double] = (0 until colNames.size).map { i =>
-			val value = cols(i + offset);
-			if (value.isEmpty) {
-				totalSum(i);
-			} else {
-				totalSum(i) + weight;
-			}
-		}
-		FacetCountBody(multiValueFlag, weightFlag, colNames, recordCount + weight, totalMap2, totalSum2, out);
+		FacetCountBody(multiValueFlag, weightFlag, colNames, recordCount2, columnResults2, out);
 	}
 
 	def close() {
 		val outClose = (0 until colNames.size).foldLeft(out) { (out, i) =>
 			val colName = colNames(i);
-			val map = totalMap(i);
-			val sum = totalSum(i);
+			val result = columnResults(i);
+			val map = result.map;
 			map.keySet.toSeq.sortBy(v => (- map(v), v)).foldLeft(out) { (out, value) =>
 				val count = map(value);
 				val countStr = Util.doubleToString(count);
 				val ratio1Str = Util.percentToString(count / recordCount);
-				val ratio2Str = Util.percentToString(count / sum);
+				val ratio2Str = Util.percentToString(count / result.sum);
 				out.next(Array(colName, value, countStr, ratio1Str, ratio2Str));
 			}
 		}
 		outClose.close();
 	}
 
+}
+
+case class ColumnResult (map: Map[String, Double], sum: Double) {
+	def next(weight: Double, value: String, multiValueFlag: Option[MultiValueFlag]): ColumnResult = {
+		val map2: Map[String, Double] = {
+			Util.valuesFromCol(value, multiValueFlag).foldLeft(map) { (map, value) =>
+				map + (value -> (map.getOrElse(value, 0.0) + weight));
+			}
+		}
+		val sum2: Double = {
+			if (value.isEmpty) {
+				sum;
+			} else {
+				sum + weight;
+			}
+		}
+		ColumnResult(map2, sum2);
+	}
+}
+
+object ColumnResult {
+	def apply(): ColumnResult = ColumnResult(Map.empty, 0.0);
 }
 

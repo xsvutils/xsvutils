@@ -156,6 +156,17 @@ object WeightFlag {
 
 object Util {
 
+	def valuesFromCol(col: String, multiValueFlag: Option[MultiValueFlag]): Iterable[String] = {
+		multiValueFlag match {
+			case Some(MultiValueA) =>
+				col.split(";", -1).toSet.filter(!_.isEmpty);
+			case Some(MultiValueB) =>
+				throw new Error();
+			case None =>
+				Some(col);
+		}
+	}
+
 	def doubleToString(x: Double): String = {
 		"%f".format(x).replaceAll("(\\.[0-9]*?)0+\\z", "$1").replaceAll("\\.0*\\z", "");
 	}
