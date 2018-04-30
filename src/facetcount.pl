@@ -22,7 +22,6 @@ my $header_count = 0;
 my $facetcount = [];
 my $facetcount2 = [];
 
-my $record_count = 0;
 my $sum = 0;
 
 # Ctrl-C で中断して結果を表示するためのハンドラ
@@ -37,8 +36,6 @@ $SIG{INT} = \&interrupt;
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
 
-    $record_count++;
-
     $headers = \@cols;
     $header_count = scalar @cols;
 
@@ -51,8 +48,6 @@ $SIG{INT} = \&interrupt;
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
-
-    $record_count++;
 
     # 行にタブの数が少ない場合に列を付け足す
     for (my $i = $header_count - @cols; $i > 0; $i--) {
@@ -91,15 +86,10 @@ while (my $line = <STDIN>) {
         }
     }
 
-    if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count ...\n";
-    }
-
     if ($interrupted) {
         last;
     }
 }
-$record_count--;
 
 print "column\tvalue\tcount\tratio\tratio2\n";
 

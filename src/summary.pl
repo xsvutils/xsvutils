@@ -73,10 +73,6 @@ while (my $line = <STDIN>) {
         }
     }
 
-    if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count ...\n";
-    }
-
     if (!@$header_indeces || $interrupted) {
         for (my $i = 0; $i < $header_count; $i++) {
             if (@{$col_values->[$i]} <= $max_value_count) {
