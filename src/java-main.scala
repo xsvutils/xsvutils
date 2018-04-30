@@ -47,7 +47,7 @@ object Main {
 				case Nil =>
 					out;
 				case weightFlag :: multiValueFlag :: "facetcount" :: tail =>
-					sub(tail, FacetCountHead(MultiValueFlag(multiValueFlag), WeightFlag(weightFlag), out));
+					sub(tail, FacetCount.Head(MultiValueFlag(multiValueFlag), WeightFlag(weightFlag), out));
 				case _ =>
 					throw new Error(args.reverse.mkString(" "));
 			}
