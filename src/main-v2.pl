@@ -649,7 +649,12 @@ sub parseQuery {
             $next_output_table = '';
 
         } elsif ($a eq "facetcount") {
-            $next_command = {command => "facetcount", multi_value => undef, weight => ''};
+            if (@$argv && $argv->[0] eq "-v4") {
+                shift(@$argv);
+                $next_command = {command => "facetcount", ver => 4, multi_value => undef, weight => ''};
+            } else {
+                $next_command = {command => "facetcount", ver => 3, multi_value => undef, weight => ''};
+            }
             $last_command = $a;
             $next_output_table = '';
 
@@ -1756,14 +1761,31 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);
 
         } elsif ($command_name eq "facetcount") {
-            my $option = "";
-            if ($curr_command->{multi_value} eq "a") {
-                $option .= " --multi-value-a";
+            if ($curr_command->{ver} == 4) {
+                my $option = "";
+                if ($curr_command->{multi_value} eq "a") {
+                    $option .= " a";
+                } elsif ($curr_command->{multi_value} eq "b") {
+                    $option .= " b";
+                } else {
+                    $option .= " ''";
+                }
+                if ($curr_command->{weight}) {
+                    $option .= " weight";
+                } else {
+                    $option .= " no-weight";
+                }
+                push(@$ircode, ["cmd", "\$TOOL_DIR/java/bin/xsvutils-java facetcount$option"]);
+            } else {
+                my $option = "";
+                if ($curr_command->{multi_value} eq "a") {
+                    $option .= " --multi-value-a";
+                }
+                if ($curr_command->{weight}) {
+                    $option .= " --weight";
+                }
+                push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
             }
-            if ($curr_command->{weight}) {
-                $option .= " --weight";
-            }
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
         } elsif ($command_name eq "treetable") {
             my $option = "";

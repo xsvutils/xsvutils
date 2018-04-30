@@ -5,6 +5,7 @@ To see version information, `xsvutils --version`.
 To see compatibility information, `xsvutils help compatibility`.
 
 ## version 0.3.1 (Unreleased)
+- add java version of facetcount
 
 ## version 0.3.0 (2018/04/23)
 - change default parse from v1 to v2
