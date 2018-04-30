@@ -6,7 +6,7 @@ object Main {
 	def main(args: Array[String]) {
 		val pipeHead = buildPipe(args.toList);
 
-		val lines = Source.fromInputStream(System.in).getLines;
+		val lines = stdinLineIterator();
 		if (!lines.hasNext) {
 			throw new Exception("Empty file");
 		}
@@ -55,6 +55,41 @@ object Main {
 		sub(args.reverse, StdoutPipeHead);
 	}
 
+	private def stdinLineIterator(): Iterator[String] = {
+
+		var fp = new java.io.BufferedReader(new java.io.InputStreamReader(System.in, "UTF-8"));
+		var nextLine: String = null;
+
+		new Iterator[String] {
+
+			def hasNext: Boolean = {
+				if (fp == null) {
+					false;
+				} else {
+					if (nextLine == null) {
+						nextLine = fp.readLine;
+					}
+					if (nextLine == null) {
+						fp.close();
+						false;
+					} else {
+						true;
+					}
+				}
+			}
+
+			def next(): String = {
+				if (!hasNext) {
+					throw new java.util.NoSuchElementException();
+				}
+				val ret = nextLine;
+				nextLine = null;
+				ret;
+			}
+
+		}
+
+	}
 }
 
 
