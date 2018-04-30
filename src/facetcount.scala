@@ -12,7 +12,7 @@ object FacetCount {
 			} else {
 				cols;
 			}
-			val outBody = out.head(Array("column", "value", "count", "ratio", "ratio2"));
+			val outBody = out.head(Array("column", "number", "value", "count", "ratio1", "ratio2"));
 			Body(multiValueFlag, weightFlag,
 				colNames,
 				0.0, IndexedSeq.fill(colNames.size)(PeriodColumnResult()),
@@ -45,12 +45,14 @@ object FacetCount {
 				val colName = colNames(i);
 				val result = columnResults(i);
 				val map = result.map;
-				map.keySet.toSeq.sortBy(v => (- map(v), v)).foldLeft(out) { (out, value) =>
+				map.keySet.toSeq.sortBy(v => (- map(v), v)).zipWithIndex.foldLeft(out) { (out, t) =>
+					val (value, number) = t;
+					val numberStr = (number + 1).toString;
 					val count = map(value);
 					val countStr = Util.doubleToString(count);
 					val ratio1Str = Util.percentToString(count / recordCount);
 					val ratio2Str = Util.percentToString(count / result.sum);
-					out.next(Array(colName, value, countStr, ratio1Str, ratio2Str));
+					out.next(Array(colName, numberStr, value, countStr, ratio1Str, ratio2Str));
 				}
 			}
 			outClose.close();
