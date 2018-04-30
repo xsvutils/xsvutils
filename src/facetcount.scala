@@ -15,7 +15,7 @@ object FacetCount {
 			val outBody = out.head(Array("column", "value", "count", "ratio", "ratio2"));
 			Body(multiValueFlag, weightFlag,
 				colNames,
-				0.0, IndexedSeq.fill(colNames.size)(ColumnResult()),
+				0.0, IndexedSeq.fill(colNames.size)(PeriodColumnResult()),
 				outBody);
 		}
 
@@ -23,7 +23,7 @@ object FacetCount {
 
 	case class Body (multiValueFlag: Option[MultiValueFlag], weightFlag: Boolean,
 		colNames: Seq[String],
-		recordCount: Double, columnResults: Seq[ColumnResult],
+		recordCount: Double, columnResults: Seq[PeriodColumnResult],
 		out: PipeBody) extends PipeBody {
 
 		def next(cols: Seq[String]): PipeBody = {
@@ -58,8 +58,8 @@ object FacetCount {
 
 	}
 
-	case class ColumnResult (map: Map[String, Double], sum: Double) {
-		def next(weight: Double, value: String, multiValueFlag: Option[MultiValueFlag]): ColumnResult = {
+	case class PeriodColumnResult (map: Map[String, Double], sum: Double) {
+		def next(weight: Double, value: String, multiValueFlag: Option[MultiValueFlag]): PeriodColumnResult = {
 			val map2: Map[String, Double] = {
 				Util.valuesFromCol(value, multiValueFlag).foldLeft(map) { (map, value) =>
 					map + (value -> (map.getOrElse(value, 0.0) + weight));
@@ -72,12 +72,12 @@ object FacetCount {
 					sum + weight;
 				}
 			}
-			ColumnResult(map2, sum2);
+			PeriodColumnResult(map2, sum2);
 		}
 	}
 
-	object ColumnResult {
-		def apply(): ColumnResult = ColumnResult(Map.empty, 0.0);
+	object PeriodColumnResult {
+		def apply(): PeriodColumnResult = PeriodColumnResult(Map.empty, 0.0);
 	}
 
 }
