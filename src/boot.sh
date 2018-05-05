@@ -43,9 +43,9 @@ if [ "$1" = "-v1" ]; then
     perl $TOOL_DIR/main-v1.pl "$@"
 elif [ "$1" = "-v2" ]; then
     shift
-    perl $TOOL_DIR/main-v2.pl "$@"
+    perl $TOOL_DIR/main.pl "$@"
 else
-    perl $TOOL_DIR/main-v2.pl "$@"
+    perl $TOOL_DIR/main.pl "$@"
 fi
 
 exit $?
