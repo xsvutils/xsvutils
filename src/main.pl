@@ -106,6 +106,18 @@ my $option_explain = undef;
 my $exists_args = '';
 $exists_args = 1 if (@ARGV);
 
+my @command_name_list = qw/
+    cat
+    head limit drop offset
+    where filter
+    cut cols
+    inshour insdate insweek inssecinterval inscopy insmap insconst
+    addconst addcopy addlinenum addcross addmap uriparams parseuriparams
+    update sort paste join union diff
+    wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
+    tee
+/;
+
 sub parseQuery {
     # 2値を返す関数。
     # 1つ目の返り値の例
@@ -143,18 +155,6 @@ sub parseQuery {
 
     my $last_command = "cat";
 
-    my @command_name_list = qw/
-        cat
-        head limit drop offset
-        where filter
-        cut cols
-        inshour insdate insweek inssecinterval inscopy insmap insconst
-        addconst addcopy addlinenum addcross addmap uriparams parseuriparams
-        update sort paste join union diff
-        wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
-        tee
-    /;
-
     while () {
         my $a;
         if (@$argv) {
@@ -184,579 +184,266 @@ sub parseQuery {
             $command_name = $curr_command->{command};
         }
 
-        if (($command_name eq "head" || $command_name eq "limit") && $a eq "-n") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{count});
-            my $a2 = shift(@$argv);
-            die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
-            $curr_command->{count} = $a2;
-
-        } elsif (($command_name eq "head" || $command_name eq "limit") && $a =~ /\A-n(0|[1-9][0-9]*)\z/) {
-            my $a2 = $1;
-            die "duplicated option -n" if defined($curr_command->{count});
-            $curr_command->{count} = $a2;
-
-        } elsif (($command_name eq "head" || $command_name eq "limit") && !defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
-            die "duplicated option -n" if defined($curr_command->{count});
-            $curr_command->{count} = $a;
-
-        } elsif ($command_name eq "offset" && $a eq "-n") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{count});
-            my $a2 = shift(@$argv);
-            die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
-            $curr_command->{count} = $a2;
-
-        } elsif ($command_name eq "offset" && $a =~ /\A-n(0|[1-9][0-9]*)\z/) {
-            my $a2 = $1;
-            die "duplicated option -n" if defined($curr_command->{count});
-            $curr_command->{count} = $a2;
-
-        } elsif ($command_name eq "offset" && !defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
-            die "duplicated option -n" if defined($curr_command->{count});
-            $curr_command->{count} = $a;
-
-        } elsif (($command_name eq "where" || $command_name eq "filter") &&
-                 !defined($curr_command->{operator}) &&
-                 $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
-                 @$argv >= 2 &&
-                 $argv->[0] =~ /\A([!=]=|[><]=?)\z/ &&
-                 $argv->[1] =~ /\A(0|[1-9][0-9]*)\z/) {
-            $curr_command->{col} = $a;
-            $curr_command->{operator} = shift(@$argv);
-            $curr_command->{value} = shift(@$argv);
-
-        } elsif (($command_name eq "where" || $command_name eq "filter") &&
-                 !defined($curr_command->{operator}) &&
-                 $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
-                 @$argv >= 2 &&
-                 $argv->[0] =~ /\A(eq|ne|[gl][et])\z/) {
-            $curr_command->{col} = $a;
-            $curr_command->{operator} = shift(@$argv);
-            $curr_command->{value} = shift(@$argv);
-
-        } elsif (($command_name eq "cut" || $command_name eq "cols") && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{cols});
-            $curr_command->{cols} = shift(@$argv);
-
-        } elsif ($command_name eq "cut" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --cols or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --cols";
-            }
-            $curr_command->{cols} = $a;
-
-        } elsif ($command_name eq "cols" && $a eq "--head") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{head});
-            $curr_command->{head} = shift(@$argv);
-
-        } elsif ($command_name eq "cols" && $a eq "--left-update") {
-            die "duplicated option $a" if defined($curr_command->{update});
-            $curr_command->{update} = "left";
-
-        } elsif ($command_name eq "cols" && $a eq "--right-update") {
-            die "duplicated option $a" if defined($curr_command->{update});
-            $curr_command->{update} = "right";
-
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap") && $a eq "--src") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{src});
-            $curr_command->{src} = shift(@$argv);
-
-        } elsif ($command_name eq "insconst" && $a eq "--value") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{value});
-            $curr_command->{value} = shift(@$argv);
-
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap" || $command_name eq "insconst") && $a eq "--dst") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{dst});
-            $curr_command->{dst} = shift(@$argv);
-
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap") && !defined($curr_command->{src}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --src or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --src";
-            }
-            $curr_command->{src} = $a;
-
-        } elsif (($command_name eq "inshour" || $command_name eq "insdate" || $command_name eq "inssecinterval" || $command_name eq "inscopy" || $command_name eq "insmap" || $command_name eq "insconst") && !defined($curr_command->{dst}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --dst or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --dst";
-            }
-            $curr_command->{dst} = $a;
-
-        } elsif ($command_name eq "insmap" && $a eq "--file") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{file});
-            $curr_command->{file} = shift(@$argv);
-
-        } elsif ($command_name eq "insmap" && $a eq "[") {
-            die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "inscopy", 1, '');
-
-        } elsif ($command_name eq "insmap" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
-            $curr_command->{file} = $a;
-
-        } elsif ($command_name eq "insmap" && $a eq "--default") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{default});
-            $curr_command->{default} = shift(@$argv);
-
-        } elsif ($command_name eq "insconst" && !defined($curr_command->{value}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --value or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --value";
-            }
-            $curr_command->{value} = $a;
-
-        } elsif (($command_name eq "uriparams" || $command_name eq "--uriparams") && ($a eq "--name" || $a eq "--names")) {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{names});
-            $curr_command->{names} = shift(@$argv);
-
-        } elsif (($command_name eq "uriparams" || $command_name eq "--uriparams") && ($a eq "--name-list")) {
-            die "duplicated option $a" if defined($curr_command->{names});
-            $curr_command->{names} = "";
-
-        } elsif (($command_name eq "uriparams") && ($a eq "--col")) {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{col});
-            $curr_command->{col} = shift(@$argv);
-
-        } elsif (($command_name eq "uriparams" || $command_name eq "--uriparams") && ($a eq "--no-decode")) {
-            die "duplicated option $a" if defined($curr_command->{decode});
-            $curr_command->{decode} = "";
-
-        } elsif (($command_name eq "uriparams" || $command_name eq "--uriparams") && ($a eq "--multi-value-a")) {
-            die "duplicated option $a" if defined($curr_command->{multi_value});
-            $curr_command->{multi_value} = "a";
-
-        } elsif (($command_name eq "uriparams" || $command_name eq "--uriparams") && ($a eq "--multi-value-b")) {
-            die "duplicated option $a" if defined($curr_command->{multi_value});
-            $curr_command->{multi_value} = "b";
-
-        } elsif ($command_name eq "uriparams" && !defined($curr_command->{col}) && $a !~ /\A-/) {
-            $curr_command->{col} = $a;
-
-        } elsif ($command_name eq "uriparams" && !defined($curr_command->{names}) && $a !~ /\A-/) {
-            $curr_command->{names} = $a;
-
-        } elsif ($command_name eq "update" && $a eq "--index") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{index});
-            $curr_command->{index} = shift(@$argv);
-
-        } elsif ($command_name eq "update" && $a eq "--col") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{col});
-            $curr_command->{col} = shift(@$argv);
-
-        } elsif ($command_name eq "update" && $a eq "--value") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{value});
-            $curr_command->{value} = shift(@$argv);
-
-        } elsif ($command_name eq "update" && !defined($curr_command->{index}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --index or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --index";
-            }
-            $curr_command->{index} = $a
-
-        } elsif ($command_name eq "update" && !defined($curr_command->{col}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --col or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --col";
-            }
-            $curr_command->{col} = $a
-
-        } elsif ($command_name eq "update" && !defined($curr_command->{value}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --value or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --value";
-            }
-            $curr_command->{value} = $a
-
-        } elsif ($command_name eq "sort" && ($a eq "--col" || $a eq "--cols" || $a eq "--columns")) {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{cols});
-            $curr_command->{cols} = shift(@$argv);
-
-        } elsif ($command_name eq "sort" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
-            if (!defined($input) && -e $a) {
-                die "ambiguous parameter: $a, use --cols or -i";
-            }
-            if (grep {$_ eq $a} @command_name_list) {
-                die "ambiguous parameter: $a, use --cols";
-            }
-            $curr_command->{cols} = $a;
-
-        } elsif ($command_name eq "paste" && $a eq "--right") {
-            degradeMain();
-
-        } elsif ($command_name eq "paste" && $a eq "--file") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{file});
-            $curr_command->{file} = shift(@$argv);
-
-        } elsif ($command_name eq "paste" && $a eq "[") {
-            die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "paste", 1, '');
-
-        } elsif ($command_name eq "paste" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
-            $curr_command->{file} = $a;
-
-        } elsif ($command_name eq "join" && $a eq "--right") {
-            degradeMain();
-
-        } elsif ($command_name eq "join" && $a eq "--file") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{file});
-            $curr_command->{file} = shift(@$argv);
-
-        } elsif ($command_name eq "join" && $a eq "[") {
-            die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "join", 1, '');
-
-        } elsif ($command_name eq "join" && $a eq "--inner") {
-            die "duplicated option $a" if defined($curr_command->{rule});
-            $curr_command->{rule} = $a;
-
-        } elsif ($command_name eq "join" && $a eq "--left-outer") {
-            die "duplicated option $a" if defined($curr_command->{rule});
-            $curr_command->{rule} = $a;
-
-        } elsif ($command_name eq "join" && $a eq "--right-outer") {
-            die "duplicated option $a" if defined($curr_command->{rule});
-            $curr_command->{rule} = $a;
-
-        } elsif ($command_name eq "join" && $a eq "--full-outer") {
-            die "duplicated option $a" if defined($curr_command->{rule});
-            $curr_command->{rule} = $a;
-
-        } elsif ($command_name eq "join" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
-            $curr_command->{file} = $a;
-
-        } elsif ($command_name eq "union" && $a eq "--right") {
-            degradeMain();
-
-        } elsif ($command_name eq "union" && $a eq "--file") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{file});
-            $curr_command->{file} = shift(@$argv);
-
-        } elsif ($command_name eq "union" && $a eq "[") {
-            die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "union", 1, '');
-
-        } elsif ($command_name eq "union" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
-            $curr_command->{file} = $a;
-
-        } elsif ($command_name eq "diff" && $a eq "--file") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{file});
-            $curr_command->{file} = shift(@$argv);
-
-        } elsif ($command_name eq "diff" && $a eq "[") {
-            die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "diff", 1, '');
-
-        } elsif ($command_name eq "diff" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
-            $curr_command->{file} = $a;
-
-        } elsif ($command_name eq "facetcount" && ($a eq "--multi-value-a")) {
-            die "duplicated option $a" if defined($curr_command->{multi_value});
-            $curr_command->{multi_value} = "a";
-
-        } elsif ($command_name eq "facetcount" && ($a eq "--weight")) {
-            $curr_command->{weight} = 1;
-
-        } elsif ($command_name eq "treetable" && $a eq "--top") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{top});
-            $curr_command->{top} = shift(@$argv);
-
-        } elsif ($command_name eq "treetable" && $a eq "--multi-value-a") {
-            $curr_command->{multi_value} = "a";
-
-        } elsif ($command_name eq "crosstable" && $a eq "--top") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{top});
-            $curr_command->{top} = shift(@$argv);
-
-        } elsif ($command_name eq "crosstable" && $a eq "--multi-value-a") {
-            $curr_command->{multi_value} = "a";
-
-        } elsif ($command_name eq "tee" && $a eq "--file") {
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option $a" if defined($curr_command->{file});
-            $curr_command->{file} = shift(@$argv);
-
-        } elsif ($command_name eq "tee" && $a eq "[") {
-            die "duplicated option $a" if defined($curr_command->{file});
-            ($curr_command->{file}, $argv) = parseQuery($argv, "tee", '', 1);
-
-        } elsif ($command_name eq "tee" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
-            $curr_command->{file} = $a;
-
-        } elsif ($a eq "--explain") {
-            $option_explain = 1;
-
-        } elsif ($a eq "--cat" || $a eq "cat") {
-            $next_command = {command => "cat"};
-            $last_command = $a;
-
-        } elsif ($a eq "head" || $a eq "limit") {
-            $next_command = {command => $a, count => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "offset") {
-            $next_command = {command => $a, count => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "where" || $a eq "filter") {
-            $next_command = {command => $a, col => undef, operator => undef, value => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "cut") {
-            $next_command = {command => "cut", cols => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "cols") {
-            $next_command = {command => "cols", cols => undef, head => undef, update => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "inshour") {
-            $next_command = {command => "inshour", src => undef, dst => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "insdate") {
-            $next_command = {command => "insdate", src => undef, dst => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "insweek") {
-            degradeMain();
-
-        } elsif ($a eq "inssecinterval") {
-            $next_command = {command => "inssecinterval", src => undef, dst => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "inscopy") {
-            $next_command = {command => "inscopy", src => undef, dst => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "insmap") {
-            $next_command = {command => "insmap", src => undef, dst => undef, file => undef, default => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "insconst") {
-            $next_command = {command => "insconst", value => undef, dst => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "addconst") {
-            degradeMain();
-
-        } elsif ($a eq "addcopy") {
-            degradeMain();
-
-        } elsif ($a eq "addlinenum") {
-            degradeMain();
-
-        } elsif ($a eq "addcross") {
-            degradeMain();
-
-        } elsif ($a eq "addmap") {
-            degradeMain();
-
-        } elsif ($a eq "uriparams") {
-            $next_command = {command => "uriparams", col => undef, names => undef,
-                             decode => undef, multi_value => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "--uriparams") {
-            $next_command = {command => "--uriparams", names => undef,
-                             decode => undef, multi_value => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "parseuriparams") {
-            degradeMain();
-
-        } elsif ($a eq "update") {
-            $next_command = {command => "update", index => undef, col => undef, value => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "sort") {
-            $next_command = {command => "sort", cols => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "paste") {
-            $next_command = {command => "paste", file => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "join") {
-            $next_command = {command => "join", file => undef, "rule" => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "union") {
-            $next_command = {command => "union", file => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "diff") {
-            $next_command = {command => "diff", file => undef};
-            $last_command = $a;
-            $next_output_table = '';
-
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            die "duplicated option: $a" if defined($output_format);
-            $output_format = "diff";
-
-        } elsif ($a eq "wcl") {
-            $next_command = {command => "wcl"};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "header") {
-            $next_command = {command => "header"};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "summary") {
-            $next_command = {command => "summary"};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "countcols") {
-            $next_command = {command => "countcols"};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "facetcount") {
-            if (@$argv && $argv->[0] eq "-v4") {
-                shift(@$argv);
-                $next_command = {command => "facetcount", ver => 4, multi_value => undef, weight => ''};
-            } else {
-                $next_command = {command => "facetcount", ver => 3, multi_value => undef, weight => ''};
-            }
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "treetable") {
-            $next_command = {command => "treetable", top => undef, multi_value => undef};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "crosstable") {
-            $next_command = {command => "crosstable", top => undef, multi_value => undef};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "wordsflags") {
-            degradeMain();
-
-        } elsif ($a eq "groupsum") {
-            if (!@$argv || $argv->[0] ne "-v2") {
-                die "\`groupsum\` subcommand needs \`-v2\`";
-            }
-            shift(@$argv);
-            $next_command = {command => "groupsum"};
-            $last_command = $a;
-            $next_output_table = '';
-
-        } elsif ($a eq "tee") {
-            $next_command = {command => "tee", file => undef};
-            $last_command = $a;
-
-        } elsif ($a eq "--tsv") {
-            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
-            die "duplicated option: $a" if defined($format);
-            $format = "tsv";
-
-        } elsif ($a eq "--csv") {
-            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
-            die "duplicated option: $a" if defined($format);
-            $format = "csv";
-
-        } elsif ($a eq "--o-tsv") {
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            die "duplicated option: $a" if defined($output_format);
-            $output_format = "tsv";
-
-        } elsif ($a eq "--o-csv") {
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            die "duplicated option: $a" if defined($output_format);
-            $output_format = "csv";
-
-        } elsif ($a eq "--o-table") {
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            die "duplicated option: $a" if defined($output_format);
-            $output_format = "table";
-
-        } elsif ($a eq "--o-diffable") {
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            die "duplicated option: $a" if defined($output_format);
-            $output_format = "diffable";
-
-        } elsif ($a eq "-i") {
-            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
-            die "option -i needs an argument" unless (@$argv);
-            die "duplicated option: $a" if defined($input);
-            $input = shift(@$argv);
-
-        } elsif ($a eq "-o") {
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            die "option -o needs an argument" unless (@$argv);
-            die "duplicated option: $a" if defined($output);
-            $output = shift(@$argv);
-
-        } elsif ($a eq "--i-header") {
-            degradeMain();
-
-        } elsif ($a eq "--header") {
-            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option: $a" if defined($input_header);
-            $input_header = shift(@$argv);
-
-        } elsif ($a eq "--ltsv") {
-            die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
-            die "option $a needs an argument" unless (@$argv);
-            die "duplicated option: $a" if defined($input_header);
-            die "duplicated option: $a" if defined($format);
-            $input_header = shift(@$argv);
-            $format = "ltsv";
-
-        } elsif ($a eq "--o-no-header") {
-            die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
-            $output_header_flag = '';
-
-        } else {
-            if ($inputOk && !defined($input)) {
-                if (-e $a) {
-                    $input = $a;
+        while () {
+            last if (parseCommandOptionHead  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionOffset($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionWhere ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionCols  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionInsCol($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionUriparams($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionUpdate($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionSort  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionPaste ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionJoin  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionUnion ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionDiff  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionFacetcount($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionTreetable($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionCrosstable($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionTee   ($a, $argv, $command_name, $curr_command, $input));
+
+            if ($a eq "--explain") {
+                $option_explain = 1;
+
+            } elsif ($a eq "--cat" || $a eq "cat") {
+                $next_command = {command => "cat"};
+                $last_command = $a;
+
+            } elsif ($a eq "head" || $a eq "limit") {
+                $next_command = {command => $a, count => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "offset") {
+                $next_command = {command => $a, count => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "where" || $a eq "filter") {
+                $next_command = {command => $a, col => undef, operator => undef, value => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "cut") {
+                $next_command = {command => "cut", cols => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "cols") {
+                $next_command = {command => "cols", cols => undef, head => undef, update => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "inshour") {
+                $next_command = {command => "inshour", src => undef, dst => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "insdate") {
+                $next_command = {command => "insdate", src => undef, dst => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "insweek") {
+                degradeMain();
+
+            } elsif ($a eq "inssecinterval") {
+                $next_command = {command => "inssecinterval", src => undef, dst => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "inscopy") {
+                $next_command = {command => "inscopy", src => undef, dst => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "insmap") {
+                $next_command = {command => "insmap", src => undef, dst => undef, file => undef, default => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "insconst") {
+                $next_command = {command => "insconst", value => undef, dst => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "addconst") {
+                degradeMain();
+
+            } elsif ($a eq "addcopy") {
+                degradeMain();
+
+            } elsif ($a eq "addlinenum") {
+                degradeMain();
+
+            } elsif ($a eq "addcross") {
+                degradeMain();
+
+            } elsif ($a eq "addmap") {
+                degradeMain();
+
+            } elsif ($a eq "uriparams") {
+                $next_command = {command => "uriparams", col => undef, names => undef,
+                                 decode => undef, multi_value => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "--uriparams") {
+                $next_command = {command => "--uriparams", names => undef,
+                                 decode => undef, multi_value => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "parseuriparams") {
+                degradeMain();
+
+            } elsif ($a eq "update") {
+                $next_command = {command => "update", index => undef, col => undef, value => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "sort") {
+                $next_command = {command => "sort", cols => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "paste") {
+                $next_command = {command => "paste", file => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "join") {
+                $next_command = {command => "join", file => undef, "rule" => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "union") {
+                $next_command = {command => "union", file => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "diff") {
+                $next_command = {command => "diff", file => undef};
+                $last_command = $a;
+                $next_output_table = '';
+
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "diff";
+
+            } elsif ($a eq "wcl") {
+                $next_command = {command => "wcl"};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "header") {
+                $next_command = {command => "header"};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "summary") {
+                $next_command = {command => "summary"};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "countcols") {
+                $next_command = {command => "countcols"};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "facetcount") {
+                if (@$argv && $argv->[0] eq "-v4") {
+                    shift(@$argv);
+                    $next_command = {command => "facetcount", ver => 4, multi_value => undef, weight => ''};
                 } else {
-                    die "Not found: $a\n";
+                    $next_command = {command => "facetcount", ver => 3, multi_value => undef, weight => ''};
                 }
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "treetable") {
+                $next_command = {command => "treetable", top => undef, multi_value => undef};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "crosstable") {
+                $next_command = {command => "crosstable", top => undef, multi_value => undef};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "wordsflags") {
+                degradeMain();
+
+            } elsif ($a eq "groupsum") {
+                if (!@$argv || $argv->[0] ne "-v2") {
+                    die "\`groupsum\` subcommand needs \`-v2\`";
+                }
+                shift(@$argv);
+                $next_command = {command => "groupsum"};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "tee") {
+                $next_command = {command => "tee", file => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "--tsv") {
+                die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
+                die "duplicated option: $a" if defined($format);
+                $format = "tsv";
+
+            } elsif ($a eq "--csv") {
+                die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
+                die "duplicated option: $a" if defined($format);
+                $format = "csv";
+
+            } elsif ($a eq "--o-tsv") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "tsv";
+
+            } elsif ($a eq "--o-csv") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "csv";
+
+            } elsif ($a eq "--o-table") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "table";
+
+            } elsif ($a eq "--o-diffable") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "diffable";
+
+            } elsif ($a eq "-i") {
+                die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
+                die "option -i needs an argument" unless (@$argv);
+                die "duplicated option: $a" if defined($input);
+                $input = shift(@$argv);
+
+            } elsif ($a eq "-o") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "option -o needs an argument" unless (@$argv);
+                die "duplicated option: $a" if defined($output);
+                $output = shift(@$argv);
+
+            } elsif ($a eq "--i-header") {
+                degradeMain();
+
+            } elsif ($a eq "--header") {
+                die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
+                die "option $a needs an argument" unless (@$argv);
+                die "duplicated option: $a" if defined($input_header);
+                $input_header = shift(@$argv);
+
+            } elsif ($a eq "--ltsv") {
+                die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
+                die "option $a needs an argument" unless (@$argv);
+                die "duplicated option: $a" if defined($input_header);
+                die "duplicated option: $a" if defined($format);
+                $input_header = shift(@$argv);
+                $format = "ltsv";
+
+            } elsif ($a eq "--o-no-header") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                $output_header_flag = '';
+
             } else {
-                die "Unknown argument: $a\n";
+                if ($inputOk && !defined($input)) {
+                    if (-e $a) {
+                        $input = $a;
+                    } else {
+                        die "Not found: $a\n";
+                    }
+                } else {
+                    die "Unknown argument: $a\n";
+                }
             }
+            last;
         }
 
         if (defined($next_command)) {
@@ -830,9 +517,551 @@ sub parseQuery {
         $output_format = "";
     }
 
-    ################################
-    # コマンド列を解釈して少し変換する
-    ################################
+    my $commands2 = validateParams($commands);
+
+    ({"commands" => $commands2,
+      "input" => $input,
+      "output" => $output,
+      "format" => $format,
+      "input_header" => $input_header,
+      "output_header_flag" => $output_header_flag,
+      "output_table" => $output_table,
+      "output_format" => $output_format,
+      "last_command" => $last_command},
+     $argv);
+}
+
+sub parseCommandOptionHead {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "head" || $command_name eq "limit");
+
+    if ($a eq "-n") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{count});
+        my $a2 = shift(@$argv);
+        die "Illegal option argument: $a2" unless ($a2 =~ /\A(0|[1-9][0-9]*)\z/);
+        $curr_command->{count} = $a2;
+        return 1;
+    }
+    if ($a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+        my $a2 = $1;
+        die "duplicated option -n" if defined($curr_command->{count});
+        $curr_command->{count} = $a2;
+        return 1;
+    }
+    if (!defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
+        die "duplicated option -n" if defined($curr_command->{count});
+        $curr_command->{count} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionOffset {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "offset");
+
+    if ($a =~ /\A-n(0|[1-9][0-9]*)\z/) {
+        my $a2 = $1;
+        die "duplicated option -n" if defined($curr_command->{count});
+        $curr_command->{count} = $a2;
+        return 1;
+    }
+    if (!defined($curr_command->{count}) && $a =~ /\A(0|[1-9][0-9]*)\z/) {
+        die "duplicated option -n" if defined($curr_command->{count});
+        $curr_command->{count} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionWhere {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "where" || $command_name eq "filter");
+
+    if (!defined($curr_command->{operator}) &&
+        $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
+        @$argv >= 2 &&
+        $argv->[0] =~ /\A([!=]=|[><]=?)\z/ &&
+        $argv->[1] =~ /\A(0|[1-9][0-9]*)\z/) {
+
+        $curr_command->{col} = $a;
+        $curr_command->{operator} = shift(@$argv);
+        $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+    if (!defined($curr_command->{operator}) &&
+        $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
+        @$argv >= 2 &&
+        $argv->[0] =~ /\A(eq|ne|[gl][et])\z/) {
+
+        $curr_command->{col} = $a;
+        $curr_command->{operator} = shift(@$argv);
+        $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionCols {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "cut" || $command_name eq "cols");
+
+    if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{cols});
+        $curr_command->{cols} = shift(@$argv);
+        return 1;
+    }
+    if ($command_name eq "cut" && !defined($curr_command->{cols}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --cols or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --cols";
+        }
+        $curr_command->{cols} = $a;
+        return 1;
+    }
+
+    return '' unless ($command_name eq "cols");
+
+    if ($a eq "--head") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{head});
+        $curr_command->{head} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--left-update") {
+        die "duplicated option $a" if defined($curr_command->{update});
+        $curr_command->{update} = "left";
+        return 1;
+    }
+    if ($a eq "--right-update") {
+        die "duplicated option $a" if defined($curr_command->{update});
+        $curr_command->{update} = "right";
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionInsCol {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "inshour" ||
+                      $command_name eq "insdate" ||
+                      $command_name eq "inssecinterval" ||
+                      $command_name eq "inscopy" ||
+                      $command_name eq "insmap" ||
+                      $command_name eq "insconst");
+
+    if (($command_name ne "insconst") && $a eq "--src") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{src});
+        $curr_command->{src} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--dst") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{dst});
+        $curr_command->{dst} = shift(@$argv);
+        return 1;
+    }
+    if (($command_name ne "insconst") && !defined($curr_command->{src}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --src or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --src";
+        }
+        $curr_command->{src} = $a;
+        return 1;
+    }
+    if (!defined($curr_command->{dst}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --dst or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --dst";
+        }
+        $curr_command->{dst} = $a;
+        return 1;
+    }
+
+    if ($command_name eq "insconst" && $a eq "--value") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{value});
+        $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+    if ($command_name eq "insmap" && $a eq "--file") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{file});
+        $curr_command->{file} = shift(@$argv);
+        return 1;
+    }
+    if ($command_name eq "insmap" && $a eq "[") {
+        die "duplicated option $a" if defined($curr_command->{file});
+        ($curr_command->{file}, $argv) = parseQuery($argv, "inscopy", 1, '');
+        return 1;
+    }
+    if ($command_name eq "insmap" && defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        $curr_command->{file} = $a;
+        return 1;
+    }
+    if ($command_name eq "insmap" && $a eq "--default") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{default});
+        $curr_command->{default} = shift(@$argv);
+        return 1;
+    }
+    if ($command_name eq "insconst" && !defined($curr_command->{value}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --value or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --value";
+        }
+        $curr_command->{value} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionUriparams {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "uriparams" || $command_name eq "--uriparams");
+
+    if ($a eq "--name" || $a eq "--names") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{names});
+        $curr_command->{names} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--name-list") {
+        die "duplicated option $a" if defined($curr_command->{names});
+        $curr_command->{names} = "";
+        return 1;
+    }
+    if ($command_name eq "uriparams" && $a eq "--col") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{col});
+        $curr_command->{col} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--no-decode") {
+        die "duplicated option $a" if defined($curr_command->{decode});
+        $curr_command->{decode} = "";
+        return 1;
+    }
+    if ($a eq "--multi-value-a") {
+        die "duplicated option $a" if defined($curr_command->{multi_value});
+        $curr_command->{multi_value} = "a";
+        return 1;
+    }
+    if ($a eq "--multi-value-b") {
+        die "duplicated option $a" if defined($curr_command->{multi_value});
+        $curr_command->{multi_value} = "b";
+        return 1;
+    }
+    if ($command_name eq "uriparams" && !defined($curr_command->{col}) && $a !~ /\A-/) {
+        $curr_command->{col} = $a;
+        return 1;
+    }
+    if ($command_name eq "uriparams" && !defined($curr_command->{names}) && $a !~ /\A-/) {
+        $curr_command->{names} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionUpdate {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "update");
+
+    if ($a eq "--index") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{index});
+        $curr_command->{index} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--col") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{col});
+        $curr_command->{col} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--value") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{value});
+        $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+    if (!defined($curr_command->{index}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --index or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --index";
+        }
+        $curr_command->{index} = $a;
+        return 1;
+    }
+    if (!defined($curr_command->{col}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --col or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --col";
+        }
+        $curr_command->{col} = $a;
+        return 1;
+    }
+    if (!defined($curr_command->{value}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --value or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --value";
+        }
+        $curr_command->{value} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionSort {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "sort");
+
+    if ($a eq "--col" || $a eq "--cols" || $a eq "--columns") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{cols});
+        $curr_command->{cols} = shift(@$argv);
+        return 1;
+    }
+    if (!defined($curr_command->{cols}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --cols or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --cols";
+        }
+        $curr_command->{cols} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionPaste {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "paste");
+
+    if ($a eq "--right") {
+        degradeMain();
+        return 1;
+    }
+    if ($a eq "--file") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{file});
+        $curr_command->{file} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "[") {
+        die "duplicated option $a" if defined($curr_command->{file});
+        ($curr_command->{file}, $argv) = parseQuery($argv, "paste", 1, '');
+        return 1;
+    }
+    if (defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        $curr_command->{file} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionJoin {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "join");
+
+    if ($a eq "--right") {
+        degradeMain();
+        return 1;
+    }
+    if ($a eq "--file") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{file});
+        $curr_command->{file} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "[") {
+        die "duplicated option $a" if defined($curr_command->{file});
+        ($curr_command->{file}, $argv) = parseQuery($argv, "join", 1, '');
+        return 1;
+    }
+    if ($a eq "--inner") {
+        die "duplicated option $a" if defined($curr_command->{rule});
+        $curr_command->{rule} = $a;
+        return 1;
+    }
+    if ($a eq "--left-outer") {
+        die "duplicated option $a" if defined($curr_command->{rule});
+        $curr_command->{rule} = $a;
+        return 1;
+    }
+    if ($a eq "--right-outer") {
+        die "duplicated option $a" if defined($curr_command->{rule});
+        $curr_command->{rule} = $a;
+        return 1;
+    }
+    if ($a eq "--full-outer") {
+        die "duplicated option $a" if defined($curr_command->{rule});
+        $curr_command->{rule} = $a;
+        return 1;
+    }
+    if (defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        $curr_command->{file} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionUnion {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "union");
+
+    if ($a eq "--right") {
+        degradeMain();
+        return 1;
+    }
+    if ($a eq "--file") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{file});
+        $curr_command->{file} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "[") {
+        die "duplicated option $a" if defined($curr_command->{file});
+        ($curr_command->{file}, $argv) = parseQuery($argv, "union", 1, '');
+        return 1;
+    }
+    if (defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        $curr_command->{file} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionDiff {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "diff");
+
+    if ($a eq "--file") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{file});
+        $curr_command->{file} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "[") {
+        die "duplicated option $a" if defined($curr_command->{file});
+        ($curr_command->{file}, $argv) = parseQuery($argv, "diff", 1, '');
+        return 1;
+    }
+    if (defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        $curr_command->{file} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionFacetcount {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "facetcount");
+
+    if ($a eq "--multi-value-a") {
+        die "duplicated option $a" if defined($curr_command->{multi_value});
+        $curr_command->{multi_value} = "a";
+        return 1;
+    }
+    if ($a eq "--weight") {
+        $curr_command->{weight} = 1;
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionTreetable {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "treetable");
+
+    if ($a eq "--top") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{top});
+        $curr_command->{top} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--multi-value-a") {
+        $curr_command->{multi_value} = "a";
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionCrosstable {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "crosstable");
+
+    if ($a eq "--top") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{top});
+        $curr_command->{top} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--multi-value-a") {
+        $curr_command->{multi_value} = "a";
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionTee {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "tee");
+
+    if ($a eq "--file") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{file});
+        $curr_command->{file} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "[") {
+        die "duplicated option $a" if defined($curr_command->{file});
+        ($curr_command->{file}, $argv) = parseQuery($argv, "tee", '', 1);
+        return 1;
+    }
+    if (defined($input) && !defined($curr_command->{file}) && $a !~ /\A-/) {
+        $curr_command->{file} = $a;
+        return 1;
+    }
+
+    '';
+}
+
+sub validateParams {
+    my ($commands) = @_;
 
     my $commands2 = [];
     for my $curr_command (@$commands) {
@@ -1147,17 +1376,7 @@ sub parseQuery {
             die $command_name;
         }
     }
-
-    ({"commands" => $commands2,
-      "input" => $input,
-      "output" => $output,
-      "format" => $format,
-      "input_header" => $input_header,
-      "output_header_flag" => $output_header_flag,
-      "output_table" => $output_table,
-      "output_format" => $output_format,
-      "last_command" => $last_command},
-     $argv);
+    $commands2;
 }
 
 sub parseSortParams {
