@@ -15,8 +15,6 @@ while (@ARGV) {
 
 my $words = {};
 
-my $record_count = 0;
-
 # Ctrl-C で中断して結果を表示するためのハンドラ
 my $interrupted = '';
 sub interrupt {
@@ -28,15 +26,11 @@ $SIG{INT} = \&interrupt;
     my $line = <STDIN>;
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
-
-    $record_count++;
 }
 
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
-
-    $record_count++;
 
     # 行にタブの数が少ない場合に列を付け足す
     for (my $i = 2 - @cols; $i > 0; $i--) {
@@ -65,10 +59,6 @@ while (my $line = <STDIN>) {
     }
     if ($g) {
         push(@{$words->{$word}->[3]}, $flag);
-    }
-
-    if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count ...\n";
     }
 
     if ($interrupted) {

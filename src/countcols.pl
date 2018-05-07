@@ -32,10 +32,6 @@ while (my $line = <STDIN>) {
         $counts->{$c} = 1;
     }
 
-    if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count ...\n";
-    }
-
     if ($interrupted) {
         last;
     }

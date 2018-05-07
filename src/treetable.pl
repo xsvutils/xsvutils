@@ -121,10 +121,6 @@ while (my $line = <STDIN>) {
 
     incrementCount(\@cols, 0, $facetcount);
 
-    if ($record_count % 10000 == 0) {
-        print STDERR "Record: $record_count ...\n";
-    }
-
     if ($interrupted) {
         last;
     }

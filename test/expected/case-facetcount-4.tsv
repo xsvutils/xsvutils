@@ -1,4 +1,4 @@
-column	value	count	ratio	ratio2
-name	aaa	4	 57.14%	 57.14%
-name	ccc	2	 28.57%	 28.57%
-name	bbb	1	 14.29%	 14.29%
+column	number	value	count	ratio1	ratio2
+name	1	aaa	4	 57.14%	 57.14%
+name	2	ccc	2	 28.57%	 28.57%
+name	3	bbb	1	 14.29%	 14.29%

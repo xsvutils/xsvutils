@@ -2,18 +2,20 @@
 
 TARGET_SOURCES1=$(echo $((
             echo target/golang.bin;
-            ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            echo target/java;
+            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
             echo target/golang.bin;
-            ls src | grep -v -E -e '(boot\.sh)' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            echo target/java/bin/xsvutils-java;
+            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 
 GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
 
-RM_TARGET=$(diff -u <(ls $TARGET_SOURCES1 2>/dev/null) <(ls -d target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
+RM_TARGET=$(diff -u <(ls -d $TARGET_SOURCES1 2>/dev/null) <(ls -d target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
 if [ -n "$RM_TARGET" ]; then
     echo rm -r $RM_TARGET >&2
     rm -r $RM_TARGET >&2
@@ -116,6 +118,56 @@ target/golang.bin: var/GOLANG_VERSION_HASH
 var/GOLANG_VERSION_HASH: $GOLANG_SOURCES
 	cat $GOLANG_SOURCES | shasum | cut -b1-40 > var/GOLANG_VERSION_HASH.tmp
 	mv var/GOLANG_VERSION_HASH.tmp var/GOLANG_VERSION_HASH
+
+EOF
+
+JAVA_RM_TARGET=$(diff -u <(ls src/*.scala 2>/dev/null | sed 's/^src\///g') <(ls var/sbt/src/main/java 2>/dev/null) | tail -n+4 | grep -E '^\+' | cut -b2- | sed 's/^/var\/sbt\/src\/main\/java\//g')
+if [ -n "$JAVA_RM_TARGET" ]; then
+    echo rm -r $JAVA_RM_TARGET >&2
+    rm -r $JAVA_RM_TARGET >&2
+fi
+
+for f in $(ls src/*.scala | sed 's/^src\///g'); do
+    cat <<EOF
+var/sbt/src/main/java/$f: src/$f
+	mkdir -p var/sbt/src/main/java
+	cp src/$f var/sbt/src/main/java/$f
+
+EOF
+done
+
+cat <<EOF
+var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT.zip: var/sbt/sbt/bin/sbt var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls src/*.scala | sed 's/^src\///g' | sed 's/^/var\/sbt\/src\/main\/java\//g'))
+	cd var/sbt; ./sbt/bin/sbt compile
+	cd var/sbt; ./sbt/bin/sbt universal:packageBin
+
+EOF
+
+cat <<EOF
+var/sbt/sbt.tgz:
+	mkdir -p var/sbt
+	#wget "https://github.com/sbt/sbt/releases/download/v1.1.4/sbt-1.1.4.tgz" -O var/sbt/sbt.tgz.tmp
+	wget "https://cocl.us/sbt-0.13.16.tgz" -O var/sbt/sbt.tgz.tmp
+	mv var/sbt/sbt.tgz.tmp var/sbt/sbt.tgz
+
+var/sbt/sbt/bin/sbt: var/sbt/sbt.tgz
+	cd var/sbt; tar xzf sbt.tgz
+	touch var/sbt/sbt/bin/sbt
+
+var/sbt/build.sbt: etc/build.sbt
+	mkdir -p var/sbt
+	cp etc/build.sbt var/sbt/build.sbt
+
+var/sbt/project/plugins.sbt: etc/plugins.sbt
+	mkdir -p var/sbt/project
+	cp etc/plugins.sbt var/sbt/project/plugins.sbt
+
+target/java/bin/xsvutils-java: var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT.zip
+	rm -rf var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT 2>/dev/null
+	cd var/sbt/target/universal; unzip xsvutils-java-0.1-SNAPSHOT.zip
+	rm -rf target/java
+	mv var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT target/java
+	touch target/java/bin/xsvutils-java
 
 EOF
 
