@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## version 0.3.2 (Unreleased)
+
 ## version 0.3.1 (2018/05/07)
 - add java version of facetcount
 - remove display of progress of facetcount, treetable, ...
