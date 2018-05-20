@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## version 0.3.2 (Unreleased)
+## version 0.3.2 (2018/05/21)
 - add `mergecols` subcommand
 
 ## version 0.3.1 (2018/05/07)
