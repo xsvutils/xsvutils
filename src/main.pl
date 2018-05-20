@@ -110,7 +110,7 @@ my @command_name_list = qw/
     cat
     head limit drop offset
     where filter
-    cut cols
+    cut cols mergecols
     inshour insdate insweek inssecinterval inscopy insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
     update sort paste join union diff
@@ -189,6 +189,7 @@ sub parseQuery {
             last if (parseCommandOptionOffset($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionWhere ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionCols  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionMergeCols($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionInsCol($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionUriparams($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionUpdate($a, $argv, $command_name, $curr_command, $input));
@@ -227,6 +228,14 @@ sub parseQuery {
 
             } elsif ($a eq "cols") {
                 $next_command = {command => "cols", cols => undef, head => undef, update => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "mergecols") {
+                unless (@$argv && $argv->[0] eq "-v4") {
+                    die "`mergecols` subcommand require `-v4` option";
+                }
+                shift(@$argv);
+                $next_command = {command => "mergecols", multi_value => undef};
                 $last_command = $a;
 
             } elsif ($a eq "inshour") {
@@ -643,6 +652,19 @@ sub parseCommandOptionCols {
     if ($a eq "--right-update") {
         die "duplicated option $a" if defined($curr_command->{update});
         $curr_command->{update} = "right";
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionMergeCols {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "mergecols");
+
+    if ($a eq "--multi-value-a") {
+        die "duplicated option $a" if defined($curr_command->{multi_value});
+        $curr_command->{multi_value} = "a";
         return 1;
     }
 
@@ -1126,6 +1148,12 @@ sub validateParams {
         } elsif ($command_name eq "cols") {
             if (!defined($curr_command->{update})) {
                 $curr_command->{update} = "";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "mergecols") {
+            if (!defined($curr_command->{multi_value})) {
+                $curr_command->{multi_value} = "a";
             }
             push(@$commands2, $curr_command);
 
@@ -1811,6 +1839,13 @@ sub build_ircode_command {
                 $option .= " --right-update";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl$option"]);
+
+        } elsif ($command_name eq "mergecols") {
+            my $option = "";
+            if ($curr_command->{multi_value} eq "a") {
+                $option .= " --multi-value-a";
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/mergecols.pl$option"]);
 
         } elsif ($command_name eq "inshour") {
             my $src = escape_for_bash($curr_command->{src});

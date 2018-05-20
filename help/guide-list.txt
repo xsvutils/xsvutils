@@ -13,6 +13,9 @@ Available subcommands:
         cut <COLUMNS>                                           Print specified columns
         cols [--col <COLUMNS>] [--head <COLUMNS>]               Print specified columns
 
+    列の値を加工するサブコマンド
+        mergecols -v4                                           [EXPERIMENTAL] Merge values of same column name
+
     列を追加するサブコマンド
         insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
