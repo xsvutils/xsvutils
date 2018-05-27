@@ -2,13 +2,17 @@ use strict;
 use warnings;
 use utf8;
 
+use Time::Local qw/timelocal/;
+
 my $action = undef;
 my $dst_column_name = undef;
 my $src_column_name = undef;
 
 while (@ARGV) {
     my $a = shift(@ARGV);
-    if ($a eq "hour") {
+    if ($a eq "unixtime") {
+        $action = "unixtime";
+    } elsif ($a eq "hour") {
         $action = "hour";
     } elsif ($a eq "date") {
         $action = "date";
@@ -48,6 +52,33 @@ my $src_column_index = undef;
     }
 
     print $dst_column_name . "\t" . $line . "\n";
+}
+
+sub getResultUnixTime {
+    my ($value) = @_;
+    if ($value =~ /\A([0-9][0-9][0-9][0-9])(|[-\/])([0-9][0-9])(|[-\/])([0-9][0-9])(.*)\z/) {
+        my $Y = $1;
+        my $M = $3;
+        my $D = $5;
+        my $tail1 = $6;
+        my $h = "00";
+        my $m = "00";
+        my $s = "00";
+        if ($tail1 =~ /\A[T ]([0-9][0-9])(.*)\z/) {
+            $h = $1;
+            my $tail2 = $2;
+            if ($tail2 =~ /\A(|:)([0-9][0-9])(.*)\z/) {
+                $m = $2;
+                my $tail3 = $3;
+                if ($tail3 =~ /\A(|:)([0-9][0-9])(.*)\z/) {
+                    $s = $2;
+                    #my $tail4 = $3;
+                }
+            }
+        }
+        return timelocal($s, $m, $h, $D, $M - 1, $Y);
+    }
+    return "";
 }
 
 sub getResultHour {
@@ -105,7 +136,9 @@ sub getResultDate {
 }
 
 my $getResultValue;
-if ($action eq "hour") {
+if ($action eq "unixtime") {
+    $getResultValue = \&getResultUnixTime;
+} elsif ($action eq "hour") {
     $getResultValue = \&getResultHour;
 } elsif ($action eq "date") {
     $getResultValue = \&getResultDate;
@@ -122,7 +155,6 @@ while (my $line = <STDIN>) {
 
     my $result = $getResultValue->($value);
 
-    unshift(@cols, $result);
     print $result . "\t" . $line . "\n";
 }
 

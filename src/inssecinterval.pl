@@ -87,7 +87,6 @@ while (my $line = <STDIN>) {
         $prev_time = '';
     }
 
-    unshift(@cols, $result);
     print $result . "\t" . $line . "\n";
 }
 

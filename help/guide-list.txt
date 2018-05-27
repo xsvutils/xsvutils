@@ -18,6 +18,7 @@ Available subcommands:
         mergecols -v4                                           [EXPERIMENTAL] Merge values of same column name
 
     列を追加するサブコマンド
+        insunixtime -v4 --local <SRC_COLUMN_NAME> <DST_COLUMN_NAME> [EXPERIMENTAL] 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
         insdate <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
         inshour <SRC_COLUMN_NAME> <DST_COLUMN_NAME>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         inssecinterval <SRC_COLUMN_NAME> <DST_COLUMN_NAME>      日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する

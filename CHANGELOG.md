@@ -6,6 +6,7 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## version 0.3.3 (Unreleased)
 - add `rmnoname` subcommand
+- add `insunixtime` subcommand
 
 ## version 0.3.2 (2018/05/21)
 - add `mergecols` subcommand
