@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## version 0.3.4 (Unreleased)
+
 ## version 0.3.3 (2018/05/27)
 - add `rmnoname` subcommand
 - add `insunixtime` subcommand
