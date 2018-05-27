@@ -2,7 +2,7 @@ cols subcommand
     Print specified columns.
 
     Usage:
-        $ xsvutils cols [--col <COLUMNS>] [--head <COLUMNS>] [option...]
+        $ xsvutils cols [--col <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>] [option...]
 
     Parameter:
         <COLUMNS>         (optional) Print <COLUMNS>
@@ -10,6 +10,7 @@ cols subcommand
     Options:
         --col <COLUMNS>    Print <COLUMNS>
         --head <COLUMNS>   Move <COLUMSN> to the leftmost position.
+        --last <COLUMNS>   Move <COLUMSN> to the rightmost position.
         --left-update      Remove duplicated columns. Overwrite right columns with the left one.
         --right-update     Remove duplicated columns. Overwrite left columns with the right one.
         --help             Print help information about this subcommand.
