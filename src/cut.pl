@@ -4,6 +4,7 @@ use utf8;
 
 my $option_columns = undef;
 my $option_head = undef;
+my $option_last = undef;
 my $option_update = '';
 
 while (@ARGV) {
@@ -14,6 +15,9 @@ while (@ARGV) {
     } elsif ($a eq "--head") {
         die "option --head needs an argument" unless (@ARGV);
         $option_head = shift(@ARGV);
+    } elsif ($a eq "--last") {
+        die "option --last needs an argument" unless (@ARGV);
+        $option_last = shift(@ARGV);
     } elsif ($a eq "--left-update") {
         $option_update = "left";
     } elsif ($a eq "--right-update") {
@@ -27,6 +31,11 @@ sub createColumnIndeces {
     my ($headers) = @_;
     my $headerCount = @$headers;
 
+    my @columnLastIndeces = ();
+    if (defined($option_last)) {
+        push(@columnLastIndeces, @{createColumnIndecesSub($headers, $option_last)});
+    }
+
     my @columnIndeces = ();
     if (defined($option_head)) {
         push(@columnIndeces, @{createColumnIndecesSub($headers, $option_head)});
@@ -36,10 +45,13 @@ sub createColumnIndeces {
     } else {
         for (my $i = 0; $i < $headerCount; $i++) {
             if (!grep {$_ == $i} @columnIndeces) {
-                push(@columnIndeces, $i);
+                if (!grep {$_ == $i} @columnLastIndeces) {
+                    push(@columnIndeces, $i);
+                }
             }
         }
     }
+    push(@columnIndeces, @columnLastIndeces);
 
     if ($option_update) {
         my @columnIndeces2 = ();

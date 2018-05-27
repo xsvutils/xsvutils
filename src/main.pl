@@ -110,8 +110,8 @@ my @command_name_list = qw/
     cat
     head limit drop offset
     where filter
-    cut cols mergecols
-    inshour insdate insweek inssecinterval inscopy insmap insconst
+    cut cols rmnoname mergecols
+    insunixtime inshour insdate insweek inssecinterval inscopy insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
     update sort paste join union diff
     wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
@@ -189,6 +189,7 @@ sub parseQuery {
             last if (parseCommandOptionOffset($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionWhere ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionCols  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionRmNoName($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionMergeCols($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionInsCol($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionUriparams($a, $argv, $command_name, $curr_command, $input));
@@ -227,7 +228,15 @@ sub parseQuery {
                 $last_command = $a;
 
             } elsif ($a eq "cols") {
-                $next_command = {command => "cols", cols => undef, head => undef, update => undef};
+                $next_command = {command => "cols", cols => undef, head => undef, last => undef, update => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "rmnoname") {
+                unless (@$argv && $argv->[0] eq "-v4") {
+                    die "`rmnoname` subcommand require `-v4` option";
+                }
+                shift(@$argv);
+                $next_command = {command => "rmnoname"};
                 $last_command = $a;
 
             } elsif ($a eq "mergecols") {
@@ -236,6 +245,18 @@ sub parseQuery {
                 }
                 shift(@$argv);
                 $next_command = {command => "mergecols", multi_value => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "insunixtime") {
+                unless (@$argv && $argv->[0] eq "-v4") {
+                    die "`mergecols` subcommand require `-v4` option";
+                }
+                shift(@$argv);
+                unless (@$argv && $argv->[0] eq "--local") {
+                    die "`mergecols` subcommand require `--local` option";
+                }
+                shift(@$argv);
+                $next_command = {command => "insunixtime", src => undef, dst => undef};
                 $last_command = $a;
 
             } elsif ($a eq "inshour") {
@@ -644,6 +665,12 @@ sub parseCommandOptionCols {
         $curr_command->{head} = shift(@$argv);
         return 1;
     }
+    if ($a eq "--last") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{last});
+        $curr_command->{last} = shift(@$argv);
+        return 1;
+    }
     if ($a eq "--left-update") {
         die "duplicated option $a" if defined($curr_command->{update});
         $curr_command->{update} = "left";
@@ -654,6 +681,13 @@ sub parseCommandOptionCols {
         $curr_command->{update} = "right";
         return 1;
     }
+
+    '';
+}
+
+sub parseCommandOptionRmNoName {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "rmnoname");
 
     '';
 }
@@ -673,7 +707,8 @@ sub parseCommandOptionMergeCols {
 
 sub parseCommandOptionInsCol {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
-    return '' unless ($command_name eq "inshour" ||
+    return '' unless ($command_name eq "insunixtime" ||
+                      $command_name eq "inshour" ||
                       $command_name eq "insdate" ||
                       $command_name eq "inssecinterval" ||
                       $command_name eq "inscopy" ||
@@ -1151,9 +1186,21 @@ sub validateParams {
             }
             push(@$commands2, $curr_command);
 
+        } elsif ($command_name eq "rmnoname") {
+            push(@$commands2, $curr_command);
+
         } elsif ($command_name eq "mergecols") {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "a";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "insunixtime") {
+            if (!defined($curr_command->{src})) {
+                die "subcommand \`insunixtime\` needs --src option";
+            }
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`insunixtime\` needs --dst option";
             }
             push(@$commands2, $curr_command);
 
@@ -1833,6 +1880,9 @@ sub build_ircode_command {
             if (defined($curr_command->{head})) {
                 $option .= " --head " . escape_for_bash($curr_command->{head});
             }
+            if (defined($curr_command->{last})) {
+                $option .= " --last " . escape_for_bash($curr_command->{last});
+            }
             if ($curr_command->{update} eq "left") {
                 $option .= " --left-update";
             } elsif ($curr_command->{update} eq "right") {
@@ -1840,12 +1890,21 @@ sub build_ircode_command {
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl$option"]);
 
+        } elsif ($command_name eq "rmnoname") {
+            my $option = "";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/rmnoname.pl$option"]);
+
         } elsif ($command_name eq "mergecols") {
             my $option = "";
             if ($curr_command->{multi_value} eq "a") {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/mergecols.pl$option"]);
+
+        } elsif ($command_name eq "insunixtime") {
+            my $src = escape_for_bash($curr_command->{src});
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/insdate.pl unixtime --name $dst --src $src"]);
 
         } elsif ($command_name eq "inshour") {
             my $src = escape_for_bash($curr_command->{src});

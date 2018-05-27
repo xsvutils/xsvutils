@@ -94,7 +94,6 @@ while (my $line = <STDIN>) {
         $result = sprintf("%04d-%02d-%02d", $year, $mon, $mday);
     }
 
-    unshift(@cols, $result);
     print $result . "\t" . $line . "\n";
 }
 

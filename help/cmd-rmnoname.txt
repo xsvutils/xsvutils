@@ -1,0 +1,6 @@
+rmnoname subcommand
+    [EXPERIMENTAL] Remove columns of no name
+
+    Options:
+        --help          Print help information about this subcommand.
+
