@@ -10,6 +10,7 @@ bash ./test/case-ltsv.sh
 
 bash ./test/case-range.sh
 bash ./test/case-where.sh
+bash ./test/case-rmnoname.sh
 bash ./test/case-mergecols.sh
 
 bash ./test/case-uriparams.sh
