@@ -1,0 +1,6 @@
+ratio subcommand
+    [EXPERIMENTAL] カラムの合計値を求めてから百分率に変換する
+
+    Options:
+        --help          Print help information about this subcommand.
+

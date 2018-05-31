@@ -114,7 +114,7 @@ my @command_name_list = qw/
     insunixtime inshour insdate insweek inssecinterval inscopy insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
     update sort paste join union diff
-    wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
+    wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
     tee
 /;
 
@@ -202,6 +202,7 @@ sub parseQuery {
             last if (parseCommandOptionFacetcount($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTreetable($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionCrosstable($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionRatio ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTee   ($a, $argv, $command_name, $curr_command, $input));
 
             if ($a eq "--explain") {
@@ -380,6 +381,16 @@ sub parseQuery {
 
             } elsif ($a eq "crosstable") {
                 $next_command = {command => "crosstable", top => undef, multi_value => undef};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "ratio") {
+                unless (@$argv && $argv->[0] eq "-v4") {
+                    die "`ratio` subcommand require `-v4` option";
+                }
+                shift(@$argv);
+
+                $next_command = {command => "ratio"};
                 $last_command = $a;
                 $next_output_table = '';
 
@@ -1094,6 +1105,13 @@ sub parseCommandOptionCrosstable {
     '';
 }
 
+sub parseCommandOptionRatio {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "ratio");
+
+    '';
+}
+
 sub parseCommandOptionTee {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
     return '' unless ($command_name eq "tee");
@@ -1428,6 +1446,9 @@ sub validateParams {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "";
             }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "ratio") {
             push(@$commands2, $curr_command);
 
 =comment
@@ -2119,6 +2140,10 @@ sub build_ircode_command {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl$option"]);
+
+        } elsif ($command_name eq "ratio") {
+            my $option = "";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/ratio.pl$option"]);
 
 =comment
         } elsif ($command_name eq "wordsflags") {
