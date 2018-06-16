@@ -7,6 +7,7 @@ To see compatibility information, `xsvutils help compatibility`.
 ## version 0.3.4 (Unreleased)
 - add `ratio` subcommand
 - add `-b`, `-w` options of `diff` subcommand
+- add `--o-chart` option as output format
 
 ## version 0.3.3 (2018/05/27)
 - add `rmnoname` subcommand

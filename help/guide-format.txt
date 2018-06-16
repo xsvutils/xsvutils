@@ -23,6 +23,10 @@ Input and Output format:
         diffable なテキストのファイル。
         出力のみ可能。
 
+    chart format
+        HTMLでのチャートの形式。
+        出力のみ可能。
+
     入力フォーマットはTSV/CSVを自動判別するが、自動判別させたくない場合は
     --tsv, --csv, --ltsv いずれかのオプションを使う。
 

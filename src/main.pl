@@ -440,6 +440,11 @@ sub parseQuery {
                 die "duplicated option: $a" if defined($output_format);
                 $output_format = "diffable";
 
+            } elsif ($a eq "--o-chart") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "chart";
+
             } elsif ($a eq "-i") {
                 die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
                 die "option -i needs an argument" unless (@$argv);
@@ -2349,6 +2354,8 @@ sub appendOutputCode {
         $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-diffable.pl";
     } elsif ($output_format eq "diff") {
         # no operation
+    } elsif ($output_format eq "chart") {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-chart.pl";
     } else {
         die;
     }
