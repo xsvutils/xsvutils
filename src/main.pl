@@ -336,7 +336,7 @@ sub parseQuery {
                 $last_command = $a;
 
             } elsif ($a eq "diff") {
-                $next_command = {command => "diff", file => undef};
+                $next_command = {command => "diff", file => undef, space => undef};
                 $last_command = $a;
                 $next_output_table = '';
 
@@ -525,6 +525,13 @@ sub parseQuery {
                     unshift(@$argv, $curr_command->{file});
                     unshift(@$argv, "-i");
                     unshift(@$argv, "[");
+                    if (defined($curr_command->{space})) {
+                        if ($curr_command->{space} eq "b") {
+                            unshift(@$argv, "-b");
+                        } elsif ($curr_command->{space} eq "w") {
+                            unshift(@$argv, "-w");
+                        }
+                    }
                     unshift(@$argv, "diff");
                     $output_format = undef;
                     $curr_command = undef;
@@ -1039,6 +1046,16 @@ sub parseCommandOptionDiff {
         $curr_command->{file} = shift(@$argv);
         return 1;
     }
+    if ($a eq "-b") {
+        die "duplicated option $a" if defined($curr_command->{space});
+        $curr_command->{space} = "b";
+        return 1;
+    }
+    if ($a eq "-w") {
+        die "duplicated option $a" if defined($curr_command->{space});
+        $curr_command->{space} = "w";
+        return 1;
+    }
     if ($a eq "[") {
         die "duplicated option $a" if defined($curr_command->{file});
         ($curr_command->{file}, $argv) = parseQuery($argv, "diff", 1, '');
@@ -1399,6 +1416,9 @@ sub validateParams {
         } elsif ($command_name eq "diff") {
             if (!defined($curr_command->{file})) {
                 die "subcommand \`diff\` needs --file option";
+            }
+            if (!defined($curr_command->{space})) {
+                $curr_command->{space} = '';
             }
             push(@$commands2, $curr_command);
 
@@ -2077,8 +2097,14 @@ sub build_ircode_command {
         } elsif ($command_name eq "diff") {
             my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
             my $file = "$input_pipe_prefix1${file_pipe_id}";
+            my $option = " -u";
+            if ($curr_command->{space} eq "w") {
+                $option .= " -w";
+            } elsif ($curr_command->{space} eq "b") {
+                $option .= " -b";
+            }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/to-diffable.pl"]);
-            push(@$ircode, ["cmd", "diff -u - $file"]);
+            push(@$ircode, ["cmd", "diff$option - $file"]);
             push(@$ircode, ["cmd", "tail -n+3"]);
             push(@$ircode, ["cmd", "(echo '--- '; echo '+++ '; cat)"]);
 
