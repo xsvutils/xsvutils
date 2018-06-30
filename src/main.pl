@@ -114,7 +114,7 @@ my @command_name_list = qw/
     insunixtime inshour insdate insweek inssecinterval inscopy insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
     update sort paste join union diff
-    wcl header summary countcols facetcount treetable crosstable wordsflags groupsum
+    wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
     tee
 /;
 
@@ -202,6 +202,7 @@ sub parseQuery {
             last if (parseCommandOptionFacetcount($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTreetable($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionCrosstable($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionRatio ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTee   ($a, $argv, $command_name, $curr_command, $input));
 
             if ($a eq "--explain") {
@@ -335,7 +336,7 @@ sub parseQuery {
                 $last_command = $a;
 
             } elsif ($a eq "diff") {
-                $next_command = {command => "diff", file => undef};
+                $next_command = {command => "diff", file => undef, space => undef};
                 $last_command = $a;
                 $next_output_table = '';
 
@@ -380,6 +381,16 @@ sub parseQuery {
 
             } elsif ($a eq "crosstable") {
                 $next_command = {command => "crosstable", top => undef, multi_value => undef};
+                $last_command = $a;
+                $next_output_table = '';
+
+            } elsif ($a eq "ratio") {
+                unless (@$argv && $argv->[0] eq "-v4") {
+                    die "`ratio` subcommand require `-v4` option";
+                }
+                shift(@$argv);
+
+                $next_command = {command => "ratio"};
                 $last_command = $a;
                 $next_output_table = '';
 
@@ -428,6 +439,11 @@ sub parseQuery {
                 die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
                 die "duplicated option: $a" if defined($output_format);
                 $output_format = "diffable";
+
+            } elsif ($a eq "--o-chart") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "chart";
 
             } elsif ($a eq "-i") {
                 die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
@@ -514,6 +530,13 @@ sub parseQuery {
                     unshift(@$argv, $curr_command->{file});
                     unshift(@$argv, "-i");
                     unshift(@$argv, "[");
+                    if (defined($curr_command->{space})) {
+                        if ($curr_command->{space} eq "b") {
+                            unshift(@$argv, "-b");
+                        } elsif ($curr_command->{space} eq "w") {
+                            unshift(@$argv, "-w");
+                        }
+                    }
                     unshift(@$argv, "diff");
                     $output_format = undef;
                     $curr_command = undef;
@@ -1028,6 +1051,16 @@ sub parseCommandOptionDiff {
         $curr_command->{file} = shift(@$argv);
         return 1;
     }
+    if ($a eq "-b") {
+        die "duplicated option $a" if defined($curr_command->{space});
+        $curr_command->{space} = "b";
+        return 1;
+    }
+    if ($a eq "-w") {
+        die "duplicated option $a" if defined($curr_command->{space});
+        $curr_command->{space} = "w";
+        return 1;
+    }
     if ($a eq "[") {
         die "duplicated option $a" if defined($curr_command->{file});
         ($curr_command->{file}, $argv) = parseQuery($argv, "diff", 1, '');
@@ -1090,6 +1123,13 @@ sub parseCommandOptionCrosstable {
         $curr_command->{multi_value} = "a";
         return 1;
     }
+
+    '';
+}
+
+sub parseCommandOptionRatio {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "ratio");
 
     '';
 }
@@ -1382,6 +1422,9 @@ sub validateParams {
             if (!defined($curr_command->{file})) {
                 die "subcommand \`diff\` needs --file option";
             }
+            if (!defined($curr_command->{space})) {
+                $curr_command->{space} = '';
+            }
             push(@$commands2, $curr_command);
 
         } elsif ($command_name eq "wcl") {
@@ -1428,6 +1471,9 @@ sub validateParams {
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "";
             }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "ratio") {
             push(@$commands2, $curr_command);
 
 =comment
@@ -2056,8 +2102,14 @@ sub build_ircode_command {
         } elsif ($command_name eq "diff") {
             my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
             my $file = "$input_pipe_prefix1${file_pipe_id}";
+            my $option = " -u";
+            if ($curr_command->{space} eq "w") {
+                $option .= " -w";
+            } elsif ($curr_command->{space} eq "b") {
+                $option .= " -b";
+            }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/to-diffable.pl"]);
-            push(@$ircode, ["cmd", "diff -u - $file"]);
+            push(@$ircode, ["cmd", "diff$option - $file"]);
             push(@$ircode, ["cmd", "tail -n+3"]);
             push(@$ircode, ["cmd", "(echo '--- '; echo '+++ '; cat)"]);
 
@@ -2119,6 +2171,10 @@ sub build_ircode_command {
                 $option .= " --multi-value-a";
             }
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/crosstable.pl$option"]);
+
+        } elsif ($command_name eq "ratio") {
+            my $option = "";
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/ratio.pl$option"]);
 
 =comment
         } elsif ($command_name eq "wordsflags") {
@@ -2298,6 +2354,8 @@ sub appendOutputCode {
         $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-diffable.pl";
     } elsif ($output_format eq "diff") {
         # no operation
+    } elsif ($output_format eq "chart") {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-chart.pl";
     } else {
         die;
     }

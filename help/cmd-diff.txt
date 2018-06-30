@@ -1,7 +1,12 @@
 diff subcommand
     Compare two inputs cell by cell
 
+    Usage:
+        $ xsvutils diff [[--file] <OTHER_FILE>] [option...]
+
     Options:
-        --file <OTHER_FILE>
-        --help        Print help information about this subcommand.
+        --file <OTHER_FILE> compare input and OTHER_FILE
+        -b                  ignore changes in the amount of white space
+        -w                  ignore all white space
+        --help              Print help information about this subcommand.
 
