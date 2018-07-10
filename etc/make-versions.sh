@@ -8,7 +8,7 @@ install() {
 }
 
 install -v3
-#install -v4
+install -v4
 
 touch var/repos-build.touch
 
