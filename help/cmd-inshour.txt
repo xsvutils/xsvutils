@@ -10,8 +10,8 @@ inshour subcommand
         <DST_COLUMN_NAME>    抽出先の新しい日時のカラム
 
     Options:
-        --src <SRC_COLUMN_NAME>    [v2] 抽出元となる日時のカラム
-        --dst <DST_COLUMN_NAME>    [v2] 抽出先の新しい日時のカラム
+        --src <SRC_COLUMN_NAME>    抽出元となる日時のカラム
+        --dst <DST_COLUMN_NAME>    抽出先の新しい日時のカラム
         --help                     Print help information about this subcommand.
 
     Examples:

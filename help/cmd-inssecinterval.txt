@@ -10,8 +10,8 @@ inssecinterval subcommand
         <DST_COLUMN_NAME>    結果保存先の新しい秒数のカラム
 
     Options:
-        --src <SRC_COLUMN_NAME>    [v2] 計算元となる日時のカラム
-        --dst <DST_COLUMN_NAME>    [v2] 結果保存先の新しい秒数のカラム
+        --src <SRC_COLUMN_NAME>    計算元となる日時のカラム
+        --dst <DST_COLUMN_NAME>    結果保存先の新しい秒数のカラム
         --help                     Print help information about this subcommand.
 
     Examples:

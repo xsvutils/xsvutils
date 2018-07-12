@@ -11,24 +11,22 @@ EXAMPLES:
 
 Commonly used subcommands:
     レコード選択に関するサブコマンド
-        limit [<N>]                     [v1/v2] Print first N records
-        offset [<N>]                    [v1/v2] Print all except first N records
+        limit [<N>]                     Print first N records
+        offset [<N>]                    Print all except first N records
 
     列の選択に関するサブコマンド
-        cut <COLUMNS>                   [v1/v2] Print specified columns
+        cut <COLUMNS>                   Print specified columns
 
     その他のデータを加工するコマンド
-        update <INDEX> <COLUMN> <VALUE> [v1] セルを指定して値を更新する
-        sort [<COLUMNS>]                [v1/v2] ソートする
+        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+        sort [<COLUMNS>]                ソートする
 
     集計するコマンド
-        wcl                             [v1/v2] Print record count. レコード数を表示する
-        header                          [v1/v2] Print column names. カラムの一覧を表示する
-        summary                         [v1/v2] Print summary of data. データのサマリを表示する
-        countcols                       [v1/v2] カラム数を集計する
-        facetcount                      [v1/v2] カラムそれぞれのファセットカウントを集計する
-        treetable                       [EXPERIMENTAL] [v1/v2]
-        crosstable                      [EXPERIMENTAL] [v1]
+        wcl                             Print record count. レコード数を表示する
+        header                          Print column names. カラムの一覧を表示する
+        summary                         Print summary of data. データのサマリを表示する
+        countcols                       カラム数を集計する
+        facetcount                      カラムそれぞれのファセットカウントを集計する
 
     `xsvutils help list` ですべてのサブコマンドを確認できる。
 

@@ -22,12 +22,12 @@ tee subcommand
 
     例
         CSVファイルを data.tsv という名前でTSVに変換しつつ、id,name 列のみを端末に表示
-            $ xsvutils -v2 data.csv tee data.tsv cut id,name
+            $ xsvutils data.csv tee data.tsv cut id,name
 
         CSVファイルを data.tsv という名前でTSVに変換し、 data.txt という名前で固定長テキストファイルにも変換
-            $ xsvutils -v2 data.csv tee data.tsv tee [ --o-table -o data.txt ]
+            $ xsvutils data.csv tee data.tsv tee [ --o-table -o data.txt ]
 
         facetcount を facetcount.txt というファイルに出力しつつ、レコード数を端末に出力
-            $ xsvutils -v2 data.tsv tee [ facetcount -o facetcount.txt ] wcl
+            $ xsvutils data.tsv tee [ facetcount -o facetcount.txt ] wcl
 
 
