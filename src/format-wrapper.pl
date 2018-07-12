@@ -41,6 +41,7 @@ my $in = *STDIN;
 my $left_size = $head_size;
 my $exists_lf = '';
 my $gzip_flag = '';
+my $xz_flag = '';
 while () {
     if ($left_size <= 0) {
         last;
@@ -60,10 +61,16 @@ while () {
             last;
         }
     }
+    if ($left_size >= $head_size - 6) {
+        if ($head_buf =~ /\A\xFD\x37\x7A\x58\x5A\x00/) {
+            $xz_flag = 1;
+            last;
+        }
+    }
     $left_size -= $l;
 }
 
-if ($gzip_flag) {
+if ($gzip_flag || $xz_flag) {
     my $CHILD1_READER;
     my $PARENT_WRITER;
     pipe($CHILD1_READER, $PARENT_WRITER);
@@ -93,7 +100,11 @@ if ($gzip_flag) {
         # parent(child1) process
         close $CHILD2_READER;
         open(STDOUT, '>&=', fileno($CHILD1_WRITER));
-        exec("gunzip", "-c");
+        if ($xz_flag) {
+            exec("xz", "-c", "-d");
+        } else {
+            exec("gunzip", "-c");
+        }
     }
     # child2 process
     close $CHILD1_WRITER;
