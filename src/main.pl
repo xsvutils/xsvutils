@@ -250,11 +250,11 @@ sub parseQuery {
 
             } elsif ($a eq "insunixtime") {
                 unless (@$argv && $argv->[0] eq "-v4") {
-                    die "`mergecols` subcommand require `-v4` option";
+                    die "`insunixtime` subcommand require `-v4` option";
                 }
                 shift(@$argv);
                 unless (@$argv && $argv->[0] eq "--local") {
-                    die "`mergecols` subcommand require `--local` option";
+                    die "`insunixtime` subcommand require `--local` option";
                 }
                 shift(@$argv);
                 $next_command = {command => "insunixtime", src => undef, dst => undef};
