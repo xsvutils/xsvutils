@@ -546,7 +546,6 @@ sub parseQuery {
                     unshift(@$argv, "diff");
                     $output_format = undef;
                     $curr_command = undef;
-                    exit(1) if @$argv > 10;
                     next;
                 }
                 push(@$commands, $curr_command);
