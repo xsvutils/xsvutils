@@ -19,6 +19,7 @@ Common options:
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。
     入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。
+    xsvutils の直後に - を置くことでも標準入力を指定できる。 `-i -` とすると `-` という名前のファイルが入力になる。
 
     以下の2つの例では $INPUT が `head` などのサブコマンド名と偶然同じだった場合に、
     1つ目ではエラーとなってしまうが、2つ目では意図したとおりに動く。
@@ -37,6 +38,8 @@ Common options:
         $ xsvutils -i FILENAME cat
         $ xsvutils < FILENAME
         $ xsvutils cat < FILENAME
+        $ xsvutils - < FILENAME
+        $ xsvutils - cat < FILENAME
 
     入出力フォーマットについて詳しくは `xsvutils help format` を参照のこと。
 

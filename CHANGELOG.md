@@ -6,6 +6,7 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## version 0.5 (Unreleased)
 - add support input of xz file
+- `-` means stdin
 
 ## version 0.4 (2018/07/10)
 - support -v1,-v2,-v3,-v4

@@ -480,7 +480,9 @@ sub parseQuery {
 
             } else {
                 if ($inputOk && !defined($input)) {
-                    if (-e $a) {
+                    if ($a eq "-") {
+                        $input = ''; # stdin
+                    } elsif (-e $a) {
                         $input = $a;
                     } else {
                         die "Not found: $a\n";
@@ -555,7 +557,7 @@ sub parseQuery {
     }
 
     if (!defined($input)) {
-        $input = '';
+        $input = ''; # stdin
     }
     if (!defined($output)) {
         $output = '';
