@@ -449,7 +449,11 @@ sub parseQuery {
                 die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
                 die "option -i needs an argument" unless (@$argv);
                 die "duplicated option: $a" if defined($input);
+
                 $input = shift(@$argv);
+                if (! -e $input) {
+                    die "Not found: $input\n";
+                }
 
             } elsif ($a eq "-o") {
                 die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
