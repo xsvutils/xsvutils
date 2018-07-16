@@ -11,22 +11,22 @@ Available subcommands:
         grep <COLUMN> <PATTERN>         Print records matching a pattern
 
     列の選択に関するサブコマンド
-        cut <COLUMNS>                                           Print specified columns
-        cols [--col <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>] Print specified columns
-        rmnoname                                                Remove columns of no name
+        cut <COLUMNS>                   Print specified columns
+        cols [--col <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>]  Print specified columns
+        rmnoname                        Remove columns of no name
 
     列の値を加工するサブコマンド
-        mergecols -v4                                           [EXPERIMENTAL] Merge values of same column name
+        mergecols -v4                   [EXPERIMENTAL] Merge values of same column name
 
     列を追加するサブコマンド
         insunixtime -v4 --local <SRC> <DST> [EXPERIMENTAL] 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
-        insdate <SRC> <DST>                 日時のカラムから日付を抽出した値を新しいカラムとして追加する
-        inshour <SRC> <DST>                 日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
-        inssecinterval <SRC> <DST>          日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する
-        inscopy <SRC> <DST>                 カラムをコピーする
-        insmap <SRC> <DST> <MAPPING_FILE>   
-        insconst <VALUE> <DST>              固定値のカラムを新しいカラムとして追加する
-        uriparams <NAMES>                   GETパラメータ形式の文字列から値を抽出する
+        insdate <SRC> <DST>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
+        inshour <SRC> <DST>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
+        inssecinterval <SRC> <DST>      日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する
+        inscopy <SRC> <DST>             カラムをコピーする
+        insmap <SRC> <DST> <MAPPING_FILE>
+        insconst <VALUE> <DST>          固定値のカラムを新しいカラムとして追加する
+        uriparams <NAMES>               GETパラメータ形式の文字列から値を抽出する
         (<SRC>, <DST> are column names)
 
     その他のデータを加工するコマンド
