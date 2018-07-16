@@ -17,12 +17,6 @@ if (-t STDOUT) {
     $isOutputTty = 1;
 }
 
-my @originalArgv = @ARGV;
-sub degradeMain {
-    print STDERR "warning: degrade to v1 (@originalArgv)\n";
-    exec("perl", "$TOOL_DIR/main-v1.pl", @originalArgv);
-}
-
 sub escape_for_bash {
     my ($str) = @_;
     if ($str =~ /\A[-_.=\/0-9a-zA-Z]+\z/) {
@@ -268,9 +262,6 @@ sub parseQuery {
                 $next_command = {command => "insdate", src => undef, dst => undef};
                 $last_command = $a;
 
-            } elsif ($a eq "insweek") {
-                degradeMain();
-
             } elsif ($a eq "inssecinterval") {
                 $next_command = {command => "inssecinterval", src => undef, dst => undef};
                 $last_command = $a;
@@ -287,21 +278,6 @@ sub parseQuery {
                 $next_command = {command => "insconst", value => undef, dst => undef};
                 $last_command = $a;
 
-            } elsif ($a eq "addconst") {
-                degradeMain();
-
-            } elsif ($a eq "addcopy") {
-                degradeMain();
-
-            } elsif ($a eq "addlinenum") {
-                degradeMain();
-
-            } elsif ($a eq "addcross") {
-                degradeMain();
-
-            } elsif ($a eq "addmap") {
-                degradeMain();
-
             } elsif ($a eq "uriparams") {
                 $next_command = {command => "uriparams", col => undef, names => undef,
                                  decode => undef, multi_value => undef};
@@ -311,9 +287,6 @@ sub parseQuery {
                 $next_command = {command => "--uriparams", names => undef,
                                  decode => undef, multi_value => undef};
                 $last_command = $a;
-
-            } elsif ($a eq "parseuriparams") {
-                degradeMain();
 
             } elsif ($a eq "update") {
                 $next_command = {command => "update", index => undef, col => undef, value => undef};
@@ -399,9 +372,6 @@ sub parseQuery {
                 $last_command = $a;
                 $next_output_table = '';
 
-            } elsif ($a eq "wordsflags") {
-                degradeMain();
-
             } elsif ($a eq "groupsum") {
                 if (!@$argv || $argv->[0] ne "-v2") {
                     die "\`groupsum\` subcommand needs \`-v2\`";
@@ -465,9 +435,6 @@ sub parseQuery {
                 die "option -o needs an argument" unless (@$argv);
                 die "duplicated option: $a" if defined($output);
                 $output = shift(@$argv);
-
-            } elsif ($a eq "--i-header") {
-                degradeMain();
 
             } elsif ($a eq "--header") {
                 die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
@@ -956,10 +923,6 @@ sub parseCommandOptionPaste {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
     return '' unless ($command_name eq "paste");
 
-    if ($a eq "--right") {
-        degradeMain();
-        return 1;
-    }
     if ($a eq "--file") {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{file});
@@ -983,10 +946,6 @@ sub parseCommandOptionJoin {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
     return '' unless ($command_name eq "join");
 
-    if ($a eq "--right") {
-        degradeMain();
-        return 1;
-    }
     if ($a eq "--file") {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{file});
@@ -1030,10 +989,6 @@ sub parseCommandOptionUnion {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
     return '' unless ($command_name eq "union");
 
-    if ($a eq "--right") {
-        degradeMain();
-        return 1;
-    }
     if ($a eq "--file") {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{file});

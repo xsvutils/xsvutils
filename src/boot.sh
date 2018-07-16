@@ -84,15 +84,7 @@ trap "rm -rf $WORKING_DIR" EXIT
 
 tput lines >/dev/null 2>&1 && export TERMINAL_LINES=$(tput lines);
 
-if [ "$1" = "-v1" ]; then
-    shift
-    perl $TOOL_DIR/main-v1.pl "$@"
-elif [ "$1" = "-v2" ]; then
-    shift
-    perl $TOOL_DIR/main.pl "$@"
-else
-    perl $TOOL_DIR/main.pl "$@"
-fi
+perl $TOOL_DIR/main.pl "$@"
 
 exit $?
 

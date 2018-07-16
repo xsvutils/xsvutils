@@ -12,6 +12,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - add `assemblematrix` subcommand
 - fix a bug of parameter parsing of `insconst` (0.3.1 - 0.4 では insconst のパラメータの順序が逆だった)
 - add sorting in reverse on `sort` subcommand
+- remove auto degradation to v1
 
 ## version 0.4 (-v4) (2018/07/10)
 - support -v1,-v2,-v3,-v4
