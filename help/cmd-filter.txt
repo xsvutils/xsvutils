@@ -1,0 +1,36 @@
+filter, where subcommand
+    Print records which satisfy a condition.
+
+    `filter` subcommand is the same as `where` subcommand.
+
+    Usage:
+        $ xsvutils filter <COLUMN> <OPERATOR> <VALUE>
+
+    Parameter:
+        <COLUMN>   column name as left-hand operand
+        <OPERATOR> operator
+        <VALUE>    value as right-hand operand
+
+    Operator:
+        ==   column value is numerically equal to the right value
+        !=   column value is numerically not equal to the right value
+        >    column value is numerically greater than the right value
+        >=   column value is numerically greater than or equal to the right value
+        <    column value is numerically less than the right value
+        <=   column value is numerically less than or equal to the right value
+        eq   column value is stringwise equal to the right value
+        ne   column value is stringwise not equal to the right value
+        gt   column value is stringwise greater than the right value
+        ge   column value is stringwise greater than or equal to the right value
+        lt   column value is stringwise less than the right value
+        le   column value is stringwise less than or equal to the right value
+
+    Options:
+        --help    Print help information about this subcommand.
+
+    注意:
+        `>` や `<` はシェルではエスケープが必要である。
+
+    例
+        $ xsvutils FILENAME filter num \>= 10  # num 列が10以上の数値を抽出
+
