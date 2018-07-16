@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v4 -> v5 (Unreleased)
+## v4 -> v5 (2018/07/16)
 
 以下のコマンドが追加された。
 - assemblematrix
@@ -55,7 +55,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ## commit log
 
-### version 0.5 (-v5) (Unreleased)
+### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file
 - `-` means stdin
 - add input file name validation
