@@ -26,15 +26,6 @@
         -v5: version 0.5
 
 
-    互換性を損なう変更履歴:
-
-        v3 -> v4:
-            insconst のパラメータの順序が逆になった (see `xsvutils help insconst`)
-
-        v4 -> v5:
-            insconst のパラメータの順序がもとに戻った (see `xsvutils help insconst`)
-
-
     注意点:
 
     1.  ヘルプに EXPERIMENTAL と書かれている箇所は
