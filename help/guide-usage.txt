@@ -40,3 +40,10 @@ USAGE:
 
         $ xsvutils data.tsv cut $COLUMN
 
+    以下のように最初のパラメータにバージョンを指定するオプションを渡すと、
+    xsvutils の過去のバージョンによる動作になる。
+
+        $ xsvutils -v4 ...
+
+    詳細は `xsvutils help compatibility` を見ること。
+

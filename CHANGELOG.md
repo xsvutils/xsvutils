@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## version 0.5 (Unreleased)
+## version 0.5 (-v5) (Unreleased)
 - add support input of xz file
 - `-` means stdin
 - add input file name validation
@@ -12,7 +12,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - add `assemblematrix` subcommand
 - fix a bug of parameter parsing of `insconst` (0.3.1 - 0.4 では insconst のパラメータの順序が逆だった)
 
-## version 0.4 (2018/07/10)
+## version 0.4 (-v4) (2018/07/10)
 - support -v1,-v2,-v3,-v4
 
 ## version 0.3.4 (2018/06/30)
@@ -35,7 +35,7 @@ To see compatibility information, `xsvutils help compatibility`.
 ## version 0.3.0 (2018/04/23)
 - change default parse from v1 to v2
 
-## version 0.2.7 (2018/04/22)
+## version 0.2.7 (-v3) (2018/04/22)
 - add `diff` subcommand on v2
 - enable output csv format on terminal
 - add facetcount ratio2 column
