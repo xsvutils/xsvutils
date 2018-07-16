@@ -164,18 +164,22 @@ if ($topCount->[1] > 0 && @$valuesB > $topCount->[1]) {
     $valuesB = [@$valuesB[0 .. ($topCount->[1] - 1)]];
 }
 
+# ヘッダ行
 print "$headers->[0]\tcount";
 foreach my $valueB (@$valuesB) {
     print "\t$valueB";
 }
 print "\n";
 
-print "\t" . $record_count;
+# 1行目(ヘッダ行含めれば2行目)
+print "\t" . $record_count; # 2カラム目は全レコード数
 foreach my $valueB (@$valuesB) {
+    # 3カラム目以降は元データ2列目の各値のレコード数
     print "\t" . $facetcountB->{$valueB};
 }
 print "\n";
 
+# 2行目以降(ヘッダ行含めれば3行目以降)
 foreach my $valueA (@$valuesA) {
     print "$valueA\t" . $facetcountA->{$valueA};
     foreach my $valueB (@$valuesB) {

@@ -42,7 +42,7 @@ Available subcommands:
         countcols                       カラム数を集計する
         facetcount                      カラムそれぞれのファセットカウントを集計する
         treetable                       左のカラムから順番にカラム組み合わせのファセットカウントを集計する
-        crosstable                      左から2カラムでクロス集計する。
+        crosstable                      2カラムでクロス集計する。
         ratio -v4                       [EXPERIMENTAL] カラムの合計値を求めてから百分率に変換する
         groupsum                        [EXPERIMENTAL]
 
