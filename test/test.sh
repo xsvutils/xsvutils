@@ -22,6 +22,7 @@ bash ./test/case-addmap.sh
 bash ./test/case-sort.sh
 bash ./test/case-join.sh
 bash ./test/case-diff.sh
+bash ./test/case-assemblematrix.sh
 bash ./test/case-datetime.sh
 bash ./test/case-number.sh
 

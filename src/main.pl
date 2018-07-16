@@ -113,7 +113,7 @@ my @command_name_list = qw/
     cut cols rmnoname mergecols
     insunixtime inshour insdate insweek inssecinterval inscopy insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
-    update sort paste join union diff
+    update sort paste join union diff assemblematrix
     wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
     tee
 /;
@@ -199,6 +199,7 @@ sub parseQuery {
             last if (parseCommandOptionJoin  ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionUnion ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionDiff  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionAssemblematrix($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionFacetcount($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTreetable($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionCrosstable($a, $argv, $command_name, $curr_command, $input));
@@ -342,6 +343,11 @@ sub parseQuery {
                 die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
                 die "duplicated option: $a" if defined($output_format);
                 $output_format = "diff";
+
+            } elsif ($a eq "assemblematrix") {
+                $next_command = {command => "assemblematrix"};
+                $last_command = $a;
+                $next_output_table = '';
 
             } elsif ($a eq "wcl") {
                 $next_command = {command => "wcl"};
@@ -1078,6 +1084,13 @@ sub parseCommandOptionDiff {
     '';
 }
 
+sub parseCommandOptionAssemblematrix {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "assemblematrix");
+
+    '';
+}
+
 sub parseCommandOptionFacetcount {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
     return '' unless ($command_name eq "facetcount");
@@ -1429,6 +1442,9 @@ sub validateParams {
             if (!defined($curr_command->{space})) {
                 $curr_command->{space} = '';
             }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "assemblematrix") {
             push(@$commands2, $curr_command);
 
         } elsif ($command_name eq "wcl") {
@@ -2116,6 +2132,9 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "diff$option - $file"]);
             push(@$ircode, ["cmd", "tail -n+3"]);
             push(@$ircode, ["cmd", "(echo '--- '; echo '+++ '; cat)"]);
+
+        } elsif ($command_name eq "assemblematrix") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/assemblematrix.pl"]);
 
         } elsif ($command_name eq "wcl") {
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);

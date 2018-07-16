@@ -34,6 +34,7 @@ Available subcommands:
         join <OTHER_FILE>               Join records of two inputs
         union <OTHER_FILE>              Join records of two inputs vertically
         diff <OTHER_FILE>               Compare two inputs cell by cell
+        assemblematrix                  3列のデータから表形式のデータを作る
 
     集計するコマンド
         wcl                             Print record count. レコード数を表示する
