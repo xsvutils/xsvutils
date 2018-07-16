@@ -625,7 +625,10 @@ sub parseCommandOptionWhere {
     if (!defined($curr_command->{operator}) &&
         $a =~ /\A[_0-9a-zA-Z][-_0-9a-zA-Z]*\z/ &&
         @$argv >= 2 &&
-        $argv->[0] =~ /\A(eq|ne|[gl][et])\z/) {
+        (
+         $argv->[0] =~ /\A(eq|ne|[gl][et])\z/ ||
+         $argv->[0] =~ /\A([!=]~)\z/
+        )) {
 
         $curr_command->{col} = $a;
         $curr_command->{operator} = shift(@$argv);

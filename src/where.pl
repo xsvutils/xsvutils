@@ -210,5 +210,35 @@ if ($operator eq '==') {
             print $line . "\n";
         }
     }
+} elsif ($operator eq '=~') {
+    while (my $line = <STDIN>) {
+        $line =~ s/\n\z//g;
+        my @cols = split(/\t/, $line, -1);
+
+        # 行にタブの数が少ない場合に列を付け足す
+        for (my $i = $header_count - @cols; $i > 0; $i--) {
+            push(@cols, "");
+        }
+
+        if ($cols[$colindex] =~ $value) {
+            print $line . "\n";
+        }
+    }
+} elsif ($operator eq '!~') {
+    while (my $line = <STDIN>) {
+        $line =~ s/\n\z//g;
+        my @cols = split(/\t/, $line, -1);
+
+        # 行にタブの数が少ない場合に列を付け足す
+        for (my $i = $header_count - @cols; $i > 0; $i--) {
+            push(@cols, "");
+        }
+
+        if ($cols[$colindex] !~ $value) {
+            print $line . "\n";
+        }
+    }
+} else {
+    die "$operator";
 }
 

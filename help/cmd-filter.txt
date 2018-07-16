@@ -24,6 +24,8 @@ filter, where subcommand
         ge   column value is stringwise greater than or equal to the right value
         lt   column value is stringwise less than the right value
         le   column value is stringwise less than or equal to the right value
+        =~   column value matches the right regular expression
+        !~   column value does not match the right regular expression
 
     Options:
         --help    Print help information about this subcommand.

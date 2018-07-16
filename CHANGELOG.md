@@ -15,6 +15,8 @@ To see compatibility information, `xsvutils help compatibility`.
 
 sort コマンドで数値の逆順ソートの機能が追加された。
 
+filter, where コマンドに `=~`, `!~` 演算子が追加された。
+
 insconst のパラメータの順序がもとに戻った。 (see `xsvutils help insconst`)
 
 以下のコマンドが削除された。
@@ -61,6 +63,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - fix a bug of parameter parsing of `insconst`
 - add sorting in reverse on `sort` subcommand
 - remove auto degradation to v1
+- add `=~`, `!~` operator of `filter`, `where` subcommands
 
 ### version 0.4 (-v4) (2018/07/10)
 - support -v1,-v2,-v3,-v4
