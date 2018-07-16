@@ -1,0 +1,21 @@
+grep subcommand
+    Print records matching a pattern
+
+    Usage:
+        $ xsvutils grep [-e] <PATTERN> [--col] <COLUMN>
+
+    Parameter:
+        <COLUMN>   target column name
+        <PATTERN>  regular expression
+
+    Options:
+        -e <PATTERN>    Use <PATTERN> as the pattern.
+        --col <COLUMN>  Match on <COLUMN>
+        --help          Print help information about this subcommand.
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME grep foo title
+        $ xsvutils FILENAME grep title -e foo
+        $ xsvutils FILENAME filter title =~ foo
+

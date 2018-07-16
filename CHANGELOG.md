@@ -8,6 +8,7 @@ To see compatibility information, `xsvutils help compatibility`.
 
 以下のコマンドが追加された。
 - assemblematrix
+- grep
 
 入力ファイルの圧縮フォーマットとしてxzがサポートされた。
 
@@ -64,6 +65,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - add sorting in reverse on `sort` subcommand
 - remove auto degradation to v1
 - add `=~`, `!~` operator of `filter`, `where` subcommands
+- add `grep` subcommand
 
 ### version 0.4 (-v4) (2018/07/10)
 - support -v1,-v2,-v3,-v4

@@ -103,7 +103,7 @@ $exists_args = 1 if (@ARGV);
 my @command_name_list = qw/
     cat
     head limit drop offset
-    where filter
+    where filter grep
     cut cols rmnoname mergecols
     insunixtime inshour insdate insweek inssecinterval inscopy insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
@@ -182,6 +182,7 @@ sub parseQuery {
             last if (parseCommandOptionHead  ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionOffset($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionWhere ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionGrep  ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionCols  ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionRmNoName($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionMergeCols($a, $argv, $command_name, $curr_command, $input));
@@ -217,6 +218,10 @@ sub parseQuery {
 
             } elsif ($a eq "where" || $a eq "filter") {
                 $next_command = {command => $a, col => undef, operator => undef, value => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "grep") {
+                $next_command = {command => $a, col => undef, value => undef};
                 $last_command = $a;
 
             } elsif ($a eq "cut") {
@@ -633,6 +638,47 @@ sub parseCommandOptionWhere {
         $curr_command->{col} = $a;
         $curr_command->{operator} = shift(@$argv);
         $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+
+    '';
+}
+
+sub parseCommandOptionGrep {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "grep");
+
+    if ($a eq "-e") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{value});
+        $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+    if (!defined($curr_command->{value}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use -e or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use -e";
+        }
+        $curr_command->{value} = $a;
+        return 1;
+    }
+
+    if ($a eq "--col") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{col});
+        $curr_command->{col} = shift(@$argv);
+        return 1;
+    }
+    if (!defined($curr_command->{col}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --col or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --col";
+        }
+        $curr_command->{col} = $a;
         return 1;
     }
 
@@ -1189,6 +1235,12 @@ sub validateParams {
             push(@$commands2, {command => "where",
                                col => $curr_command->{col},
                                operator => $curr_command->{operator},
+                               value => $curr_command->{value}});
+
+        } elsif ($command_name eq "grep") {
+            push(@$commands2, {command => "where",
+                               col => $curr_command->{col},
+                               operator => "=~",
                                value => $curr_command->{value}});
 
         } elsif ($command_name eq "cut") {

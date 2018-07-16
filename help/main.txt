@@ -14,6 +14,7 @@ Commonly used subcommands:
         limit [<N>]                     Print first N records
         offset [<N>]                    Print all except first N records
         filter <CONDITION>              Print records which satisfy a condition
+        grep <COLUMN> <PATTERN>         Print records matching a pattern
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                   Print specified columns

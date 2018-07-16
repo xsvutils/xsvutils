@@ -8,6 +8,7 @@ Available subcommands:
         offset [<N>]                    Print all except first N records
         where <CONDITION>               Print records which satisfy a condition
         filter <CONDITION>              Print records which satisfy a condition
+        grep <COLUMN> <PATTERN>         Print records matching a pattern
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                                           Print specified columns
