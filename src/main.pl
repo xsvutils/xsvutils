@@ -221,7 +221,7 @@ sub parseQuery {
                 $last_command = $a;
 
             } elsif ($a eq "grep") {
-                $next_command = {command => $a, col => undef, value => undef};
+                $next_command = {command => $a, col => undef, value => undef, invert => undef};
                 $last_command = $a;
 
             } elsif ($a eq "cut") {
@@ -679,6 +679,12 @@ sub parseCommandOptionGrep {
             die "ambiguous parameter: $a, use --col";
         }
         $curr_command->{col} = $a;
+        return 1;
+    }
+
+    if ($a eq "-v") {
+        die "duplicated option $a" if defined($curr_command->{invert});
+        $curr_command->{invert} = 1;
         return 1;
     }
 
@@ -1238,9 +1244,13 @@ sub validateParams {
                                value => $curr_command->{value}});
 
         } elsif ($command_name eq "grep") {
+            my $operator = "=~";
+            if ($curr_command->{invert}) {
+                $operator = "!~";
+            }
             push(@$commands2, {command => "where",
                                col => $curr_command->{col},
-                               operator => "=~",
+                               operator => $operator,
                                value => $curr_command->{value}});
 
         } elsif ($command_name eq "cut") {

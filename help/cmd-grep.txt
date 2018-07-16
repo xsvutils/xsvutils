@@ -11,6 +11,7 @@ grep subcommand
     Options:
         -e <PATTERN>    Use <PATTERN> as the pattern.
         --col <COLUMN>  Match on <COLUMN>
+        -v              Invert the sense of matching, print non-matching records.
         --help          Print help information about this subcommand.
 
     以下は同じ意味である。

@@ -6,6 +6,9 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v5 -> v6 (Unreleased)
 
+以下のオプションが追加された。
+- grep コマンドの -v
+
 ## v4 -> v5 (2018/07/16)
 
 以下のコマンドが追加された。
@@ -58,6 +61,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ## commit log
 
 ### version 0.6 (-v6) (Unreleased)
+- add `-v` option of `grep` subcommand
 
 ### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file
