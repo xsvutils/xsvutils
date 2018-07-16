@@ -4,6 +4,7 @@ use utf8;
 
 my $name = undef;
 my $target_name = undef;
+my $reverse_flag = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
@@ -13,6 +14,8 @@ while (@ARGV) {
     } elsif ($a eq "--col") {
         die "option --col needs an argument" unless (@ARGV);
         $target_name = shift(@ARGV);
+    } elsif ($a eq "--reverse") {
+        $reverse_flag = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -65,6 +68,14 @@ while (my $line = <STDIN>) {
     my $value = "";
     if (defined($cols[$target_column])) {
         $value = $cols[$target_column];
+    }
+
+    if ($reverse_flag) {
+        if ($value =~ /\A[1-9][0-9]*\z/) {
+            $value = "-" . $value;
+        } elsif ($value =~ /\A-([1-9][0-9]*)\z/) {
+            $value = "-" . $1;
+        }
     }
 
     my $sortable = "";

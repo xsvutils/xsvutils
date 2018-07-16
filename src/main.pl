@@ -1533,12 +1533,23 @@ sub parseSortParams {
     }
     while (@args) {
         my $a = pop(@args);
-        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):n\z/) {
-            push(@$commands, {command => "_addnumsortable", src => $1, dst => ""});
-        } else {
-            push(@$commands, {command => "inscopy", src => $a, dst => ""});
-        }
         $c++;
+        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):([nr]*)\z/) {
+            my $col = $1;
+            my $op = $2;
+            my $reverse = '';
+            if ($op =~ /n/) {
+                if ($op =~ /r/) {
+                    $reverse = 1;
+                }
+                push(@$commands, {command => "_addnumsortable", src => $col, dst => "", reverse => $reverse});
+                next;
+            }
+        }
+        if ($a =~ /\A([_0-9a-zA-Z][-_0-9a-zA-Z]*):/) {
+            die "\`sort\` column parameter is illegal: $a\n";
+        }
+        push(@$commands, {command => "inscopy", src => $a, dst => ""});
     }
     push(@$commands, {command => "sort"});
     if ($c > 0) {
@@ -2037,7 +2048,11 @@ sub build_ircode_command {
         } elsif ($command_name eq "_addnumsortable") {
             my $name  = escape_for_bash($curr_command->{dst});
             my $col = escape_for_bash($curr_command->{src});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl --name $name --col $col"]);
+            my $option = "";
+            if ($curr_command->{reverse}) {
+                $option .= " --reverse";
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addnumsortable.pl$option --name $name --col $col"]);
 
 =comment
         } elsif ($command_name eq "addcross") {
