@@ -233,10 +233,9 @@ sub parseQuery {
                 $last_command = $a;
 
             } elsif ($a eq "rmnoname") {
-                unless (@$argv && $argv->[0] eq "-v4") {
-                    die "`rmnoname` subcommand require `-v4` option";
+                if (@$argv && $argv->[0] eq "-v4") {
+                    shift(@$argv);
                 }
-                shift(@$argv);
                 $next_command = {command => "rmnoname"};
                 $last_command = $a;
 
