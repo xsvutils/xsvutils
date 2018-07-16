@@ -10,6 +10,7 @@ To see compatibility information, `xsvutils help compatibility`.
 - add input file name validation
 - remove -v4 option of `rmnoname` subcommand
 - add `assemblematrix` subcommand
+- fix a bug of parameter parsing of `insconst` (0.3.1 - 0.4 では insconst のパラメータの順序が逆だった)
 
 ## version 0.4 (2018/07/10)
 - support -v1,-v2,-v3,-v4

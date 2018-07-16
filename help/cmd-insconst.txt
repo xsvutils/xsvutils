@@ -13,3 +13,6 @@ insconst subcommand
         --dst <DST_COLUMN_NAME> 新しいカラム
         --help                  Print help information about this subcommand.
 
+    バグ:
+        0.3.1 - 0.4 (-v4) ではオプションなしの場合、 <VALUE> と <DST_COLUMN_NAME> の順序を逆に解釈してしまっていた。
+

@@ -754,12 +754,6 @@ sub parseCommandOptionInsCol {
         $curr_command->{src} = shift(@$argv);
         return 1;
     }
-    if ($a eq "--dst") {
-        die "option $a needs an argument" unless (@$argv);
-        die "duplicated option $a" if defined($curr_command->{dst});
-        $curr_command->{dst} = shift(@$argv);
-        return 1;
-    }
     if (($command_name ne "insconst") && !defined($curr_command->{src}) && $a !~ /\A-/) {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --src or -i";
@@ -768,6 +762,30 @@ sub parseCommandOptionInsCol {
             die "ambiguous parameter: $a, use --src";
         }
         $curr_command->{src} = $a;
+        return 1;
+    }
+
+    if ($command_name eq "insconst" && $a eq "--value") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{value});
+        $curr_command->{value} = shift(@$argv);
+        return 1;
+    }
+    if ($command_name eq "insconst" && !defined($curr_command->{value}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --value or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --value";
+        }
+        $curr_command->{value} = $a;
+        return 1;
+    }
+
+    if ($a eq "--dst") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{dst});
+        $curr_command->{dst} = shift(@$argv);
         return 1;
     }
     if (!defined($curr_command->{dst}) && $a !~ /\A-/) {
@@ -781,12 +799,6 @@ sub parseCommandOptionInsCol {
         return 1;
     }
 
-    if ($command_name eq "insconst" && $a eq "--value") {
-        die "option $a needs an argument" unless (@$argv);
-        die "duplicated option $a" if defined($curr_command->{value});
-        $curr_command->{value} = shift(@$argv);
-        return 1;
-    }
     if ($command_name eq "insmap" && $a eq "--file") {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{file});
@@ -806,16 +818,6 @@ sub parseCommandOptionInsCol {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{default});
         $curr_command->{default} = shift(@$argv);
-        return 1;
-    }
-    if ($command_name eq "insconst" && !defined($curr_command->{value}) && $a !~ /\A-/) {
-        if (!defined($input) && -e $a) {
-            die "ambiguous parameter: $a, use --value or -i";
-        }
-        if (grep {$_ eq $a} @command_name_list) {
-            die "ambiguous parameter: $a, use --value";
-        }
-        $curr_command->{value} = $a;
         return 1;
     }
 
