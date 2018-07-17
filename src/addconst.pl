@@ -22,6 +22,8 @@ die "subcommand `addconst` requires option --name" unless defined $name;
 
 {
     my $line = <STDIN>;
+    exit(1) unless defined($line);
+
     print "$name\t$line";
 }
 

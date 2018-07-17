@@ -66,6 +66,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ### version 0.6 (-v6) (Unreleased)
 - add `-v` option of `grep` subcommand
 - fix a bug of handling division by zero on `facetcount` subcommand
+- improve handling empty input
 
 ### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file

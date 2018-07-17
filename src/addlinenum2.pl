@@ -19,6 +19,8 @@ die "subcommand `addlinenum2` requires option --name" unless defined $name;
 my $value = 1;
 
 my $line = <STDIN>;
+exit(1) unless defined($line);
+
 print "$name\t$line";
 
 while (my $line = <STDIN>) {

@@ -21,6 +21,8 @@ while (@ARGV) {
 die "subcommand `addlinenum` requires option --name" unless defined $name;
 
 my $line = <STDIN>;
+exit(1) unless defined($line);
+
 print "$name\t$line";
 
 while (my $line = <STDIN>) {

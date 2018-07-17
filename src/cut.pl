@@ -147,6 +147,8 @@ my $columnIndeces = undef;
 
 {
     my $line = <STDIN>;
+    exit(1) unless defined($line);
+
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
 
