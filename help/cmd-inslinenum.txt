@@ -1,0 +1,13 @@
+inslinenum subcommand
+    1から始まる連番のカラムを新規に一番左に追加する。
+
+    Usage:
+        $ xsvutils inslinenum [--dst] <DST_COLUMN_NAME>
+
+    Parameter:
+        <DST_COLUMN_NAME> 新しいカラム
+
+    Options:
+        --dst <DST_COLUMN_NAME> 新しいカラム
+        --help                  Print help information about this subcommand.
+

@@ -24,6 +24,7 @@ Available subcommands:
         inshour <SRC> <DST>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         inssecinterval <SRC> <DST>      日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する
         inscopy <SRC> <DST>             カラムをコピーする
+        inslinenum <DST>                連番カラムを追加する
         insmap <SRC> <DST> <MAPPING_FILE>
         insconst <VALUE> <DST>          固定値のカラムを新しいカラムとして追加する
         uriparams <NAMES>               GETパラメータ形式の文字列から値を抽出する

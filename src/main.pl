@@ -105,7 +105,7 @@ my @command_name_list = qw/
     head limit drop offset
     where filter grep
     cut cols rmnoname mergecols
-    insunixtime inshour insdate insweek inssecinterval inscopy insmap insconst
+    insunixtime inshour insdate insweek inssecinterval inscopy inslinenum insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
     update sort paste join union diff assemblematrix
     wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
@@ -273,6 +273,10 @@ sub parseQuery {
 
             } elsif ($a eq "inscopy") {
                 $next_command = {command => "inscopy", src => undef, dst => undef};
+                $last_command = $a;
+
+            } elsif ($a eq "inslinenum") {
+                $next_command = {command => "inslinenum", dst => undef};
                 $last_command = $a;
 
             } elsif ($a eq "insmap") {
@@ -766,17 +770,18 @@ sub parseCommandOptionInsCol {
                       $command_name eq "inshour" ||
                       $command_name eq "insdate" ||
                       $command_name eq "inssecinterval" ||
+                      $command_name eq "inslinenum" ||
                       $command_name eq "inscopy" ||
                       $command_name eq "insmap" ||
                       $command_name eq "insconst");
 
-    if (($command_name ne "insconst") && $a eq "--src") {
+    if (($command_name ne "insconst" && $command_name ne "inslinenum") && $a eq "--src") {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{src});
         $curr_command->{src} = shift(@$argv);
         return 1;
     }
-    if (($command_name ne "insconst") && !defined($curr_command->{src}) && $a !~ /\A-/) {
+    if (($command_name ne "insconst" && $command_name ne "inslinenum") && !defined($curr_command->{src}) && $a !~ /\A-/) {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --src or -i";
         }
@@ -1330,6 +1335,12 @@ sub validateParams {
             }
             if (!defined($curr_command->{dst})) {
                 die "subcommand \`inscopy\` needs --dst option";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "inslinenum") {
+            if (!defined($curr_command->{dst})) {
+                die "subcommand \`inslinenum\` needs --dst option";
             }
             push(@$commands2, $curr_command);
 
@@ -2032,6 +2043,10 @@ sub build_ircode_command {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $dst --src $src"]);
+
+        } elsif ($command_name eq "inslinenum") {
+            my $dst = escape_for_bash($curr_command->{dst});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $dst"]);
 
         } elsif ($command_name eq "insmap") {
             my $src = escape_for_bash($curr_command->{src});
