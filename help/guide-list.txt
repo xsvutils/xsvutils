@@ -37,6 +37,7 @@ Available subcommands:
         join <OTHER_FILE>               Join records of two inputs
         union <OTHER_FILE>              Join records of two inputs vertically
         diff <OTHER_FILE>               Compare two inputs cell by cell
+        expandmultivalue <COLUMN>       マルチバリューを複数レコードに展開する
         assemblematrix                  3列のデータから表形式のデータを作る
 
     集計するコマンド

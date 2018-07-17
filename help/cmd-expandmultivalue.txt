@@ -1,0 +1,13 @@
+expandmultivalue subcommand
+    マルチバリューを複数レコードに展開する
+
+    Usage:
+        $ xsvutils expandmultivalue [--col] <COLUMNS>
+
+    Parameter:
+        <COLUMNS>        Target column is <COLUMNS>
+
+    Options:
+        --col <COLUMNS>  Target column is <COLUMNS>
+        --help           Print help information about this subcommand.
+

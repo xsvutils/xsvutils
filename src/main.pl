@@ -107,7 +107,7 @@ my @command_name_list = qw/
     cut cols rmnoname mergecols
     insunixtime inshour insdate insweek inssecinterval inscopy inslinenum insmap insconst
     addconst addcopy addlinenum addcross addmap uriparams parseuriparams
-    update sort paste join union diff assemblematrix
+    update sort paste join union diff expandmultivalue assemblematrix
     wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
     tee
 /;
@@ -194,6 +194,7 @@ sub parseQuery {
             last if (parseCommandOptionJoin  ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionUnion ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionDiff  ($a, $argv, $command_name, $curr_command, $input));
+            last if (parseCommandOptionExpandmultivalue($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionAssemblematrix($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionFacetcount($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTreetable($a, $argv, $command_name, $curr_command, $input));
@@ -325,6 +326,10 @@ sub parseQuery {
                 die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
                 die "duplicated option: $a" if defined($output_format);
                 $output_format = "diff";
+
+            } elsif ($a eq "expandmultivalue") {
+                $next_command = {command => "expandmultivalue", col => undef};
+                $last_command = $a;
 
             } elsif ($a eq "assemblematrix") {
                 $next_command = {command => "assemblematrix"};
@@ -1101,6 +1106,30 @@ sub parseCommandOptionDiff {
     '';
 }
 
+sub parseCommandOptionExpandmultivalue {
+    my ($a, $argv, $command_name, $curr_command, $input) = @_;
+    return '' unless ($command_name eq "expandmultivalue");
+
+    if ($a eq "--col") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{col});
+        $curr_command->{col} = shift(@$argv);
+        return 1;
+    }
+    if (!defined($curr_command->{col}) && $a !~ /\A-/) {
+        if (!defined($input) && -e $a) {
+            die "ambiguous parameter: $a, use --col or -i";
+        }
+        if (grep {$_ eq $a} @command_name_list) {
+            die "ambiguous parameter: $a, use --col";
+        }
+        $curr_command->{col} = $a;
+        return 1;
+    }
+
+    '';
+}
+
 sub parseCommandOptionAssemblematrix {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
     return '' unless ($command_name eq "assemblematrix");
@@ -1474,6 +1503,12 @@ sub validateParams {
             }
             if (!defined($curr_command->{space})) {
                 $curr_command->{space} = '';
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "expandmultivalue") {
+            if (!defined($curr_command->{col})) {
+                die "subcommand \`expandmultivalue\` needs --col option";
             }
             push(@$commands2, $curr_command);
 
@@ -2184,6 +2219,10 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "diff$option - $file"]);
             push(@$ircode, ["cmd", "tail -n+3"]);
             push(@$ircode, ["cmd", "(echo '--- '; echo '+++ '; cat)"]);
+
+        } elsif ($command_name eq "expandmultivalue") {
+            my $col = escape_for_bash($curr_command->{col});
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/expandmultivalue.pl --multi-value-a --col $col"]);
 
         } elsif ($command_name eq "assemblematrix") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/assemblematrix.pl"]);

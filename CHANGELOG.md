@@ -8,6 +8,7 @@ To see compatibility information, `xsvutils help compatibility`.
 
 以下のコマンドが追加された。
 - inslinenum
+- expandmultivalue
 
 以下のオプションが追加された。
 - grep コマンドの -v
@@ -71,6 +72,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - fix a bug of handling division by zero on `facetcount` subcommand
 - improve handling empty input
 - add `inslinenum` subcommand
+- add `expandmultivalue` subcommand
 
 ### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file
