@@ -106,7 +106,12 @@ for (; $i < $header_count; $i++) {
     foreach my $v (@$values) {
         my $c = $fc->{$v};
         my $ratio = sprintf("%6.2f%%", 100 * $c / $sum);
-        my $ratio2 = sprintf("%6.2f%%", 100 * $c / $sum2);
+        my $ratio2;
+        if ($sum2 == 0) {
+            $ratio2 = '';
+        } else {
+            $ratio2 = sprintf("%6.2f%%", 100 * $c / $sum2);
+        }
         print "$col_name\t$v\t$c\t$ratio\t$ratio2\n";
     }
 }
