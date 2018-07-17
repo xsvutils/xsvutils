@@ -1548,7 +1548,7 @@ sub parseSortParams {
     my $commands = [];
     my $c = 0;
     if (@args) {
-        push(@$commands, {command => "_addlinenum2"});
+        push(@$commands, {command => "_addlinenum_sortable"});
         $c++;
     }
     while (@args) {
@@ -2062,8 +2062,8 @@ sub build_ircode_command {
             my $value = escape_for_bash($curr_command->{2]);
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name $name --value $value"]);
 =cut
-        } elsif ($command_name eq "_addlinenum2") {
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum2.pl --name ''"]);
+        } elsif ($command_name eq "_addlinenum_sortable") {
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addlinenum.pl --name '' --sortable"]);
 
         } elsif ($command_name eq "_addnumsortable") {
             my $name  = escape_for_bash($curr_command->{dst});
