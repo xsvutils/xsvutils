@@ -13,6 +13,8 @@ To see compatibility information, `xsvutils help compatibility`.
 以下のオプションが追加された。
 - grep コマンドの -v
 
+uriparamsの入力に `?...` や `http://.../...?...` の形式を許容するように変更した。
+
 エラーのハンドリングを少し強化した。
 
 
@@ -73,6 +75,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - improve handling empty input
 - add `inslinenum` subcommand
 - add `expandmultivalue` subcommand
+- allow URL format on `uriparams` subcommand
 
 ### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file

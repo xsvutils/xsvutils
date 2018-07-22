@@ -11,6 +11,14 @@ uriparams subcommand
         --multi-value-b            出力形式を複数値B形式とする (default is multi-value-a)
         --help                     Print help information about this subcommand.
 
+    入力となる query string は以下のいずれの形式でもよい。
+
+        q=aaa&r=xxx
+        ?q=aaa&r=xxx
+        foo.html?q=aaa&r=xxx
+        http://www.example.com/foo.html?q=aaa&r=xxx
+        https://www.example.com/foo.html?q=aaa&r=xxx
+
     複数値A形式: パラメータは同じ名前で複数の可能性があるが、
     その場合には、値と値の間にセミコロン(;)を配置する。
     パラメータが存在しない場合と値が空文字列の場合とを区別しない。
@@ -40,4 +48,6 @@ uriparams subcommand
         q=&q=bbb&r=xxx     ;bbb;
         q=aaa&q=&r=xxx     aaa;;
         q=&q=&r=xxx        ;;
+
+    
 

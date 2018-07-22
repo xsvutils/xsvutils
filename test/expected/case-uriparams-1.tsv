@@ -7,3 +7,10 @@ id	querystring	q	r
 6	q=aaa&q=&r=xxx	aaa	xxx
 7	q=&q=&r=xxx		xxx
 10	q=a%20b%21c+d%25e%26f%3dg%5ch;i	a b!c d%e&f=g\\h\x3Bi	
+20	r=xxx		xxx
+21	?r=xxx		xxx
+22	foo.html?r=xxx		xxx
+23	http://www.example.com/?r=xxx		xxx
+24	http://www.example.com/foo.html?r=xxx		xxx
+25	https://www.example.com/?r=xxx		xxx
+26	https://www.example.com/foo.html?r=xxx		xxx

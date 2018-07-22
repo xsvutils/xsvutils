@@ -60,7 +60,7 @@ func printLineAsTsv(wr *bufio.Writer, line []string) {
 	}
 }
 
-func Convert(in *os.File, out *os.File, query string, fullUrl bool, namesAction bool, multiValueB bool) error {
+func Convert(in *os.File, out *os.File, query string, namesAction bool, multiValueB bool) error {
 	wr := bufio.NewWriter(out)
 	keys := strings.Split(query, ",")
 	header := make(map[string]int, len(keys))
@@ -81,15 +81,38 @@ func Convert(in *os.File, out *os.File, query string, fullUrl bool, namesAction 
 	for i := 0; sc.Scan(); i++ {
 		line := make([]string, len(keys))
 
-		var querystring = ""
-		if fullUrl {
-			line2 := strings.SplitN(sc.Text(), "?", 2);
-			if len(line2) == 2 {
-				querystring = line2[1];
+		var querystring = sc.Text()
+		if strings.HasPrefix(querystring, "http://") {
+			var querystring2 = querystring[7:]
+			p1 := strings.Index(querystring2, "/")
+			if p1 >= 0 {
+				querystring2 = querystring2[p1 + 1:]
+				p2 := strings.Index(querystring2, "?")
+				if p2 >= 0 {
+					querystring = querystring2[p2 + 1:]
+				} else {
+					querystring = "";
+				}
+			}
+		} else if strings.HasPrefix(querystring, "https://") {
+			var querystring2 = querystring[7:]
+			p1 := strings.Index(querystring2, "/")
+			if p1 >= 0 {
+				querystring2 = querystring2[p1 + 1:]
+				p2 := strings.Index(querystring2, "?")
+				if p2 >= 0 {
+					querystring = querystring2[p2 + 1:]
+				} else {
+					querystring = "";
+				}
 			}
 		} else {
-			querystring = sc.Text()
+			p2 := strings.Index(querystring, "?")
+			if p2 >= 0 {
+				querystring = querystring[p2 + 1:]
+			}
 		}
+
 		params := strings.Split(querystring, "&")
 		for _, p := range params {
 			kv := strings.SplitN(p, "=", 2)
