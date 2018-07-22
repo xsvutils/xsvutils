@@ -1926,10 +1926,10 @@ sub prefetch_input {
     if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+) newline:([^ ]+)\z/) {
         die "failed to guess format $input_pipe_path";
     }
-    $input->{format}       = $1;
-    $input->{charencoding} = $2;
-    $input->{utf8bom}      = $3;
-    $input->{newline}      = $4;
+    $input->{format}       = $1; # tsv, csv, ltsv
+    $input->{charencoding} = $2; # UTF-8, SHIFT-JIS
+    $input->{utf8bom}      = $3; # 0, 1
+    $input->{newline}      = $4; # unix, dos, mac
 
     return $input;
 }

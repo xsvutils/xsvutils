@@ -209,13 +209,16 @@ if ($newline eq '') {
     $newline = guess_newline($head_buf);
 }
 
+# フォーマットの推定結果を出力
 open(my $format_result_fh, '>', $format_result_path) or die $!;
 print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline\n";
 close($format_result_fh);
 
+# 先読みした内容を出力
 open(my $output_fh, '>', $output_path) or dir $!;
 syswrite($output_fh, $head_buf);
 open(STDOUT, '>&=', fileno($output_fh));
 
+# 残りの入力をそのまま出力
 exec("cat");
 
