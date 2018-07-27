@@ -49,5 +49,16 @@ uriparams subcommand
         q=aaa&q=&r=xxx     aaa;;
         q=&q=&r=xxx        ;;
 
-    
+    --name の代わりに --name-list というオプションをつけると、
+    names という名前のカラムで、パラメータの名前の一覧を出力する。
+
+        query string       names
+        ---------------------------
+        r=xxx              r
+        q=&r=xxx           r
+        q=aaa&r=xxx        q;r
+        q=aaa&q=bbb&r=xxx  q;q;r
+        q=&q=bbb&r=xxx     q;r
+        q=aaa&q=&r=xxx     q;r
+        q=&q=&r=xxx        r
 
