@@ -7,7 +7,7 @@ import (
 )
 
 func printHeaderNamesAsTsv(wr *bufio.Writer) {
-	_, err := wr.WriteString("names\n")
+	_, err := wr.WriteString("name-list\n")
 	if err != nil {
 		os.Exit(0); // 出力先がなくなった場合はそのまま終了する
 	}

@@ -15,6 +15,8 @@ To see compatibility information, `xsvutils help compatibility`.
 
 uriparamsの入力に `?...` や `http://.../...?...` の形式を許容するように変更した。
 
+uriparams --name-list で生成するカラム名をオプション名に合わせて `names` から `name-list` に変更した。
+
 エラーのハンドリングを少し強化した。
 
 
@@ -76,6 +78,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - add `inslinenum` subcommand
 - add `expandmultivalue` subcommand
 - allow URL format on `uriparams` subcommand
+- change column name of `uriparams --name-list`
 
 ### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file

@@ -1,4 +1,4 @@
-id	querystring	names
+id	querystring	name-list
 1	r=xxx	r;
 2	q=&r=xxx	q;r;
 3	q=aaa	q;
