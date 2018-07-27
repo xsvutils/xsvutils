@@ -6,7 +6,7 @@ cut subcommand
         $ xsvutils cut [<COLUMNS>] [option...]
 
     Parameter:
-        <COLUMNS>         (optional) Print <COLUMNS>
+        <COLUMNS>         (optional) Print <COLUMNS> (same as --cols)
 
     Options:
         --cols <COLUMNS>   Print <COLUMNS> (--col, --columns are the same)

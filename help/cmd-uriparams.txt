@@ -1,6 +1,13 @@
 uriparams subcommand
     GETパラメータ形式の文字列から値を抽出する。
 
+    Usage:
+        $ xsvutils uriparams [<QUERYSTRING_COLUMN> <PARAMETER_NAMES>] [option...]
+
+    Parameter:
+        <QUERYSTRING_COLUMN>       query string のあるカラム名を指定 (--col オプションと同じ)
+        <PARAMETER_NAMES>          query string から抜き出すパラメータ名を指定 (--names オプションと同じ)
+
     Options:
         --name  <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
         --names <PARAMETER_NAMES>  query string から抜き出すパラメータ名を指定
