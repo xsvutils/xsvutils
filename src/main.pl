@@ -2388,6 +2388,26 @@ sub irToShellscript {
     }
 }
 
+# 文字列の配列の配列 $sources から以下のようなイメージの文字列の配列にする
+# 
+# $begin . $first_first_source
+# $begin_b . $middle_first_source
+# ...
+# $begin_b . $middle_first_source
+# $begin_b . $last_first_source . $end0
+
+# $begin1 . $first_middle_source
+# $begin1_b . $middle_middle_source
+# ...
+# $begin1_b . $middle_middle_source
+# $begin1_b . $last_middle_source . $end1
+
+# $begin2 . $first_last_source
+# $begin2_b . $middle_last_source
+# ...
+# $begin2_b . $middle_last_source
+# $begin2_b . $last_last_source . $end
+# 
 sub joinShellscriptLines {
     my ($sources, $begin, $begin_b, $end0, $begin1, $begin1_b, $end1, $begin2, $begin2_b, $end) = @_;
 
@@ -2407,6 +2427,14 @@ sub joinShellscriptLines {
     ];
 }
 
+# 文字列の配列 $sources から以下のようなイメージの文字列の配列にする
+# 
+# $begin . $first_source
+# $begin_b . $middle_source
+# ...
+# $begin_b . $middle_source
+# $begin_b . $last_source . $end
+# 
 sub joinShellscriptLinesSub {
     my ($sources, $begin, $begin_b, $end) = @_;
 
