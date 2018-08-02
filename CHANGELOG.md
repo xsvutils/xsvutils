@@ -19,6 +19,8 @@ uriparams --name-list で生成するカラム名をオプション名に合わ�
 
 エラーのハンドリングを少し強化した。
 
+`--o-diffable` での空行でのバグを修正した。
+
 
 ## v4 -> v5 (2018/07/16)
 
@@ -79,6 +81,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - add `expandmultivalue` subcommand
 - allow URL format on `uriparams` subcommand
 - change column name of `uriparams --name-list`
+- fix a bug of handling empty line on `--o-diffable`
 
 ### version 0.5 (-v5) (2018/07/16)
 - add support input of xz file

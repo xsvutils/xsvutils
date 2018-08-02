@@ -26,14 +26,23 @@ if (@headers == 1) {
         $line =~ s/\n\z//g;
         my @cols = split(/\t/, $line, -1);
 
-        print "$cols[0]\n";
+        if (@cols) {
+            print "$cols[0]\n";
+        } else {
+            print "\n";
+        }
     }
 } else {
     while (my $line = <STDIN>) {
         $line =~ s/\n\z//g;
         my @cols = split(/\t/, $line, -1);
 
-        my $id = $cols[0];
+        my $id;
+        if (@cols) {
+            $id = $cols[0];
+        } else {
+            $id = "";
+        }
 
         my $i = 1;
         while () {
