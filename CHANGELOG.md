@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v5 -> v6 (Unreleased)
+## v5 -> v6 (2018/08/06)
 
 以下のコマンドが追加された。
 - inslinenum
@@ -73,7 +73,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ## commit log
 
-### version 0.6 (-v6) (Unreleased)
+### version 0.6 (-v6) (2018/08/06)
 - add `-v` option of `grep` subcommand
 - fix a bug of handling division by zero on `facetcount` subcommand
 - improve handling empty input
