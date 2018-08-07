@@ -1,6 +1,94 @@
 
 object FacetCount {
 
+	def main(args: List[String]) {
+		val pipeHead = buildPipe(args);
+
+		val lines = stdinLineIterator();
+		if (!lines.hasNext) {
+			throw new Exception("Empty file");
+		}
+
+		val (pipeBody, colCount) = {
+			val line = lines.next();
+			val cols: Array[String] = line.split("\t", -1);
+			(pipeHead.head(cols), cols.size);
+		}
+
+		val pipeClose = lines.foldLeft(pipeBody) { (pipeBody, line) =>
+			val cols: Array[String] = {
+				val cols: Array[String] = line.split("\t", -1);
+				val size = cols.size;
+				if (colCount == size) {
+					cols;
+				} else if (colCount < size) {
+					cols.slice(0, colCount);
+				} else {
+					val cols2 = new Array[String](colCount);
+					System.arraycopy(cols, 0, cols2, 0, size);
+					(size until colCount).foreach { i =>
+						cols2(i) = "";
+					}
+					cols2;
+				}
+			}
+			pipeBody.next(cols);
+		}
+
+		pipeClose.close();
+	}
+
+	private def buildPipe(args: List[String]): PipeHead = {
+		@scala.annotation.tailrec
+		def sub(args: List[String], out: PipeHead): PipeHead = {
+			args match {
+				case Nil =>
+					out;
+				case weightFlag :: multiValueFlag :: "facetcount" :: tail =>
+					sub(tail, FacetCount.Head(MultiValueFlag(multiValueFlag), WeightFlag(weightFlag), out));
+				case _ =>
+					throw new Error(args.reverse.mkString(" "));
+			}
+		}
+		sub(args.reverse, StdoutPipeHead);
+	}
+
+	private def stdinLineIterator(): Iterator[String] = {
+
+		var fp = new java.io.BufferedReader(new java.io.InputStreamReader(System.in, "UTF-8"));
+		var nextLine: String = null;
+
+		new Iterator[String] {
+
+			def hasNext: Boolean = {
+				if (fp == null) {
+					false;
+				} else {
+					if (nextLine == null) {
+						nextLine = fp.readLine;
+					}
+					if (nextLine == null) {
+						fp.close();
+						false;
+					} else {
+						true;
+					}
+				}
+			}
+
+			def next(): String = {
+				if (!hasNext) {
+					throw new java.util.NoSuchElementException();
+				}
+				val ret = nextLine;
+				nextLine = null;
+				ret;
+			}
+
+		}
+
+	}
+
 	case class Head (multiValueFlag: Option[MultiValueFlag], weightFlag: Boolean, out: PipeHead) extends PipeHead {
 
 		def head(cols: Seq[String]): PipeBody = {

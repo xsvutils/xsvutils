@@ -2282,7 +2282,7 @@ sub build_ircode_command {
                 } else {
                     $option .= " no-weight";
                 }
-                push(@$ircode, ["cmd", "\$TOOL_DIR/java/bin/xsvutils-java facetcount$option"]);
+                push(@$ircode, ["cmd", "\$TOOL_DIR/java/bin/xsvutils-java --facetcount facetcount$option"]);
             } else {
                 my $option = "";
                 if ($curr_command->{multi_value} eq "a") {
