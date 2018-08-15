@@ -6,6 +6,10 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v6 -> v7 (Unreleased)
 
+以下のオプションが追加された。
+- cols コマンドの --remove
+
+
 ## v5 -> v6 (2018/08/06)
 
 以下のコマンドが追加された。
@@ -76,6 +80,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ## commit log
 
 ### version 0.7 (-v7) (Unreleased)
+- add `--remove` option of `cols` subcommand
 
 ### version 0.6 (-v6) (2018/08/06)
 - add `-v` option of `grep` subcommand

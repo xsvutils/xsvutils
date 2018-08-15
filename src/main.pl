@@ -230,7 +230,12 @@ sub parseQuery {
                 $last_command = $a;
 
             } elsif ($a eq "cols") {
-                $next_command = {command => "cols", cols => undef, head => undef, last => undef, update => undef};
+                $next_command = {command => "cols",
+                                 cols => undef,
+                                 head => undef,
+                                 last => undef,
+                                 remove => undef,
+                                 update => undef};
                 $last_command = $a;
 
             } elsif ($a eq "rmnoname") {
@@ -733,6 +738,12 @@ sub parseCommandOptionCols {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{last});
         $curr_command->{last} = shift(@$argv);
+        return 1;
+    }
+    if ($a eq "--remove") {
+        die "option $a needs an argument" unless (@$argv);
+        die "duplicated option $a" if defined($curr_command->{remove});
+        $curr_command->{remove} = shift(@$argv);
         return 1;
     }
     if ($a eq "--left-update") {
@@ -2027,6 +2038,9 @@ sub build_ircode_command {
             }
             if (defined($curr_command->{last})) {
                 $option .= " --last " . escape_for_bash($curr_command->{last});
+            }
+            if (defined($curr_command->{remove})) {
+                $option .= " --remove " . escape_for_bash($curr_command->{remove});
             }
             if ($curr_command->{update} eq "left") {
                 $option .= " --left-update";

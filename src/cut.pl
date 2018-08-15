@@ -5,6 +5,7 @@ use utf8;
 my $option_columns = undef;
 my $option_head = undef;
 my $option_last = undef;
+my $option_remove = undef;
 my $option_update = '';
 
 while (@ARGV) {
@@ -18,6 +19,9 @@ while (@ARGV) {
     } elsif ($a eq "--last") {
         die "option --last needs an argument" unless (@ARGV);
         $option_last = shift(@ARGV);
+    } elsif ($a eq "--remove") {
+        die "option --remove needs an argument" unless (@ARGV);
+        $option_remove = shift(@ARGV);
     } elsif ($a eq "--left-update") {
         $option_update = "left";
     } elsif ($a eq "--right-update") {
@@ -36,6 +40,11 @@ sub createColumnIndeces {
         push(@columnLastIndeces, @{createColumnIndecesSub($headers, $option_last)});
     }
 
+    my @columnRemoveIndeces = ();
+    if (defined($option_remove)) {
+        push(@columnRemoveIndeces, @{createColumnIndecesSub($headers, $option_remove)});
+    }
+
     my @columnIndeces = ();
     if (defined($option_head)) {
         push(@columnIndeces, @{createColumnIndecesSub($headers, $option_head)});
@@ -52,6 +61,17 @@ sub createColumnIndeces {
         }
     }
     push(@columnIndeces, @columnLastIndeces);
+
+    {
+        my @columnIndeces2 = ();
+        for (my $i = 0; $i < @columnIndeces; $i++) {
+            my $hi = $columnIndeces[$i];
+            if (!grep {$_ eq $hi} @columnRemoveIndeces) {
+                push(@columnIndeces2, $hi);
+            }
+        }
+        @columnIndeces = @columnIndeces2;
+    }
 
     if ($option_update) {
         my @columnIndeces2 = ();
@@ -90,7 +110,7 @@ sub createColumnIndecesSub {
     my ($headers, $option_columns) = @_;
     my $headerCount = @$headers;
     my @columns2 = split(/,/, $option_columns);
-    my @columns3 = ();
+    my @columns3 = (); # カラム名の配列
     foreach my $f (@columns2) {
         if ($f =~ /\A(.+?)\.\.(.+)\z/) {
             my $f1 = $1;
@@ -120,7 +140,7 @@ sub createColumnIndecesSub {
         push(@columns3, $f);
     }
 
-    my @columns4 = ();
+    my @columns4 = (); # インデックスの配列
     foreach my $f (@columns3) {
         my $g = '';
         for (my $i = 0; $i < $headerCount; $i++) {
