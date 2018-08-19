@@ -10,7 +10,10 @@ my $utf8bom = "";
 my $newline = "";
 
 my $format_result_path = undef;
+my $input_path = undef;
 my $output_path = undef;
+
+my $pipe_mode = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
@@ -20,23 +23,35 @@ while (@ARGV) {
         $format = "csv";
     } elsif ($a eq "--ltsv") {
         $format = "ltsv";
+    } elsif ($a eq "--pipe") {
+        # pipeモードを強制する
+        # このオプションがない場合は状況によってfileモードまたはpipeモードになる
+        $pipe_mode = 1;
+    } elsif ($a eq "-i") {
+        die "option $a needs an argument" unless (@ARGV);
+        $input_path = shift(@ARGV);
+    } elsif ($a eq "-o") {
+        die "option $a needs an argument" unless (@ARGV);
+        $output_path = shift(@ARGV);
     } elsif (!defined($format_result_path)) {
         $format_result_path = $a;
-    } elsif (!defined($output_path)) {
-        $output_path = $a;
     } else {
         die "Unknown argument: $a";
     }
 }
 
 die "format-wrapper.pl requires argument" unless defined $format_result_path;
-die "format-wrapper.pl requires argument" unless defined $output_path;
 
 my $head_size = 100 * 4096;
 
 my $head_buf = "";
 
 my $in = *STDIN;
+if (!defined($input_path)) {
+    $in = *STDIN;
+} else {
+    open($in, '<', $input_path) or die $!;
+}
 
 my $left_size = $head_size;
 my $exists_lf = '';
@@ -80,6 +95,7 @@ if ($gzip_flag || $xz_flag) {
         die $!;
     } elsif ($pid1) {
         # parent process
+        # 読み込み済みの入力を標準出力し、残りはcatする
         close $CHILD1_READER;
         open(STDOUT, '>&=', fileno($PARENT_WRITER));
         syswrite(STDOUT, $head_buf);
@@ -98,6 +114,7 @@ if ($gzip_flag || $xz_flag) {
         die $!;
     } elsif ($pid2) {
         # parent(child1) process
+        # gunzip or xz のプロセスをexecする
         close $CHILD2_READER;
         open(STDOUT, '>&=', fileno($CHILD1_WRITER));
         if ($xz_flag) {
@@ -119,7 +136,10 @@ if ($gzip_flag || $xz_flag) {
         push(@options, "--ltsv");
     }
     push(@options, $format_result_path);
-    push(@options, $output_path);
+    if (defined($output_path)) {
+        push(@options, "-o");
+        push(@options, $output_path);
+    }
 
     exec("perl", "$TOOL_DIR/format-wrapper.pl", @options);
 }
@@ -209,15 +229,29 @@ if ($newline eq '') {
     $newline = guess_newline($head_buf);
 }
 
+my $mode;
+if (!$pipe_mode && defined($input_path) && -f $input_path) {
+    $mode = "file";
+} else {
+    $mode = "pipe";
+}
+
 # フォーマットの推定結果を出力
 open(my $format_result_fh, '>', $format_result_path) or die $!;
-print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline\n";
+print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline mode:$mode\n";
 close($format_result_fh);
 
+if ($mode eq "file") {
+    exit(0);
+}
+
+if (defined($output_path)) {
+    open(my $output_fh, '>', $output_path) or dir $!;
+    open(STDOUT, '>&=', fileno($output_fh));
+}
+
 # 先読みした内容を出力
-open(my $output_fh, '>', $output_path) or dir $!;
-syswrite($output_fh, $head_buf);
-open(STDOUT, '>&=', fileno($output_fh));
+syswrite(STDOUT, $head_buf);
 
 # 残りの入力をそのまま出力
 exec("cat");

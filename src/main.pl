@@ -1933,8 +1933,10 @@ sub prefetch_input {
         if ($input->{charencoding} eq '') {
             # TODO
         }
+        push(@command_line, "--pipe");
+        push(@command_line, "-o", $output_pipe_path);
         push(@command_line, $format_result_path);
-        push(@command_line, $output_pipe_path);
+        push(@command_line, "-o", $output_pipe_path);
         exec(@command_line);
     }
 
@@ -1943,13 +1945,14 @@ sub prefetch_input {
     close($format_fh);
 
     $format =~ s/\n\z//g;
-    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+) newline:([^ ]+)\z/) {
+    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+) newline:([^ ]+) mode:([^ ]+)\z/) {
         die "failed to guess format $input_pipe_path";
     }
     $input->{format}       = $1; # tsv, csv, ltsv
     $input->{charencoding} = $2; # UTF-8, SHIFT-JIS
     $input->{utf8bom}      = $3; # 0, 1
     $input->{newline}      = $4; # unix, dos, mac
+    # $5; # pipe, file
 
     return $input;
 }
