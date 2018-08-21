@@ -14,6 +14,8 @@ uriparams subcommand
         --name-list                値の代わりにパラメータ名を抜き出す。--name, --names と同時には指定できない
         --col <QUERYSTRING_COLUMN> query string のあるカラム名を指定
         --no-decode                パーセントエンコーディングのデコード処理を行わない
+        --sjis                     パーセントエンコーディングのデコードの文字エンコーディングはShift-JISとする
+                                   (デフォルトはUTF-8)
         --multi-value-a            出力形式を複数値A形式とする (default is this)
         --multi-value-b            出力形式を複数値B形式とする (default is multi-value-a)
         --help                     Print help information about this subcommand.

@@ -503,8 +503,12 @@ sub parseQuery {
                     if (defined($curr_command->{multi_value}) && $curr_command->{multi_value} eq "b") {
                         unshift(@$argv, "--multi-value-b");
                     }
-                    if (defined($curr_command->{decode}) && $curr_command->{decode} eq "") {
-                        unshift(@$argv, "--no-decode");
+                    if (defined($curr_command->{decode})) {
+                        if ($curr_command->{decode} eq "") {
+                            unshift(@$argv, "--no-decode");
+                        } elsif ($curr_command->{decode} eq "sjis") {
+                            unshift(@$argv, "--sjis");
+                        }
                     }
                     if ($curr_command->{names} eq "") {
                         unshift(@$argv, "--name-list");
@@ -891,6 +895,11 @@ sub parseCommandOptionUriparams {
     if ($a eq "--no-decode") {
         die "duplicated option $a" if defined($curr_command->{decode});
         $curr_command->{decode} = "";
+        return 1;
+    }
+    if ($a eq "--sjis") {
+        die "duplicated option $a" if defined($curr_command->{decode});
+        $curr_command->{decode} = "sjis";
         return 1;
     }
     if ($a eq "--multi-value-a") {
@@ -1455,7 +1464,7 @@ sub validateParams {
                 die "subcommand \`uriparams\` needs --names option";
             }
             if (!defined($curr_command->{decode})) {
-                $curr_command->{decode} = 1;
+                $curr_command->{decode} = "utf8";
             }
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "a";
@@ -2175,8 +2184,10 @@ sub build_ircode_command {
                 $option .= " --multi-value-b";
             }
             push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin uriparams2tsv$option"]);
-            if ($curr_command->{decode}) {
+            if ($curr_command->{decode} eq "utf8") {
                 push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent.sh"]); # TODO $colsもデコードされてしまう問題あり
+            } elsif ($curr_command->{decode} eq "sjis") {
+                push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent-sjis.sh"]);
             }
 
         } elsif ($command_name eq "update") {
