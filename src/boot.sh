@@ -79,8 +79,12 @@ elif [ -d /dev/shm ]; then
 else
     export WORKING_DIR=$(mktemp -d /tmp/xsvutils-XXXXXXXX)
 fi
-[ -n "$WORKING_DIR" ] || { echo "Cannot WORKING_DIR: $WORKING_DIR"; exit $?; }
-trap "rm -rf $WORKING_DIR" EXIT
+[ -n "$WORKING_DIR" ] || { echo "Cannot create WORKING_DIR: $WORKING_DIR"; exit $?; }
+
+export HARD_WORKING_DIR=$(mktemp -d /tmp/xsvutils-hard-XXXXXXXX)
+[ -n "$HARD_WORKING_DIR" ] || { echo "Cannot create HARD_WORKING_DIR: $HARD_WORKING_DIR"; exit $?; }
+
+trap "rm -rf $WORKING_DIR $HARD_WORKING_DIR" EXIT
 
 tput lines >/dev/null 2>&1 && export TERMINAL_LINES=$(tput lines);
 
