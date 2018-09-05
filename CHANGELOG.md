@@ -8,6 +8,9 @@ To see compatibility information, `xsvutils help compatibility`.
 
 以下のオプションが追加された。
 - cols コマンドの --remove
+- uriparams コマンドの --sjis
+
+端末へのテーブル表示時に途中にあるヘッダ行を反転表示するように変更した。
 
 
 ## v5 -> v6 (2018/08/06)
@@ -18,7 +21,6 @@ To see compatibility information, `xsvutils help compatibility`.
 
 以下のオプションが追加された。
 - grep コマンドの -v
-- uriparams コマンドの --sjis
 
 uriparamsの入力に `?...` や `http://.../...?...` の形式を許容するように変更した。
 
@@ -83,6 +85,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ### version 0.7 (-v7) (Unreleased)
 - add `--remove` option of `cols` subcommand
 - add `--sjis` option of `uriparams` subcommand
+- highlight header row
 
 ### version 0.6 (-v6) (2018/08/06)
 - add `-v` option of `grep` subcommand
