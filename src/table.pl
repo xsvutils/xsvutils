@@ -117,7 +117,9 @@ sub printRecord {
         my $col = $cols->[$i];
         push(@colViews, stringViewPadding($col, $viewLength, $i == $col_count1));
     }
-    print "|" . join("|", @colViews) . "|\n";
+    my $head = $header_flag ? "\e[7m|" : "|";
+    my $tail = $header_flag ? "|\e[0m" : "|";
+    print $head . join("|", @colViews) . $tail . "\n";
 }
 
 my $max_line_count = 1010;
