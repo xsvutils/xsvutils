@@ -179,6 +179,8 @@ while (my $line = <STDIN>) {
     }
 
     if ($record_count == $max_line_count) {
+        printRecord(shift(@records), $col_lengths) if ($option_col_number);
+        printRecord(shift(@records), $col_lengths, 1);
         foreach my $record (@records) {
             printRecord($record, $col_lengths);
         }
@@ -188,6 +190,8 @@ while (my $line = <STDIN>) {
 }
 
 if ($record_count < $max_line_count) {
+    printRecord(shift(@records), $col_lengths) if ($option_col_number);
+    printRecord(shift(@records), $col_lengths, 1);
     foreach my $record (@records) {
         printRecord($record, $col_lengths);
     }
