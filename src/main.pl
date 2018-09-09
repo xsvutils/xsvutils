@@ -2511,6 +2511,10 @@ sub appendOutputCode {
         }
     }
 
+    if ($isPager) {
+        $table_option .= " --color";
+    }
+
     if (!$command_seq->{output_header_flag} && !($isPager && $output_format eq "table")) {
         $main_1_source = $main_1_source . " | tail -n+2";
     }

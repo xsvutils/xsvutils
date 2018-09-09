@@ -21,6 +21,7 @@ if (defined($ENV{TERMINAL_LINES})) {
 my $max_width = 80;
 my $option_col_number = '';
 my $option_record_number = '';
+my $option_color = '';
 
 while (@ARGV) {
     my $a = shift(@ARGV);
@@ -35,6 +36,8 @@ while (@ARGV) {
         $option_col_number = 1;
     } elsif ($a eq "--record-number") {
         $option_record_number = 1;
+    } elsif ($a eq "--color") {
+        $option_color = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -117,8 +120,8 @@ sub printRecord {
         my $col = $cols->[$i];
         push(@colViews, stringViewPadding($col, $viewLength, $i == $col_count1));
     }
-    my $head = $header_flag ? "\e[7m|" : "|";
-    my $tail = $header_flag ? "|\e[0m" : "|";
+    my $head = ($option_color && $header_flag) ? "\e[7m|" : "|";
+    my $tail = ($option_color && $header_flag) ? "|\e[0m" : "|";
     print $head . join("|", @colViews) . $tail . "\n";
 }
 
