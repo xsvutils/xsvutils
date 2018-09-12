@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v6 -> v7 (Unreleased)
+## v6 -> v7 (2018/09/12)
 
 以下のオプションが追加された。
 - cols コマンドの --remove
@@ -82,7 +82,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ## commit log
 
-### version 0.7 (-v7) (Unreleased)
+### version 0.7 (-v7) (2018/09/12)
 - add `--remove` option of `cols` subcommand
 - add `--sjis` option of `uriparams` subcommand
 - highlight header row
