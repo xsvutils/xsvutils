@@ -17,6 +17,10 @@ elif [ "$version" = -v6 ]; then
     # version 0.6
     GIT_HASH=5ee4226daac842c4d9d5a364b06128238503c164
     make_arg=build
+elif [ "$version" = -v7 ]; then
+    # version 0.7
+    GIT_HASH=8456d18517212e7f1e2f19c4bff75b94b18bb134
+    make_arg=build
 elif [ -n "$recursive_flag" ]; then
     echo "Unknown version: $version" >&2
     exit 1

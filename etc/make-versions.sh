@@ -11,6 +11,7 @@ install -v3
 install -v4
 install -v5
 install -v6
+install -v7
 
 touch var/repos-build.touch
 
