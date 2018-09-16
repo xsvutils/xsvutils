@@ -84,7 +84,7 @@ fi
 export HARD_WORKING_DIR=$(mktemp -d /tmp/xsvutils-hard-XXXXXXXX)
 [ -n "$HARD_WORKING_DIR" ] || { echo "Cannot create HARD_WORKING_DIR: $HARD_WORKING_DIR"; exit $?; }
 
-trap "rm -rf $WORKING_DIR $HARD_WORKING_DIR" EXIT
+trap "rm -rf $WORKING_DIR $HARD_WORKING_DIR; perl $TOOL_DIR/killchildren.pl $$" EXIT
 
 tput lines >/dev/null 2>&1 && export TERMINAL_LINES=$(tput lines);
 

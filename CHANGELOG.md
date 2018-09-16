@@ -6,6 +6,9 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v7 -> v8 (Unreleased)
 
+xsvutils 異常終了時に子プロセスが残ってしまうことがある問題を改善した。
+
+
 ## v6 -> v7 (2018/09/12)
 
 以下のオプションが追加された。
@@ -85,6 +88,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ## commit log
 
 ### version 0.8 (-v8) (Unreleased)
+- kill child processes on exit
 
 ### version 0.7 (-v7) (2018/09/12)
 - add `--remove` option of `cols` subcommand
