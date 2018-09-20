@@ -22,7 +22,7 @@ cut subcommand
         $ xsvutils FILENAME cut name1,name2,name3
         $ xsvutils FILENAME cut name1..name3
 
-    See also `git help cols`.
+    See also `xsvutils help cols`.
 
     Examples:
 
