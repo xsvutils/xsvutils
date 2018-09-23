@@ -8,6 +8,9 @@ To see compatibility information, `xsvutils help compatibility`.
 
 xsvutils 異常終了時に子プロセスが残ってしまうことがある問題を改善した。
 
+以下のコマンドの進捗表示を廃止した。
+- wcl
+
 
 ## v6 -> v7 (2018/09/12)
 
@@ -89,6 +92,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ### version 0.8 (-v8) (Unreleased)
 - kill child processes on exit
+- stop printing progress on `wcl`
 
 ### version 0.7 (-v7) (2018/09/12)
 - add `--remove` option of `cols` subcommand

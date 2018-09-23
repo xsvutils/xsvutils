@@ -27,9 +27,9 @@ func Count(rd io.Reader, hasHeader bool) {
 		for i := 0; i < len; i++ {
 			if buf[i] == '\n' {
 				lineCount++;
-				if lineCount % 1000000 == 0 {
-					fmt.Fprintf(os.Stderr, "Record: %d\n", lineCount);
-				}
+				//if lineCount % 1000000 == 0 {
+				//	fmt.Fprintf(os.Stderr, "Record: %d\n", lineCount);
+				//}
 			}
 		}
 		if buf[len - 1] == '\n' {

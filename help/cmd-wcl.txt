@@ -2,8 +2,6 @@ wcl subcommand
     Print record count excluding header line.
     レコード数を表示する。ヘッダ行は含まない。
 
-    データが大きい場合には、標準エラー出力に進捗表示をする。
-
     Options:
         --help    Print help information about this subcommand.
 
