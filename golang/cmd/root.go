@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"../lib/buffer"
-	"../lib/csv2tsv"
-	"../lib/fldsort"
-	"../lib/uriparams2tsv"
-	"../lib/wcl"
+	"../buffer"
+	"../csv2tsv"
+	"../fldsort"
+	"../uriparams2tsv"
+	"../wcl"
 )
 
 var RootCmd = &cobra.Command{
