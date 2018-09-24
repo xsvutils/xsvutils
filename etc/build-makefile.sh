@@ -13,8 +13,6 @@ TARGET_SOURCES2=$(echo $((
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 
-GOLANG_SOURCES=$(echo $(find golang -type f -name "*.go" | LC_ALL=C sort))
-
 RM_TARGET=$(diff -u <(ls -d $TARGET_SOURCES1 2>/dev/null) <(ls -d target/* 2>/dev/null) | grep -E '^\+target' | cut -b2-)
 if [ -n "$RM_TARGET" ]; then
     echo rm -r $RM_TARGET >&2
@@ -103,21 +101,18 @@ target/help-$f: help/$f
 EOF
 done
 
+perl etc/build-makefile-golang.pl $(find src -name '*.go')
 
 cat <<EOF
 gobuild: target/golang.bin
 
 target/golang.bin: var/GOLANG_VERSION_HASH
 	go version
-	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd golang; go vet ./...; go get github.com/spf13/cobra; go build; fi
-	mv golang/golang target/golang.bin
-	cp target/golang.bin golang/golang
+	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd var/xsvutils-golang; go vet ./...; go get github.com/spf13/cobra; go build; fi
+	mv var/xsvutils-golang/xsvutils-golang target/golang.bin
+	cp target/golang.bin var/xsvutils-golang/xsvutils-golang
 	chmod 777 target/golang.bin
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
-
-var/GOLANG_VERSION_HASH: $GOLANG_SOURCES
-	cat $GOLANG_SOURCES | shasum | cut -b1-40 > var/GOLANG_VERSION_HASH.tmp
-	mv var/GOLANG_VERSION_HASH.tmp var/GOLANG_VERSION_HASH
 
 EOF
 
