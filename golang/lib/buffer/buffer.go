@@ -7,7 +7,26 @@ import (
 	"io/ioutil"
 	"strings"
 	"os"
+	"github.com/spf13/cobra"
 )
+
+var (
+	debug bool
+)
+
+func InitCmd(RootCmd *cobra.Command) {
+	RootCmd.AddCommand(bufferCmd)
+	bufferCmd.Flags().BoolVarP(&debug, "debug", "", false, "debug mode")
+}
+
+var bufferCmd = &cobra.Command{
+	Use:   "buffer",
+	Short: "buffer pipe",
+	Long:  "buffer pipe",
+	Run: func(cmd *cobra.Command, args []string) {
+		Buffer(args)
+	},
+}
 
 const (
 	toolname = "xsvutils_buffer"
@@ -36,7 +55,6 @@ const (
 )
 
 var (
-	debug = true
 	bufferFileDirPath string
 	outputs []*output
 	fastestOutputIndex int = -1
@@ -267,9 +285,7 @@ func onOutputFinished(index int) bool {
 //	//}
 //}
 
-func Buffer(outputPathList []string, debug_ bool) {
-
-	debug = debug_
+func Buffer(outputPathList []string) {
 
 	func () {
 		var err error

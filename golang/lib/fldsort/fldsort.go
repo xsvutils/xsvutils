@@ -5,9 +5,37 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"sort"
+	"github.com/spf13/cobra"
 )
+
+var (
+	hasHeader  bool
+	sortQuery  string
+	descSort   bool
+	splitCount int
+)
+
+func InitCmd(RootCmd *cobra.Command) {
+	RootCmd.AddCommand(fldsortCmd)
+	fldsortCmd.Flags().BoolVarP(&hasHeader, "header", "H", false, "default false(=noheader)")
+	fldsortCmd.Flags().IntVarP(&splitCount, "split-count", "", 50000, "line count of intermediate files")
+}
+
+var fldsortCmd = &cobra.Command{
+	Use:   "fldsort",
+	Short: "sort by specific fields",
+	Long:  "sort by specific fields",
+	Run: func(cmd *cobra.Command, args []string) {
+		err := FieldSort(os.Stdin, hasHeader, splitCount)
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+	},
+}
 
 const (
 	toolname = "xsvutils_sort"

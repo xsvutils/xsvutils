@@ -5,10 +5,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-)
 
-var isCsvInput bool
-var hasHeader bool
+	"../lib/buffer"
+	"../lib/csv2tsv"
+	"../lib/fldsort"
+	"../lib/uriparams2tsv"
+	"../lib/wcl"
+)
 
 var RootCmd = &cobra.Command{
 	Use:   "xsvutils",
@@ -24,6 +27,9 @@ func Execute() {
 }
 
 func init() {
-	RootCmd.PersistentFlags().BoolVarP(&isCsvInput, "incsv", "c", false, "default false(=tsv)")
-	RootCmd.PersistentFlags().BoolVarP(&hasHeader, "header", "H", false, "default false(=noheader)")
+	buffer.InitCmd(RootCmd)
+	csv2tsv.InitCmd(RootCmd)
+	fldsort.InitCmd(RootCmd)
+	uriparams2tsv.InitCmd(RootCmd)
+	wcl.InitCmd(RootCmd)
 }

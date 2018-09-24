@@ -5,7 +5,22 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
+	"github.com/spf13/cobra"
 )
+
+func InitCmd(RootCmd *cobra.Command) {
+	RootCmd.AddCommand(csv2tsvCmd)
+}
+
+var csv2tsvCmd = &cobra.Command{
+	Use:   "csv2tsv",
+	Short: "convert csv to tsv",
+	Long:  "convert csv to tsv",
+	Run: func(cmd *cobra.Command, args []string) {
+		Convert(os.Stdin)
+	},
+}
 
 func Convert(rd io.Reader) {
 	r := csv.NewReader(rd)

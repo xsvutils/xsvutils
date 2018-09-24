@@ -109,7 +109,7 @@ gobuild: target/golang.bin
 
 target/golang.bin: var/GOLANG_VERSION_HASH
 	go version
-	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd golang; go vet ./...; go get github.com/spf13/cobra; go run ./generator/generator.go && go build; fi
+	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd golang; go vet ./...; go get github.com/spf13/cobra; go build; fi
 	mv golang/golang target/golang.bin
 	cp target/golang.bin golang/golang
 	chmod 777 target/golang.bin

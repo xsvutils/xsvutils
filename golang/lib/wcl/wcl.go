@@ -4,7 +4,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"github.com/spf13/cobra"
 )
+
+var hasHeader bool
+
+func InitCmd(RootCmd *cobra.Command) {
+	RootCmd.AddCommand(wclCmd)
+	wclCmd.Flags().BoolVarP(&hasHeader, "header", "H", false, "default false(=noheader)")
+}
+
+var wclCmd = &cobra.Command{
+	Use:   "wcl",
+	Short: "count lines",
+	Long:  "count lines",
+	Run: func(cmd *cobra.Command, args []string) {
+		Count(os.Stdin, hasHeader)
+	},
+}
 
 func Count(rd io.Reader, hasHeader bool) {
 	lineCount := 0
