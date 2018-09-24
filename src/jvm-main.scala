@@ -9,6 +9,8 @@ object Main {
 				throw new IllegalArgumentException();
 			case "--facetcount" :: tail =>
 				FacetCount.main(tail);
+			case "--parser" :: tail =>
+				ParserMain.main(tail);
 			case _ =>
 				throw new IllegalArgumentException(args.reverse.mkString(" "));
 		}

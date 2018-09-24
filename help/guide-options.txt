@@ -46,3 +46,6 @@ Common options:
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
 
+`--jvm` での実装メモ
+    --o-chart, --help, --version は未実装
+

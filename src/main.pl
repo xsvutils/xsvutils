@@ -26,6 +26,50 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
+################################################################################
+# use jvm if --java
+################################################################################
+
+sub forkJvm {
+    my ($argv) = @_;
+
+    my @jvmOptions = ();
+    if ($isInputTty) {
+        push(@jvmOptions, '--input-tty');
+    }
+    if ($isOutputTty) {
+        push(@jvmOptions, '--output-tty');
+    }
+
+    my $fromParser = "$WORKING_DIR/from-parser";
+    my $toParser   = "$WORKING_DIR/to-parser";
+    mkfifo($fromParser, 0600) or die $!;
+    mkfifo($toParser,   0600) or die $!;
+
+    #system("ls -al $WORKING_DIR/*");
+    my $pid1 = fork;
+    if (!defined $pid1) {
+        die $!;
+    } elsif ($pid1) {
+        # parent process
+    } else {
+        # child process
+        open(my $in_fh, '<', $toParser) or die $!;
+        open(my $out_fh, '>', $fromParser) or die $!;
+        open(STDIN, '<&=', fileno($in_fh)) or die $!;
+        open(STDOUT, '>&=', fileno($out_fh)) or die $!;
+        exec("$TOOL_DIR/java/bin/xsvutils-java", "--parser", @jvmOptions, @$argv);
+    }
+
+    exec("perl", "$TOOL_DIR/process-builder.pl", $fromParser, $toParser);
+    die;
+}
+
+if (@ARGV && $ARGV[0] eq '--jvm') {
+    my @argv = @ARGV;
+    shift(@argv);
+    forkJvm(\@argv);
+}
 
 ################################################################################
 # parse command line options for help

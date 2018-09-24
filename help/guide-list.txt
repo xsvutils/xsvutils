@@ -60,3 +60,8 @@ Available subcommands:
         $ xsvutils <SUBCOMMAND> --help
     で確認できる。
 
+`--jvm` での実装メモ
+    ほとんどすべてのサブコマンドが未実装。
+
+    実装済み(--helpオプションを除く): cut, update, wcl
+
