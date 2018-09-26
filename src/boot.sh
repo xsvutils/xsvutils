@@ -25,7 +25,7 @@ fi
 
 VERSION=
 
-if [ "$1" = -v8- ]; then # latest version
+if [ "$1" = -v8 ]; then # latest version
     shift
 elif [[ "$1" =~ -v[0-9]+ ]]; then
     if [ "$1" = "-v1" ]; then

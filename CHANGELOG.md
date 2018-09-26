@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v7 -> v8 (Unreleased)
+## v7 -> v8 (2018/09/26)
 
 xsvutils 異常終了時に子プロセスが残ってしまうことがある問題を改善した。
 
@@ -97,7 +97,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ## commit log
 
-### version 0.8 (-v8) (Unreleased)
+### version 0.8 (-v8) (2018/09/26)
 - kill child processes on exit
 - stop printing progress on `wcl`
 - add --jvm option
