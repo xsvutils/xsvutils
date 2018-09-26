@@ -1,6 +1,6 @@
 # xsvutils
 
-Utilities for handling separated value data.
+A set of command line utilities for handling tabular data files.
 CSVファイルやTSVファイルをCUIで扱うツール。
 
 https://www.slideshare.net/suzuki-navi/xsvutils-overview
@@ -13,7 +13,7 @@ To see help documents,
 
     $ xsvutils --help
     $ xsvutils --help usage
-    $ xsvutils --help subcommands
+    $ xsvutils --help list
 
 ## Example
 
@@ -22,6 +22,7 @@ Print tsv/csv data to the terminal.
 
     $ xsvutils data.tsv
     $ xsvutils data.csv
+    $ xsvutils data.csv.gz                       # gz or xz format is supported
     $ ssh remote-host cat foo/bar.csv | xsvutils
 
 端末への出力例
