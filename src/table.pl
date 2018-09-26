@@ -121,8 +121,8 @@ sub printRecord {
         push(@colViews, stringViewPadding($col, $viewLength, $i == $col_count1));
     }
     my $vert = encode_utf8("│");
-    my $head = ($option_color && $header_flag) ? "\e[7m$vert" : $vert;
-    my $tail = ($option_color && $header_flag) ? "$vert\e[0m" : $vert;
+    my $head = ($option_color && $header_flag) ? "\e[7m" : "";
+    my $tail = ($option_color && $header_flag) ? "\e[0m" : "";
     print $head . join($vert, @colViews) . $tail . "\n";
 }
 
