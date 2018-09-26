@@ -120,9 +120,10 @@ sub printRecord {
         my $col = $cols->[$i];
         push(@colViews, stringViewPadding($col, $viewLength, $i == $col_count1));
     }
-    my $head = ($option_color && $header_flag) ? "\e[7m|" : "|";
-    my $tail = ($option_color && $header_flag) ? "|\e[0m" : "|";
-    print $head . join("|", @colViews) . $tail . "\n";
+    my $vert = encode_utf8("│");
+    my $head = ($option_color && $header_flag) ? "\e[7m$vert" : $vert;
+    my $tail = ($option_color && $header_flag) ? "$vert\e[0m" : $vert;
+    print $head . join($vert, @colViews) . $tail . "\n";
 }
 
 my $max_line_count = 1010;
