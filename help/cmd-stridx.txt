@@ -1,0 +1,9 @@
+stridx subcommand
+    
+
+    Usage:
+        $ xsvutils --jvm stridx [option...]
+
+    Options:
+        --help             Print help information about this subcommand.
+

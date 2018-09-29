@@ -311,14 +311,15 @@ object QueryParser {
 		"cut" -> (() => CutCommandParser(None)),
 		"cutidx" -> (() => CutidxCommandParser(None)),
 		"update" -> (() => UpdateCommandParser(None, None, None)),
-		"wcl" -> (() => WclCommandParser())
+		"wcl" -> (() => WclCommandParser()),
+		"stridx" -> (() => StridxCommandParser())
 	);
 
 	private val HeaderArgPattern = "[_0-9a-zA-Z][-_0-9a-zA-Z,]*".r;
 
 }
 
-sealed trait CommandParser {
+trait CommandParser {
 	def eat(args: List[String]): Option[(CommandParser, List[String])];
 	def createCommand(): Command;
 	def eatFilePathPriority: Boolean = false;
@@ -472,7 +473,7 @@ object QueryTree {
 
 }
 
-sealed trait Command {
+trait Command {
 	def externalInputFormatWrapper: List[InputFormatWrapper] = Nil;
 	def stdins: List[InputFormatWrapper] = Nil;
 	def stdouts: List[OutputFormatWrapper] = Nil;
@@ -480,41 +481,56 @@ sealed trait Command {
 //	def output: OutputResource;
 }
 
+trait CommandExecutor {
+	def exec(inputFilePath: String, outputFilePath: String);
+}
+
 //==================================================================================================
 
 sealed trait CommandLineArgument {
 	def toRaw: String;
+	def toBash: String;
 	def toDebug: String;
 }
 case class NormalArgument(arg: String) extends CommandLineArgument {
-	def toRaw: String = escapeForBash(arg);
+	def toRaw: String = arg;
+	def toBash: String = escapeForBash(arg);
 	def toDebug: String = escapeForBash(arg);
 }
 case class WorkingDirArgument(fname: String) extends CommandLineArgument {
-	def toRaw: String = escapeForBash(WORKING_DIR + "/" + fname);
+	def toRaw: String = WORKING_DIR + "/" + fname;
+	def toBash: String = escapeForBash(WORKING_DIR + "/" + fname);
 	def toDebug: String = "$WORKING_DIR/" + escapeForBash(fname);
 }
 case class ToolDirArgument(fname: String) extends CommandLineArgument {
-	def toRaw: String = escapeForBash(TOOL_DIR + "/" + fname);
+	def toRaw: String = TOOL_DIR + "/" + fname;
+	def toBash: String = escapeForBash(TOOL_DIR + "/" + fname);
 	def toDebug: String = "$TOOL_DIR/" + escapeForBash(fname);
 }
 
-case class CommandLine(args: List[CommandLineArgument],
-	in: Option[CommandLineArgument], out: Option[CommandLineArgument],
-	background: Boolean, debug: String) {
+sealed trait CommandLine {
+	def toBash: Option[String];
+	def toDebug: String;
+	def execute();
+}
 
-	def toRaw: String = {
-		args.map(_.toRaw).mkString(" ") +
+case class CommandLineImpl(args: List[CommandLineArgument],
+	in: Option[CommandLineArgument], out: Option[CommandLineArgument],
+	background: Boolean, debug: String) extends CommandLine {
+
+	def toBash: Option[String] = {
+		val raw = args.map(_.toBash).mkString(" ") +
 			(in match {
-				case Some(in) => " < " + in.toRaw;
+				case Some(in) => " < " + in.toBash;
 				case None => "";
 			}) +
 			(out match {
-				case Some(out) => " > " + out.toRaw;
+				case Some(out) => " > " + out.toBash;
 				case None => "";
 			}) +
 			(if (background) " &" else "");
-		}
+		Some(raw);
+	}
 	def toDebug: String = {
 		if (args.isEmpty && debug.isEmpty) {
 			"";
@@ -537,6 +553,37 @@ case class CommandLine(args: List[CommandLineArgument],
 			}
 			c + sep + "# " + debug;
 		}
+	}
+
+	def execute() {}
+}
+
+case class JvmCommandLine (executor: CommandExecutor,
+	in: CommandLineArgument, out: CommandLineArgument,
+	debug: String) extends CommandLine {
+
+	def toBash: Option[String] = None;
+
+	def toDebug: String = {
+		val c = "#jvm: " + executor.toString +
+			" < " + in.toDebug +
+			" > " + out.toDebug +
+			" &";
+		val maxLen = 110;
+		val sep = if (c.length < maxLen) {
+			" " * (maxLen - c.length);
+		} else {
+			"    ";
+		}
+		c + sep + "# " + debug;
+	}
+
+	def execute() {
+		(new Thread(new Runnable() {
+			def run() {
+				executor.exec(in.toRaw, out.toRaw);
+			}
+		})).start();
 	}
 }
 
@@ -630,7 +677,7 @@ case class FifoResource(id: Int) {
 
 	def createMkfifoCommandLines(): List[CommandLine] = {
 		if (GlobalParser.createMkfifoCommandLines(id)) {
-			CommandLine(NormalArgument("mkfifo") :: arg :: Nil,
+			CommandLineImpl(NormalArgument("mkfifo") :: arg :: Nil,
 				None, None, false, "mkfifo " + id) :: Nil;
 		} else {
 			Nil;
@@ -676,7 +723,7 @@ class InputFormatWrapper (
 				NormalArgument("--ltsv") :: Nil;
 			case None => Nil;
 		}
-		val command = CommandLine(NormalArgument("perl") :: ToolDirArgument("format-wrapper.pl") ::
+		val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("format-wrapper.pl") ::
 			formatOpt ::: resultFifo.arg ::
 			NormalArgument("-i") :: input.input.arg :: NormalArgument("-o") :: streamFifo.arg :: Nil,
 			None, None, true, commandLineIOStringForDebug(input.input, streamFifo.o));
@@ -832,10 +879,10 @@ case class CharEncodingInputConverterCommand (charEncoding: CharEncoding) extend
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
 		charEncoding match {
 			case UTF8CharEncoding =>
-				CommandLine(NormalArgument("cat") :: Nil,
+				CommandLineImpl(NormalArgument("cat") :: Nil,
 					Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 			case SJISCharEncoding =>
-				CommandLine(("iconv" :: "-f" :: "SHIFT-JIS" :: "-t" :: "UTF-8//TRANSLIT" :: Nil).map(NormalArgument),
+				CommandLineImpl(("iconv" :: "-f" :: "SHIFT-JIS" :: "-t" :: "UTF-8//TRANSLIT" :: Nil).map(NormalArgument),
 					Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 		}
 	}
@@ -845,7 +892,7 @@ case class CharEncodingInputConverterCommand (charEncoding: CharEncoding) extend
 case class UTF8BomTrimmerCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(("tail" :: "-c+4" :: Nil).map(NormalArgument),
+		CommandLineImpl(("tail" :: "-c+4" :: Nil).map(NormalArgument),
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -854,7 +901,7 @@ case class UTF8BomTrimmerCommand () extends Command {
 case class DosNewLineToUnixCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(("sed" :: "s/\\r$//g" :: Nil).map(NormalArgument),
+		CommandLineImpl(("sed" :: "s/\\r$//g" :: Nil).map(NormalArgument),
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -863,7 +910,7 @@ case class DosNewLineToUnixCommand () extends Command {
 case class MacNewLineToUnixCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(("sed" :: "s/\\r$/\\n/g" :: Nil).map(NormalArgument),
+		CommandLineImpl(("sed" :: "s/\\r$/\\n/g" :: Nil).map(NormalArgument),
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -872,7 +919,7 @@ case class MacNewLineToUnixCommand () extends Command {
 case class CsvToTsvCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(ToolDirArgument("golang.bin") :: NormalArgument("csv2tsv") :: Nil,
+		CommandLineImpl(ToolDirArgument("golang.bin") :: NormalArgument("csv2tsv") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -881,7 +928,7 @@ case class CsvToTsvCommand () extends Command {
 case class LtsvToTsvCommand (cols: List[String]) extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("ltsv2tsv.pl") :: NormalArgument("--header") :: NormalArgument(cols.mkString(",")) :: Nil,
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("ltsv2tsv.pl") :: NormalArgument("--header") :: NormalArgument(cols.mkString(",")) :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -890,7 +937,7 @@ case class LtsvToTsvCommand (cols: List[String]) extends Command {
 case class AddHeaderCommand(cols: List[String]) extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("bash") :: ToolDirArgument("add-header.sh") :: NormalArgument(cols.mkString("\\t")) :: Nil,
+		CommandLineImpl(NormalArgument("bash") :: ToolDirArgument("add-header.sh") :: NormalArgument(cols.mkString("\\t")) :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -952,7 +999,7 @@ class OutputFormatWrapper (
 case class TsvToCsvCommand() extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("to-csv.pl") :: Nil,
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("to-csv.pl") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -966,7 +1013,7 @@ case class TsvToTableCommand(isColor: Boolean) extends Command {
 		} else {
 			Nil;
 		}
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("table.pl") :: options.map(NormalArgument),
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("table.pl") :: options.map(NormalArgument),
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -975,7 +1022,7 @@ case class TsvToTableCommand(isColor: Boolean) extends Command {
 case class TsvToDiffableCommand() extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("to-diffable.pl") :: Nil,
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("to-diffable.pl") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -984,7 +1031,7 @@ case class TsvToDiffableCommand() extends Command {
 case class NoHeaderCommand() extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("tail") :: NormalArgument("-n+2") :: Nil,
+		CommandLineImpl(NormalArgument("tail") :: NormalArgument("-n+2") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -993,7 +1040,7 @@ case class NoHeaderCommand() extends Command {
 case class LessCommand() extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("less") :: NormalArgument("-SRX") :: Nil,
+		CommandLineImpl(NormalArgument("less") :: NormalArgument("-SRX") :: Nil,
 			Some(input.arg), None, false, commandLineIOStringForDebug(Some(input), None)) :: Nil;
 	}
 
@@ -1005,7 +1052,7 @@ case class CatCommand (
 ) extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(NormalArgument("cat") :: Nil,
+		CommandLineImpl(NormalArgument("cat") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -1018,17 +1065,17 @@ object TeeCommand {
 		outputs match {
 			case Nil =>
 				val output = NullOutputResource();
-				CommandLine(NormalArgument("cat") :: Nil,
+				CommandLineImpl(NormalArgument("cat") :: Nil,
 					Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 			case head :: Nil =>
-				CommandLine(NormalArgument("cat") :: Nil,
+				CommandLineImpl(NormalArgument("cat") :: Nil,
 					Some(input.arg), Some(head.arg), true, commandLineIOStringForDebug(input, head)) :: Nil;
 			case head :: tail =>
 				val debugs = (tail ::: head :: Nil).map(o => commandLineIOStringForDebug(input, o));
 				val debug = debugs.head;
-				val debugTail = debugs.tail.map(CommandLine(Nil, None, None, false, _));
+				val debugTail = debugs.tail.map(CommandLineImpl(Nil, None, None, false, _));
 
-				val command = CommandLine(NormalArgument("tee") :: tail.map(_.arg) ::: Nil,
+				val command = CommandLineImpl(NormalArgument("tee") :: tail.map(_.arg) ::: Nil,
 					Some(input.arg), Some(head.arg), true, debug);
 
 				command :: debugTail ::: Nil;
@@ -1117,12 +1164,12 @@ case class PasteCommand (
 				val cmds2 = anotherInput.createCommandLines(None, Some(fifo2.o));
 
 				val option = NormalArgument("--right") :: fifo2.i.arg :: Nil;
-				val command = CommandLine(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
+				val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
 					Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output));
 
 				empty :: cmds1 ::: empty :: cmds2 ::: empty ::
 				command ::
-				CommandLine(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
+				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
 			case None =>
 				val fifo1 = GlobalParser.createFifo();
 				val fifo2 = GlobalParser.createFifo();
@@ -1133,12 +1180,12 @@ case class PasteCommand (
 				val cmds3 = anotherInput.createCommandLines(Some(fifo1.i), Some(fifo2.o));
 
 				val option = NormalArgument("--right") :: fifo2.i.arg :: Nil;
-				val command = CommandLine(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
+				val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
 					Some(fifo3.i.arg), Some(output.arg), true, commandLineIOStringForDebug(fifo3.i, output));
 
 				empty :: cmds1 ::: cmds2 ::: empty :: cmds3 ::: empty ::
 				command ::
-				CommandLine(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
+				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
 		}
 	}
 
@@ -1185,7 +1232,7 @@ case class CutCommand (
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
 		val option = NormalArgument("--col") :: NormalArgument(columns.mkString(",")) :: Nil;
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("cut.pl") :: option,
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("cut.pl") :: option,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -1232,7 +1279,7 @@ case class CutidxCommand (
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
 		val option = NormalArgument("--col") :: NormalArgument(column) :: Nil;
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("cutidx.pl") :: option,
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("cutidx.pl") :: option,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -1323,7 +1370,7 @@ case class UpdateCommand (content: List[UpdateContent]) extends Command {
 		val contents = content.map { content =>
 			NormalArgument(content.index + ":" + content.col + "=" + content.value);
 		}
-		CommandLine(NormalArgument("perl") :: ToolDirArgument("update.pl") :: contents,
+		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("update.pl") :: contents,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -1347,7 +1394,7 @@ case class WclCommandParser (
 case class WclCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLine(ToolDirArgument("golang.bin") :: NormalArgument("wcl") :: NormalArgument("--header") :: Nil,
+		CommandLineImpl(ToolDirArgument("golang.bin") :: NormalArgument("wcl") :: NormalArgument("--header") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -1389,18 +1436,25 @@ class ParserMain (tree: GlobalTree) {
 	val reader = new java.io.BufferedReader(new java.io.InputStreamReader(System.in, "UTF-8"));
 
 	private def putCommand(command: String) {
-		putCommand(CommandLine(NormalArgument(command) :: Nil, None, None, false, ""));
+		putCommand(CommandLineImpl(NormalArgument(command) :: Nil, None, None, false, ""));
 	}
 
 	private def putCommand(line: CommandLine) {
-		val raw = line.toRaw;
-		println(raw);
+		line.execute();
+
+		val rawOpt = line.toBash;
+		rawOpt match {
+			case Some(raw) => println(raw);
+			case None => ;
+		}
 		if (tree.explain) {
 			System.err.println(line.toDebug);
 		}
 
-		if (raw == "wait") {
-			return;
+		rawOpt match {
+			case Some("wait") => return;
+			case None => return;
+			case _ => ;
 		}
 
 		val result = reader.readLine();
@@ -1431,7 +1485,7 @@ object ParserMain {
 	val TOOL_DIR: String = System.getenv("TOOL_DIR");
 	val WORKING_DIR: String = System.getenv("WORKING_DIR");
 
-	val emptyCommandLine = CommandLine(Nil, None, None, false, "");
+	val emptyCommandLine = CommandLineImpl(Nil, None, None, false, "");
 
 	def commandLineIOStringForDebug(input: InputResource, output: OutputResource): String = {
 		input.numberForDebug + " -> " + output.numberForDebug;

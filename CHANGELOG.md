@@ -8,6 +8,7 @@ To see compatibility information, `xsvutils help compatibility`.
 
 以下のコマンドが追加された。
 - cutidx (--jvm のみ)
+- stridx (--jvm のみ)
 
 
 ## v7 -> v8 (2018/09/26)
@@ -105,6 +106,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ### version 0.9 (-v9) (Unreleased)
 - add `cutidx` subcommand on `--jvm`
+- add `stridx` subcommand on `--jvm`
 
 ### version 0.8 (-v8) (2018/09/26)
 - kill child processes on exit
