@@ -53,6 +53,7 @@ Available subcommands:
 
     その他のコマンド
         tee <OTHER_FILE>                Output to next subcommand and another file
+        cutidx <COLUMN>                 Print specified column, record offset and length (--jvm only)
 
     各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>
@@ -63,5 +64,5 @@ Available subcommands:
 `--jvm` での実装メモ
     ほとんどすべてのサブコマンドが未実装。
 
-    実装済み(--helpオプションを除く): cut, update, wcl
+    実装済み(--helpオプションを除く): cut, update, wcl, cutidx
 

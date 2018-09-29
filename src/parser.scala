@@ -309,6 +309,7 @@ object QueryParser {
 	val commands: Map[String, () => CommandParser] = Map(
 		"paste" -> (() => PasteCommandParser(None)),
 		"cut" -> (() => CutCommandParser(None)),
+		"cutidx" -> (() => CutidxCommandParser(None)),
 		"update" -> (() => UpdateCommandParser(None, None, None)),
 		"wcl" -> (() => WclCommandParser())
 	);
@@ -1154,8 +1155,7 @@ case class CutCommandParser (
 			case opt :: arg :: tail if (opt == "--col" || opt == "--cols" || opt == "columns") =>
 				columns match {
 					case Some(_) => throw new UserException("duplicated option: " + args.head);
-					case None =>
-						Some((updateCols(arg), tail));
+					case None => Some((updateCols(arg), tail));
 				}
 			case opt :: Nil if (opt == "--col" || opt == "--cols" || opt == "columns") =>
 				throw new UserException("option " + args.head + " needs an argument");
@@ -1186,6 +1186,53 @@ case class CutCommand (
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
 		val option = NormalArgument("--col") :: NormalArgument(columns.mkString(",")) :: Nil;
 		CommandLine(NormalArgument("perl") :: ToolDirArgument("cut.pl") :: option,
+			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
+	}
+
+}
+
+//==================================================================================================
+
+case class CutidxCommandParser (
+	column: Option[String]
+) extends CommandParser {
+
+	def eat(args: List[String]): Option[(CommandParser, List[String])] = {
+		args match {
+			case "--col" :: arg :: tail =>
+				column match {
+					case Some(_) => throw new UserException("duplicated option: " + args.head);
+					case None => Some((this.copy(column = Some(arg)), tail));
+				}
+			case "--col" :: Nil =>
+				throw new UserException("option " + args.head + " needs an argument");
+			case GlobalParser.OptionPattern() :: tail =>
+				None;
+			case arg :: tail if (column.isEmpty) =>
+				Some((this.copy(column = Some(arg)), tail));
+			case _ =>
+				None;
+		}
+	}
+
+	def createCommand(): Command = {
+		column match {
+			case Some(column) =>
+				CutidxCommand(column);
+			case None =>
+				throw new UserException("subcommand `cutidx` needs --col option");
+		}
+	}
+
+}
+
+case class CutidxCommand (
+	column: String
+) extends Command {
+
+	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
+		val option = NormalArgument("--col") :: NormalArgument(column) :: Nil;
+		CommandLine(NormalArgument("perl") :: ToolDirArgument("cutidx.pl") :: option,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 

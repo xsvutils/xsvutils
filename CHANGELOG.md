@@ -6,6 +6,10 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v8 -> v9 (Unreleased)
 
+以下のコマンドが追加された。
+- cutidx (--jvm のみ)
+
+
 ## v7 -> v8 (2018/09/26)
 
 xsvutils 異常終了時に子プロセスが残ってしまうことがある問題を改善した。
@@ -100,12 +104,13 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ## commit log
 
 ### version 0.9 (-v9) (Unreleased)
+- add `cutidx` subcommand on `--jvm`
 
 ### version 0.8 (-v8) (2018/09/26)
 - kill child processes on exit
 - stop printing progress on `wcl`
-- add --jvm option
-- reimplement `cut`, `update`, `wcl` subcommands on --jvm
+- add `--jvm` option
+- reimplement `cut`, `update`, `wcl` subcommands on `--jvm`
 
 ### version 0.7 (-v7) (2018/09/12)
 - add `--remove` option of `cols` subcommand
