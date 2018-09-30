@@ -37,9 +37,6 @@ case class GlobalParser (
 
 object GlobalParser {
 
-	val OptionPattern = "-.*".r;
-	val ColumnNamePattern = "[_0-9a-zA-Z][-_0-9a-zA-Z]*".r;
-
 	def apply() = new GlobalParser(QueryParser(None, true, true, false, false), false, false, false);
 
 	def parse(args: List[String]): GlobalParser = {
@@ -56,6 +53,13 @@ object GlobalParser {
 			}
 		}
 		sub(GlobalParser(), args);
+	}
+
+	val OptionPattern = "-.*".r;
+	val ColumnNamePattern = "[_0-9a-zA-Z][-_0-9a-zA-Z]*".r;
+
+	def isOptionPattern(arg: String): Boolean = {
+		GlobalParser.OptionPattern.unapplySeq(arg).isDefined;
 	}
 
 	private var fifoCounter: Int = 0;
@@ -105,24 +109,16 @@ case class QueryParser (
 		args match {
 			case Nil =>
 				(this, args, false);
+			case a :: tail if (lastCommand.map(_.eatSubquery).getOrElse(false)) =>
+				lastCommand.get.eat(args) match {
+					case Some((c2, tail)) =>
+						(this.copy(lastCommand = Some(c2)), tail, false);
+					case None =>
+						eatSub(args, queryCommandName, inputOk, outputOk);
+				}
 			case "-" :: tail if (inputPath.isEmpty) =>
 				throwIfUnexpectedInputOption(queryCommandName, inputOk);
 				(this.copy(inputPath = Some(Left(()))), tail, false);
-			case a :: tail if (QueryParser.commands.contains(a)) =>
-				if (inputPath.isEmpty && (new java.io.File(a)).exists) {
-					throwIfUnexpectedInputOption(queryCommandName, inputOk);
-					throw new UserException("ambiguous parameter: " + a + ", use -i");
-				}
-				lastCommand match {
-					case None =>
-						(this.copy(lastCommand = Some(QueryParser.commands(a)())), tail, false);
-					case Some(c) =>
-						(this.copy(commands = c :: commands, lastCommand = Some(QueryParser.commands(a)())), tail, false);
-				}
-			case a :: tail if (!a.matches("-.*") && inputPath.isEmpty && (new java.io.File(a)).exists) &&
-					!(lastCommand.map(_.eatFilePathPriority).getOrElse(false)) =>
-				throwIfUnexpectedInputOption(queryCommandName, inputOk);
-				(this.copy(inputPath = Some(Right(a))), tail, false);
 			case "--tsv" :: tail =>
 				throwIfUnexpectedInputOption(queryCommandName, inputOk);
 				inputFormat match {
@@ -214,6 +210,21 @@ case class QueryParser (
 					case None => (this.copy(outputHeader = Some(false)), tail, false);
 					case _ => throw new UserException("duplicated option: " + args.head);
 				}
+			case a :: tail if (QueryParser.commands.contains(a)) =>
+				if (inputPath.isEmpty && (new java.io.File(a)).exists) {
+					throwIfUnexpectedInputOption(queryCommandName, inputOk);
+					throw new UserException("ambiguous parameter: " + a + ", use -i");
+				}
+				lastCommand match {
+					case None =>
+						(this.copy(lastCommand = Some(QueryParser.commands(a)())), tail, false);
+					case Some(c) =>
+						(this.copy(commands = c :: commands, lastCommand = Some(QueryParser.commands(a)())), tail, false);
+				}
+			case a :: tail if (!GlobalParser.isOptionPattern(a) && inputPath.isEmpty && (new java.io.File(a)).exists) &&
+					!(lastCommand.map(_.eatFilePathPriority).getOrElse(false)) =>
+				throwIfUnexpectedInputOption(queryCommandName, inputOk);
+				(this.copy(inputPath = Some(Right(a))), tail, false);
 			case "]" :: tail if queryCommandName.isDefined =>
 				(this, tail, true);
 			case a :: tail if (lastCommand.isDefined) =>
@@ -322,9 +333,10 @@ object QueryParser {
 }
 
 trait CommandParser {
+	def eatFilePathPriority: Boolean = false;
+	def eatSubquery: Boolean = false;
 	def eat(args: List[String]): Option[(CommandParser, List[String])];
 	def createCommand(): Command;
-	def eatFilePathPriority: Boolean = false;
 }
 
 //==================================================================================================
@@ -1092,6 +1104,15 @@ case class PasteCommandParser (
 	anotherInput: Option[Either[String, (QueryParser, Boolean)]]
 ) extends CommandParser {
 
+	override def eatFilePathPriority: Boolean = true;
+
+	override def eatSubquery: Boolean = {
+		anotherInput match {
+			case Some(Right((q, false))) => true;
+			case _ => false;
+		}
+	}
+
 	def eat(args: List[String]): Option[(CommandParser, List[String])] = {
 		anotherInput match {
 			case Some(Right((q, false))) =>
@@ -1102,17 +1123,19 @@ case class PasteCommandParser (
 					case "[" :: tail =>
 						anotherInput match {
 							case None =>
-								Some((this.copy(anotherInput = Some(Right((QueryParser(Some("paste"), true, false, true, true), false)))), tail));
+								Some((this.copy(anotherInput = Some(Right((QueryParser(queryCommandName = Some("paste"),
+									inputOk = true, outputOk = false,
+							existsDefaultInput = true, existsDefaultOutput = true), false)))), tail));
 							case _ =>
 								throw new UserException("duplicated option: " + args.head);
 						}
-					case "--file" :: a :: tail =>
+					case "--file" :: arg :: tail =>
 						anotherInput match {
 							case None =>
-								if (!(new java.io.File(a)).exists) {
-									throw new UserException("File not found: " + a);
+								if (!(new java.io.File(arg)).exists) {
+									throw new UserException("File not found: " + arg);
 								}
-								Some((this.copy(anotherInput = Some(Left(a))), tail));
+								Some((this.copy(anotherInput = Some(Left(arg))), tail));
 							case _ =>
 								throw new UserException("duplicated option: " + args.head);
 						}
@@ -1138,8 +1161,6 @@ case class PasteCommandParser (
 		}
 		PasteCommand(anotherInput2);
 	}
-
-	override def eatFilePathPriority: Boolean = true;
 
 }
 
