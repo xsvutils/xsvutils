@@ -318,8 +318,8 @@ object QueryParser {
 	}
 
 	val commands: Map[String, () => CommandParser] = Map(
-		"filter" -> (() => FilterCommandParser(None, None, None)),
-		"where" -> (() => FilterCommandParser(None, None, None)),
+		"filter" -> (() => FilterCommandParser(None, None, None, None)),
+		"where" -> (() => FilterCommandParser(None, None, None, None)),
 		"paste" -> (() => PasteCommandParser(None)),
 		"cut" -> (() => CutCommandParser(None)),
 		"cutidx" -> (() => CutidxCommandParser(None)),
@@ -1209,10 +1209,10 @@ case class PasteCommand (
 				val option = NormalArgument("--right") :: fifo2i.arg :: Nil;
 				val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
 					Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output));
+				val debug = CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2i, output));
 
 				fifo2Cmds ::: cmds3 :::
-				command ::
-				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2i, output)) :: Nil;
+				command :: debug :: Nil;
 			case None =>
 				// input - tee ------------------ fifo3 - paste - output
 				//           \                            /
@@ -1230,10 +1230,10 @@ case class PasteCommand (
 				val option = NormalArgument("--right") :: fifo2.i.arg :: Nil;
 				val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
 					Some(fifo3.i.arg), Some(output.arg), true, commandLineIOStringForDebug(fifo3.i, output));
+				val debug = CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output));
 
 				fifoCmds ::: cmds3 ::: cmds4 :::
-				command ::
-				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
+				command :: debug :: Nil;
 		}
 	}
 
@@ -1488,15 +1488,16 @@ class ParserMain (tree: GlobalTree) {
 	}
 
 	private def putCommand(line: CommandLine) {
+		if (tree.explain) {
+			System.err.println(line.toDebug);
+		}
+
 		line.execute();
 
 		val rawOpt = line.toBash;
 		rawOpt match {
 			case Some(raw) => println(raw);
 			case None => ;
-		}
-		if (tree.explain) {
-			System.err.println(line.toDebug);
 		}
 
 		rawOpt match {

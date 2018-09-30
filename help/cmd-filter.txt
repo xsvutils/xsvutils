@@ -4,7 +4,7 @@ filter, where subcommand
     `filter` subcommand is the same as `where` subcommand.
 
     Usage:
-        $ xsvutils filter <COLUMN> <OPERATOR> <VALUE>
+        $ xsvutils filter <COLUMN> <OPERATOR> <VALUE> [option...]
 
     Parameter:
         <COLUMN>   column name as left-hand operand
@@ -28,7 +28,8 @@ filter, where subcommand
         !~   column value does not match the right regular expression
 
     Options:
-        --help    Print help information about this subcommand.
+        --stridx <IDX_FILE> Use stridx file. (--jvm only)
+        --help              Print help information about this subcommand.
 
     注意:
         `>` や `<` はシェルではエスケープが必要である。

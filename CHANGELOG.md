@@ -14,6 +14,10 @@ To see compatibility information, `xsvutils help compatibility`.
 - filter
 - where
 
+以下のオプションが追加された。
+- filter コマンドの --stridx (--jvm のみ)
+- where コマンドの --stridx (--jvm のみ)
+
 
 ## v7 -> v8 (2018/09/26)
 
@@ -115,6 +119,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - add `cutidx` subcommand on `--jvm`
 - add `stridx` subcommand on `--jvm`
 - reimplement `filter`, `where` subcommands on `--jvm`
+- add `--stridx` option of `filter` `where` subcommands on `--jvm`
 
 ### version 0.8 (-v8) (2018/09/26)
 - kill child processes on exit
