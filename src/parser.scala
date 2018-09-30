@@ -419,7 +419,9 @@ class QueryTree private (
 		}) ::: commands.flatMap(_.stdouts);
 	}
 
-	def createCommandLines(defaultInput: Option[InputResource], defaultOutput: Option[OutputResource]): List[CommandLine] = {
+	def createCommandLines(defaultInput: Option[InputResource], defaultOutput: Option[OutputResource],
+		isNilOk: Boolean): List[CommandLine] = {
+
 		//if (existsDefaultInput && defaultInput.isEmpty) {
 		//	throw new AssertionError();
 		//}
@@ -444,23 +446,32 @@ class QueryTree private (
 			case (None, None) => (StdoutResource(), Nil);
 		}
 
-		val commandsReversed = (cmds1 ::: commands ::: cmds2) match {
-			case Nil => CatCommand() :: Nil;
-			case cmds => cmds.reverse;
+		def sub(cmds: List[Command]): List[CommandLine] = {
+			val commandsReversed = cmds.reverse;
+			val last = commandsReversed.head;
+			val middle = commandsReversed.tail.reverse;
+			val (in2, sourcesReversed1, sourcesReversed2) = middle.foldLeft[(InputResource, List[CommandLine], List[CommandLine])]((in, Nil, Nil)) { (t, cmd) =>
+				val (in3, sources1, sources2) = t;
+				val fifo = GlobalParser.createFifo();
+				val lines1 = fifo.createMkfifoCommandLines().reverse;
+				val lines2 = cmd.createCommandLines(in3, fifo.o).reverse;
+				(fifo.i, lines1 ::: sources1, lines2 ::: sources2);
+			}
+			val sources1 = sourcesReversed1.reverse;
+			val sources2 = (last.createCommandLines(in2, out).reverse ::: sourcesReversed2).reverse;
+			sources1 ::: sources2;
 		}
-		val last = commandsReversed.head;
-		val middle = commandsReversed.tail.reverse;
-		val (in2, sourcesReversed1, sourcesReversed2) = middle.foldLeft[(InputResource, List[CommandLine], List[CommandLine])]((in, Nil, Nil)) { (t, cmd) =>
-			val (in3, sources1, sources2) = t;
-			val fifo = GlobalParser.createFifo();
-			val lines1 = fifo.createMkfifoCommandLines().reverse;
-			val lines2 = cmd.createCommandLines(in3, fifo.o).reverse;
-			(fifo.i, lines1 ::: sources1, lines2 ::: sources2);
-		}
-		val sources1 = sourcesReversed1.reverse;
-		val sources2 = (last.createCommandLines(in2, out).reverse ::: sourcesReversed2).reverse;
 
-		sources1 ::: sources2;
+		(cmds1 ::: commands ::: cmds2) match {
+			case Nil =>
+				if (isNilOk) {
+					Nil;
+				} else {
+					sub(CatCommand() :: Nil);
+				}
+			case cmds =>
+				sub(cmds);
+		}
 	}
 
 }
@@ -714,7 +725,7 @@ case class ExternalOutputResourceFormat (
 //==================================================================================================
 
 class InputFormatWrapper (
-	private[this] val input: ExternalInputResourceFormat,
+	val input: ExternalInputResourceFormat,
 	private[this] val resultFifo: FifoResource,
 	private[this] val streamFifo: FifoResource
 ) {
@@ -1179,34 +1190,48 @@ case class PasteCommand (
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
 		val empty = ParserMain.emptyCommandLine;
 
+		val fifo2 = GlobalParser.createFifo(); // output of anotherInput and input of paste subcommand
+
 		anotherInput.inputFormatWrapper match {
 			case Some(_) =>
-				val fifo2 = GlobalParser.createFifo();
-				val cmds1 = fifo2.createMkfifoCommandLines();
+				// input -------------------- paste - output
+				//                            /
+				//        anotherInput - fifo2
 
-				val cmds2 = anotherInput.createCommandLines(None, Some(fifo2.o));
-
-				val option = NormalArgument("--right") :: fifo2.i.arg :: Nil;
+				val cmds3 = anotherInput.createCommandLines(None, Some(fifo2.o), true);
+				val (fifo2i, fifo2Cmds) = if (cmds3.isEmpty) {
+					val anotherInputResource: ExternalInputResource = anotherInput.inputFormatWrapper.get.input.input;
+					(anotherInputResource, Nil);
+				} else {
+					val fifo2Cmds = fifo2.createMkfifoCommandLines();
+					(fifo2.i, fifo2Cmds);
+				}
+				val option = NormalArgument("--right") :: fifo2i.arg :: Nil;
 				val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
 					Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output));
 
-				empty :: cmds1 ::: empty :: cmds2 ::: empty ::
+				fifo2Cmds ::: cmds3 :::
 				command ::
-				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
+				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2i, output)) :: Nil;
 			case None =>
-				val fifo1 = GlobalParser.createFifo();
-				val fifo2 = GlobalParser.createFifo();
-				val fifo3 = GlobalParser.createFifo();
-				val cmds1 = fifo1.createMkfifoCommandLines() ::: fifo2.createMkfifoCommandLines() ::: fifo3.createMkfifoCommandLines();
+				// input - tee ------------------ fifo3 - paste - output
+				//           \                            /
+				//            fifo1 - anotherInput - fifo2
 
-				val cmds2 = TeeCommand.createCommandLines(input, fifo3.o :: fifo1.o :: Nil);
-				val cmds3 = anotherInput.createCommandLines(Some(fifo1.i), Some(fifo2.o));
+				val fifo1 = GlobalParser.createFifo();
+				val fifo3 = GlobalParser.createFifo();
+
+				val fifo2Cmds = fifo2.createMkfifoCommandLines();
+				val fifoCmds = fifo1.createMkfifoCommandLines() ::: fifo2Cmds ::: fifo3.createMkfifoCommandLines();
+
+				val cmds3 = TeeCommand.createCommandLines(input, fifo3.o :: fifo1.o :: Nil);
+				val cmds4 = anotherInput.createCommandLines(Some(fifo1.i), Some(fifo2.o), false);
 
 				val option = NormalArgument("--right") :: fifo2.i.arg :: Nil;
 				val command = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("paste.pl") :: option ::: Nil,
 					Some(fifo3.i.arg), Some(output.arg), true, commandLineIOStringForDebug(fifo3.i, output));
 
-				empty :: cmds1 ::: cmds2 ::: empty :: cmds3 ::: empty ::
+				fifoCmds ::: cmds3 ::: cmds4 :::
 				command ::
 				CommandLineImpl(Nil, None, None, false, commandLineIOStringForDebug(fifo2.i, output)) :: Nil;
 		}
@@ -1444,7 +1469,7 @@ class ParserMain (tree: GlobalTree) {
 			putCommand(emptyCommandLine);
 		}
 
-		tree.query.createCommandLines(None, None).foreach { commandLine =>
+		tree.query.createCommandLines(None, None, false).foreach { commandLine =>
 			putCommand(commandLine);
 		}
 		putCommand(emptyCommandLine);
