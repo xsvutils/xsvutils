@@ -29,6 +29,9 @@ xsvutils 異常終了時に子プロセスが残ってしまうことがある�
 - update
 - wcl
 
+端末へのテーブル表示時に罫線の表示に罫線素片を利用するようにした。
+また、行の先頭と末尾に罫線を表示しないようにした。
+
 
 ## v6 -> v7 (2018/09/12)
 
@@ -118,6 +121,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - stop printing progress on `wcl`
 - add `--jvm` option
 - reimplement `cut`, `update`, `wcl` subcommands on `--jvm`
+- fix vertical lines
 
 ### version 0.7 (-v7) (2018/09/12)
 - add `--remove` option of `cols` subcommand
