@@ -65,5 +65,5 @@ Available subcommands:
 `--jvm` での実装メモ
     ほとんどすべてのサブコマンドが未実装。
 
-    実装済み(--helpオプションを除く): cut, update, wcl, cutidx, stridx
+    実装済み(--helpオプションを除く): where, filter, cut, update, wcl, cutidx, stridx
 

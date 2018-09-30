@@ -307,6 +307,8 @@ object QueryParser {
 	}
 
 	val commands: Map[String, () => CommandParser] = Map(
+		"filter" -> (() => FilterCommandParser(None, None, None)),
+		"where" -> (() => FilterCommandParser(None, None, None)),
 		"paste" -> (() => PasteCommandParser(None)),
 		"cut" -> (() => CutCommandParser(None)),
 		"cutidx" -> (() => CutidxCommandParser(None)),
