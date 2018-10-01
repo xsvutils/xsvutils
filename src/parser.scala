@@ -655,12 +655,6 @@ case class FileInputResource(path: String) extends ExternalInputResource {
 	def numberForDebug: String = "x";
 }
 
-case class FifoInputResource(resource: FifoResource) extends InputResource {
-	def arg: CommandLineArgument = resource.arg;
-	def numberForDebug: String = resource.id.toString;
-	def createMkfifoCommandLines(): List[CommandLine] = resource.createMkfifoCommandLines();
-}
-
 sealed trait OutputResource {
 	def arg: CommandLineArgument;
 	def numberForDebug: String;
@@ -687,18 +681,18 @@ case class FileOutputResource(path: String) extends ExternalOutputResource {
 	def numberForDebug: String = "x";
 }
 
-case class FifoOutputResource(resource: FifoResource) extends OutputResource {
-	def arg: CommandLineArgument = resource.arg;
-	def numberForDebug: String = resource.id.toString;
-	def createMkfifoCommandLines(): List[CommandLine] = resource.createMkfifoCommandLines();
-}
-
 case class FifoResource(id: Int) {
 	def path: String = WORKING_DIR + "/pipe_" + id;
 	def arg: CommandLineArgument = WorkingDirArgument("pipe_" + id);
 
-	val i = FifoInputResource(this);
-	val o = FifoOutputResource(this);
+	val i = new InputResource {
+		def arg: CommandLineArgument = FifoResource.this.arg;
+		def numberForDebug: String = id.toString;
+	}
+	val o = new OutputResource {
+		def arg: CommandLineArgument = FifoResource.this.arg;
+		def numberForDebug: String = id.toString;
+	}
 
 	def createMkfifoCommandLines(): List[CommandLine] = {
 		if (GlobalParser.createMkfifoCommandLines(id)) {
