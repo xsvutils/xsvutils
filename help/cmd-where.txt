@@ -37,13 +37,23 @@ where, filter subcommand
         $ xsvutils FILENAME where num \>= 10  # num 列が10以上の数値を抽出
 
     インデックスファイルについて
+        OPERATOR が eq の場合は --stridx オプションでインデックスファイルを指定できます。
+
         --stridx を使用すると、インデックスを利用するので高速処理されます。
-        --stridx を使用したうえで更に、
-        入力が標準入力やパイプでない通常のファイルで、
+        --stridx を使用し、
+        かつ 入力が標準入力やパイプでない通常のファイルで、
         かつ gz または xz で圧縮されていないプレーンテキストで、
         かつCSVやLTSVなどではなくTSVファイルの場合は、
-        入力ファイルを seek することが可能で先頭から読み込む必要がないため、
-        もっと高速に処理されます。
+        入力ファイルを seek することが可能で先頭からの逐次読み込むが不要なため、
+        さらに高速に処理されます。
 
         --stridx は --jvm でしか使用できません。
+
+        インデックスファイルでの使用例
+
+            # インデックスファイル生成
+            $ xsvutils --jvm bigdata.tsv cutidx uid stridx > bigdata-uid-stridx.tsv
+
+            # インデックスファイルを使った検索
+            $ xsvutils --jvm bigdata.tsv filter uid eq foobar --stridx bigdata-uid-stridx.tsv
 

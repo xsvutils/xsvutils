@@ -13,3 +13,5 @@ cutidx subcommand
 
     Either of COLUMN parameter or --col option is required.
 
+    To see `xsvutils help filter` for examples.
+
