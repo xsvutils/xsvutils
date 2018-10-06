@@ -120,6 +120,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - add `stridx` subcommand on `--jvm`
 - reimplement `filter`, `where` subcommands on `--jvm`
 - add `--stridx` option of `filter` `where` subcommands on `--jvm`
+- support creating big stridx file
 
 ### version 0.8 (-v8) (2018/09/26)
 - kill child processes on exit

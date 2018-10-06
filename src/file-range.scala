@@ -18,6 +18,18 @@ case class FileRangeList(ranges: List[FileRange]) {
 		srListReversed.reverse;
 	}
 
+	def merge(other: FileRangeList): FileRangeList = {
+		if (this.ranges.isEmpty) {
+			other;
+		} else if (other.ranges.isEmpty) {
+			this;
+		} else if (this.ranges.head.offset < other.ranges.head.offset) {
+			FileRangeList(this.ranges ::: other.ranges);
+		} else {
+			FileRangeList(other.ranges ::: this.ranges);
+		}
+	}
+
 }
 
 object FileRangeList {

@@ -85,6 +85,13 @@ object GlobalParser {
 		new InputFormatWrapper(input, resultFifo, streamFifo);
 	}
 
+	private var hardTempCounter: Int = 0;
+
+	def createHardTempFile(): HardTempFileResource = {
+		hardTempCounter = hardTempCounter + 1;
+		HardTempFileResource(hardTempCounter);
+	}
+
 }
 
 //==================================================================================================
@@ -527,6 +534,11 @@ case class WorkingDirArgument(fname: String) extends CommandLineArgument {
 	def toBash: String = escapeForBash(WORKING_DIR + "/" + fname);
 	def toDebug: String = "$WORKING_DIR/" + escapeForBash(fname);
 }
+case class HardWorkingDirArgument(fname: String) extends CommandLineArgument {
+	def toRaw: String = HARD_WORKING_DIR + "/" + fname;
+	def toBash: String = escapeForBash(HARD_WORKING_DIR + "/" + fname);
+	def toDebug: String = "$HARD_WORKING_DIR/" + escapeForBash(fname);
+}
 case class ToolDirArgument(fname: String) extends CommandLineArgument {
 	def toRaw: String = TOOL_DIR + "/" + fname;
 	def toBash: String = escapeForBash(TOOL_DIR + "/" + fname);
@@ -701,6 +713,20 @@ case class FifoResource(id: Int) {
 		} else {
 			Nil;
 		}
+	}
+}
+
+case class HardTempFileResource(id: Int) {
+	def path: String = HARD_WORKING_DIR + "/temp_" + id;
+	def arg: CommandLineArgument = HardWorkingDirArgument("temp_" + id);
+
+	val i = new InputResource {
+		def arg: CommandLineArgument = HardTempFileResource.this.arg;
+		def numberForDebug: String = "H" + id.toString;
+	}
+	val o = new OutputResource {
+		def arg: CommandLineArgument = HardTempFileResource.this.arg;
+		def numberForDebug: String = "H" + id.toString;
 	}
 }
 
@@ -1527,6 +1553,7 @@ object ParserMain {
 
 	val TOOL_DIR: String = System.getenv("TOOL_DIR");
 	val WORKING_DIR: String = System.getenv("WORKING_DIR");
+	val HARD_WORKING_DIR: String = System.getenv("HARD_WORKING_DIR");
 
 	val emptyCommandLine = CommandLineImpl(Nil, None, None, false, "");
 
