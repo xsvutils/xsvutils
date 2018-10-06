@@ -5,9 +5,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
-//import java.io.OutputStreamWriter;
-//import java.io.BufferedWriter;
-//import java.io.PrintWriter;
+import java.io.IOException;
 
 import scala.io.Source;
 
@@ -212,9 +210,10 @@ case class FilterStridxExecutor(column: String, value: String, stridxFile: Comma
 
 			val buf: Array[Byte] = new Array[Byte](4096);
 
+			var seekFlag: Boolean = true;
 			srList2.foreach { sr =>
 				var skip: Long = sr.skip;
-				skipStream(inputStream, skip, buf);
+				seekFlag = skipStream(inputStream, skip, buf, seekFlag);
 				var read: Long = sr.read;
 				while (read > 0) {
 					val l = if (read >= buf.length) {
@@ -288,8 +287,17 @@ case class FilterStridxExecutor(column: String, value: String, stridxFile: Comma
 		throw new AssertionError();
 	}
 
-	private[this] def skipStream(inputStream: BufferedInputStream, skip: Long, buf: Array[Byte]) {
+	private[this] def skipStream(inputStream: BufferedInputStream, skip: Long, buf: Array[Byte], seekFlag: Boolean): Boolean = {
 		var skip2: Long = skip;
+		var seekFlag2: Boolean = seekFlag;
+		while (seekFlag2 && skip2 > 0) {
+			try {
+				val l = inputStream.skip(skip2);
+				skip2 = skip2 - l;
+			} catch { case _: IOException =>
+				seekFlag2 = false;
+			}
+		}
 		while (skip2 > 0) {
 			val l = if (skip2 >= buf.length) {
 				inputStream.read(buf);
@@ -298,6 +306,7 @@ case class FilterStridxExecutor(column: String, value: String, stridxFile: Comma
 			}
 			skip2 = skip2 - l;
 		}
+		return seekFlag2;
 	}
 
 }
