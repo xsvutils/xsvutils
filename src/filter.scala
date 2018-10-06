@@ -279,7 +279,7 @@ case class FilterStridxExecutor(column: String, value: String, stridxFile: Comma
 			val pos = (0 until len2).indexWhere(i => buf(i) == '\n');
 			if (pos >= 0) {
 				headLen = headLen + pos + 1;
-				bufList = (buf, headLen + 1) :: bufList;
+				bufList = (buf, headLen) :: bufList;
 				return (offset, bufList.reverse);
 			}
 			headLen = headLen + len2;
