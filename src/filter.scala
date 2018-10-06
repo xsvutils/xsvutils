@@ -145,13 +145,11 @@ case class FilterStridxCommand (
 	}
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		// Input - tee-header.pl - fifo1 ------------------------ union-header.pl - Output
-		//                     \                                  /
-		//                     fifo2 - FilterStridxExecutor - fifo3
-		//                            /
-		//    stridxInput - stridxFifo
+		// Input ----------------- FilterStridxExecutor - Output
+		//                         /
+		// stridxInput - stridxFifo
 
-		val stridxFifo = GlobalParser.createFifo(); // output of stridxInput and input of paste subcommand
+		val stridxFifo = GlobalParser.createFifo(); // output of stridxInput and input of filter subcommand
 
 		val stridxInputCmds = stridxInput.createCommandLines(None, Some(stridxFifo.o), true);
 		val (stridxFifoI, stridxFifoCmds) = if (stridxInputCmds.isEmpty) {
@@ -162,32 +160,14 @@ case class FilterStridxCommand (
 			(stridxFifo.i, stridxFifoCmds);
 		}
 
-		val fifo1 = GlobalParser.createFifo();
-		val fifo2 = GlobalParser.createFifo();
-		val fifo3 = GlobalParser.createFifo();
-		val fifoCmds: List[CommandLine] = {
-			val teeHeaderCmd = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("tee-header.pl") :: fifo1.arg :: Nil,
-				Some(input.arg), Some(fifo2.arg), true, ParserMain.commandLineIOStringForDebug(input, fifo2.o));
-			val teeHeaderDebug = CommandLineImpl(Nil, None, None, false,
-				ParserMain.commandLineIOStringForDebug(input, fifo1.o));
-			val unionHeaderCmd = CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("union-header.pl") :: fifo1.arg :: Nil,
-				Some(fifo3.arg), Some(output.arg), true, ParserMain.commandLineIOStringForDebug(fifo3.i, output));
-			val unionHeaderDebug = CommandLineImpl(Nil, None, None, false,
-				ParserMain.commandLineIOStringForDebug(fifo1.i, output));
-			fifo1.createMkfifoCommandLines() ::: fifo2.createMkfifoCommandLines() ::: fifo3.createMkfifoCommandLines() :::
-				teeHeaderCmd :: teeHeaderDebug :: unionHeaderCmd :: unionHeaderDebug :: Nil;
-		}
-
 		val executor = FilterStridxExecutor(column, value, stridxFifoI.arg);
-		val command = JvmCommandLine(executor, fifo2.arg, fifo3.arg,
-			ParserMain.commandLineIOStringForDebug(fifo2.i, fifo3.o));
+		val command = JvmCommandLine(executor, input.arg, output.arg,
+			ParserMain.commandLineIOStringForDebug(input, output));
 		val debug = CommandLineImpl(Nil, None, None, false,
-			ParserMain.commandLineIOStringForDebug(stridxFifoI, fifo3.o));
+			ParserMain.commandLineIOStringForDebug(stridxFifoI, output));
 
-		fifoCmds ::: stridxFifoCmds ::: stridxInputCmds :::
-		command :: debug :: Nil;
+		stridxFifoCmds ::: stridxInputCmds ::: command :: debug :: Nil;
 	}
-
 }
 
 case class FilterStridxExecutor(column: String, value: String, stridxFile: CommandLineArgument) extends CommandExecutor {
@@ -213,28 +193,38 @@ case class FilterStridxExecutor(column: String, value: String, stridxFile: Comma
 		val rangeList = searchRangeList(stridxLineIterator);
 		val srList = rangeList.getOrElse(FileRangeList(Nil)).toSkipAndReadList;
 
-		val buf: Array[Byte] = new Array[Byte](4096);
-
-		srList.foreach { sr =>
-			var skip: Long = sr.skip;
-			while (skip > 0) {
-				val l = if (skip >= buf.length) {
-					inputStream.read(buf);
-				} else {
-					inputStream.read(buf, 0, skip.toInt);
-				}
-				//val l = inputStream.skip(skip);
-				skip = skip - l;
+		if (srList.isEmpty) {
+			val (_, bufList: List[(Array[Byte], Int)]) = readHeader(inputStream, -1);
+			bufList.foreach { t =>
+				val (buf, len) = t;
+				outputStream.write(buf, 0, len);
 			}
-			var read: Long = sr.read;
-			while (read > 0) {
-				val l = if (read >= buf.length) {
-					inputStream.read(buf);
-				} else {
-					inputStream.read(buf, 0, read.toInt);
+		} else {
+			val srHead = srList.head;
+			val firstOffset = srHead.skip;
+			val (offset, bufList: List[(Array[Byte], Int)]) = readHeader(inputStream, firstOffset);
+			bufList.foreach { t =>
+				val (buf, len) = t;
+				outputStream.write(buf, 0, len);
+			}
+
+			val srList2: List[FileSkipAndRead] = FileSkipAndRead(firstOffset - offset, srHead.read) :: srList.tail;
+
+			val buf: Array[Byte] = new Array[Byte](4096);
+
+			srList2.foreach { sr =>
+				var skip: Long = sr.skip;
+				skipStream(inputStream, skip, buf);
+				var read: Long = sr.read;
+				while (read > 0) {
+					val l = if (read >= buf.length) {
+						inputStream.read(buf);
+					} else {
+						inputStream.read(buf, 0, read.toInt);
+					}
+					read = read - l;
+					outputStream.write(buf, 0, l);
 				}
-				read = read - l;
-				outputStream.write(buf, 0, l);
 			}
 		}
 	}
@@ -262,6 +252,52 @@ case class FilterStridxExecutor(column: String, value: String, stridxFile: Comma
 			}
 		}
 		rangeList;
+	}
+
+	private[this] def readHeader(inputStream: BufferedInputStream, firstOffset: Long): (Int, List[(Array[Byte], Int)]) = {
+		var offset: Int = 0;
+		var bufList: List[(Array[Byte], Int)] = Nil;
+		var f: Boolean = true;
+		var headLen: Int = 0;
+		while (f) {
+			val buf: Array[Byte] = new Array[Byte](1024);
+			val len = if (firstOffset < 0) {
+				buf.length;
+			} else {
+				val rest = firstOffset - offset;
+				if (rest < buf.length) {
+					rest.toInt;
+				} else {
+					buf.length;
+				};
+			}
+			val len2 = inputStream.read(buf, 0, len);
+			if (len2 < 0) {
+				return (offset, bufList.reverse);
+			}
+			offset = offset + len2;
+			val pos = (0 until len2).indexWhere(i => buf(i) == '\n');
+			if (pos >= 0) {
+				headLen = headLen + pos + 1;
+				bufList = (buf, headLen + 1) :: bufList;
+				return (offset, bufList.reverse);
+			}
+			headLen = headLen + len2;
+			bufList = (buf, len2) :: bufList;
+		}
+		throw new AssertionError();
+	}
+
+	private[this] def skipStream(inputStream: BufferedInputStream, skip: Long, buf: Array[Byte]) {
+		var skip2: Long = skip;
+		while (skip2 > 0) {
+			val l = if (skip2 >= buf.length) {
+				inputStream.read(buf);
+			} else {
+				inputStream.read(buf, 0, skip2.toInt);
+			}
+			skip2 = skip2 - l;
+		}
 	}
 
 }
