@@ -2,16 +2,27 @@
 # varの中にgolangをインストールするスクリプト。
 # ホストのグローバル環境やユーザ環境には影響を与えません。 var の中で完結しています。
 
-VERSION=1.9.2
+golang_ver=1.9.2
+
+uname=$(uname)
+
+if [ "$uname" = "Darwin" ]; then
+    golang_os_name='darwin'
+elif [ "$uname" = "Linux" ]; then
+    golang_os_name='linux'
+else
+    echo "Unknown OS: $uname" >&2
+    exit 1
+fi
 
 (
     cd var
 
-    fname=golang-$VERSION.linux-amd64
+    fname=golang-$golang_ver.$golang_os_name-amd64
+    url=https://storage.googleapis.com/golang/go$golang_ver.$golang_os_name-amd64.tar.gz
 
     if [ ! -e $fname ]; then
         if [ ! -e $fname.tar.gz ]; then
-            url=https://storage.googleapis.com/golang/go$VERSION.linux-amd64.tar.gz
             echo curl -L $url \> $fname.tar.gz
             curl -L $url > $fname.tar.gz.tmp || exit $?
             mv $fname.tar.gz.tmp $fname.tar.gz
