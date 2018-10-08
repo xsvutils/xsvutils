@@ -32,6 +32,11 @@ fi
 cat <<\EOF
 build: xsvutils
 
+target: var/TARGET_VERSION_HASH
+
+EOF
+
+cat <<\EOF
 xsvutils: src/boot.sh var/TARGET_VERSION_HASH
 	cat src/boot.sh | sed "s/XXXX_VERSION_HASH_XXXX/$$(cat var/TARGET_VERSION_HASH)/g" > var/xsvutils
 	(cd target; tar cz *) >> var/xsvutils

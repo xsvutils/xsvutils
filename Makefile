@@ -1,6 +1,6 @@
 
 build: var/makefile
-	make -f var/makefile build
+	make --question -f var/makefile build || make -f var/makefile build
 
 gobuild: var/makefile
 	make -f var/makefile gobuild

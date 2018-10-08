@@ -2,7 +2,16 @@
 
 VERSION_HASH=XXXX_VERSION_HASH_XXXX
 
-export TOOL_DIR=$HOME/.xsvutils/version-$VERSION_HASH
+if [[ $VERSION_HASH =~ X_VERSION_HASH_X ]]; then
+    if [ -z "$XSVUTILS_TOOL_DIR" ]; then
+        # boot.sh を直接実行するには
+        # ./etc/xsvutils-devel を使ってください
+        exit 1
+    fi
+    export TOOL_DIR=$XSVUTILS_TOOL_DIR
+else
+    export TOOL_DIR=$HOME/.xsvutils/version-$VERSION_HASH
+fi
 
 if [ ! -e $TOOL_DIR ]; then
     tool_parent_dir=$(dirname $TOOL_DIR)
