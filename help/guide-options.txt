@@ -46,6 +46,8 @@ Common options:
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
 
+    xsvutils開発者向けの説明は `xsvutils help development` を参照のこと。
+
 `--jvm` での実装メモ
     --o-chart, --help, --version は未実装
 
