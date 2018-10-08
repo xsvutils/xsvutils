@@ -20,16 +20,17 @@ foreach my $source (@ARGV) {
             } else {
                 $package_dir = "/$package_name";
             }
-            print "var/xsvutils-golang$package_dir/$source_name.go: src/$source_name.go\n";
-            print "\tmkdir -p var/xsvutils-golang$package_dir\n";
-            print "\tcp src/$source_name.go var/xsvutils-golang$package_dir/$source_name.go\n";
-            print "\n";
             last;
         }
     }
     close($fp);
 
     die if ($package_name eq '');
+
+    print "var/xsvutils-golang$package_dir/$source_name.go: src/$source_name.go\n";
+    print "\tmkdir -p var/xsvutils-golang$package_dir\n";
+    print "\tcp src/$source_name.go var/xsvutils-golang$package_dir/$source_name.go\n";
+    print "\n";
 
     $sources = $sources . " var/xsvutils-golang$package_dir/$source_name.go";
 }

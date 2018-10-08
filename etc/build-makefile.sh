@@ -19,15 +19,13 @@ if [ -n "$RM_TARGET" ]; then
     rm -r $RM_TARGET >&2
 fi
 
-if ! which go >/dev/null; then
-    bash etc/install-golang.sh >&2 || exit $?
-    cat <<EOF
+bash etc/install-golang.sh >&2 || exit $?
+cat <<EOF
 export PATH=$(pwd)/var/golang/bin:$PATH
 export GOROOT=$(pwd)/var/golang
 export GOPATH=$(pwd)/var/golang_packages
 
 EOF
-fi
 
 cat <<\EOF
 build: xsvutils
@@ -112,7 +110,6 @@ cat <<EOF
 gobuild: target/golang.bin
 
 target/golang.bin: var/GOLANG_VERSION_HASH
-	go version
 	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd var/xsvutils-golang; go vet ./...; go get github.com/spf13/cobra; go build; fi
 	mv var/xsvutils-golang/xsvutils-golang target/golang.bin
 	cp target/golang.bin var/xsvutils-golang/xsvutils-golang
