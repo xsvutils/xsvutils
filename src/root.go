@@ -6,11 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"../buffer"
-	"../csv2tsv"
-	"../fldsort"
-	"../uriparams2tsv"
-	"../wcl"
+	"github.com/suzuki-navi/xsvutils/buffer"
+	"github.com/suzuki-navi/xsvutils/csv2tsv"
+	"github.com/suzuki-navi/xsvutils/fldsort"
+	"github.com/suzuki-navi/xsvutils/uriparams2tsv"
+	"github.com/suzuki-navi/xsvutils/wcl"
 )
 
 var RootCmd = &cobra.Command{

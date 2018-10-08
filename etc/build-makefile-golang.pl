@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use utf8;
 
+my $GOLANG_SOURCE_DIR = "var/golang_packages/src/github.com/suzuki-navi/xsvutils";
+
 my $sources = '';
 
 foreach my $source (@ARGV) {
@@ -27,12 +29,12 @@ foreach my $source (@ARGV) {
 
     die if ($package_name eq '');
 
-    print "var/xsvutils-golang$package_dir/$source_name.go: src/$source_name.go\n";
-    print "\tmkdir -p var/xsvutils-golang$package_dir\n";
-    print "\tcp src/$source_name.go var/xsvutils-golang$package_dir/$source_name.go\n";
+    print "$GOLANG_SOURCE_DIR$package_dir/$source_name.go: src/$source_name.go\n";
+    print "\tmkdir -p $GOLANG_SOURCE_DIR$package_dir\n";
+    print "\tcp src/$source_name.go $GOLANG_SOURCE_DIR$package_dir/$source_name.go\n";
     print "\n";
 
-    $sources = $sources . " var/xsvutils-golang$package_dir/$source_name.go";
+    $sources = $sources . " $GOLANG_SOURCE_DIR$package_dir/$source_name.go";
 }
 
 print "var/GOLANG_VERSION_HASH: $sources\n";

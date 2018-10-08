@@ -21,7 +21,7 @@ fi
 
 bash etc/install-golang.sh >&2 || exit $?
 cat <<EOF
-export PATH=$(pwd)/var/golang/bin:$PATH
+export PATH=$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH
 export GOROOT=$(pwd)/var/golang
 export GOPATH=$(pwd)/var/golang_packages
 
@@ -109,12 +109,20 @@ perl etc/build-makefile-golang.pl $(find src -name '*.go')
 cat <<EOF
 gobuild: target/golang.bin
 
-target/golang.bin: var/GOLANG_VERSION_HASH
-	if ! diff var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build >/dev/null 2>&1; then cd var/xsvutils-golang; go vet ./...; go get github.com/spf13/cobra; go build; fi
-	mv var/xsvutils-golang/xsvutils-golang target/golang.bin
-	cp target/golang.bin var/xsvutils-golang/xsvutils-golang
-	chmod 777 target/golang.bin
+target/golang.bin: var/GOLANG_VERSION_HASH var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock
+	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; dep ensure
+	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; go vet ./...
+	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; go build
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
+	cp var/golang_packages/src/github.com/suzuki-navi/xsvutils/xsvutils var/golang.bin
+	chmod 777 var/golang.bin
+	mv var/golang.bin target/golang.bin
+
+var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml: etc/Gopkg.toml
+	cp etc/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml
+
+var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock: etc/Gopkg.lock
+	cp etc/Gopkg.lock var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock
 
 EOF
 
