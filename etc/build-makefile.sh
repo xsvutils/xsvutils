@@ -70,7 +70,7 @@ EOF
 (
     ls help/cmd-*.txt | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g'
 ) | sort | column -c 80 > var/help-cmd-list.txt.tmp
-if [ ! -e var/help-cmd-list.txt.tmp ] || ! diff -q var/help-cmd-list.txt var/help-cmd-list.txt.tmp >/dev/null; then
+if [ ! -e var/help-cmd-list.txt ] || ! diff -q var/help-cmd-list.txt var/help-cmd-list.txt.tmp >/dev/null; then
     mv var/help-cmd-list.txt.tmp var/help-cmd-list.txt
 fi
 
@@ -79,7 +79,7 @@ fi
     echo version
     echo changelog
 ) | sort | column -c 80 > var/help-guide-list.txt.tmp
-if [ ! -e var/help-guide-list.txt.tmp ] || ! diff -q var/help-guide-list.txt var/help-guide-list.txt.tmp >/dev/null; then
+if [ ! -e var/help-guide-list.txt ] || ! diff -q var/help-guide-list.txt var/help-guide-list.txt.tmp >/dev/null; then
     mv var/help-guide-list.txt.tmp var/help-guide-list.txt
 fi
 
