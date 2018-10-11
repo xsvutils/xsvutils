@@ -5,3 +5,16 @@ xsvutils開発者向けの説明
         このオプションは -v* オプションよりも後で --jvm オプションよりも後で、
         その他のオプションやパラメータ指定の前に置く必要がある。
 
+    依存ソフトウェア:
+
+        ビルド時
+            java     make時に `$HOME/.xsvutils` 配下に自動インストール
+            scala    make時にソースディレクトリ内の var 配下に自動インストール
+            sbt      make時にソースディレクトリ内の var 配下に自動インストール
+            golang   make時にソースディレクトリ内の var 配下に自動インストール
+
+        実行時
+            java     make時に `$HOME/.xsvutils` 配下に自動インストール
+                     または `xsvutils --install-java` 実行時に `$HOME/.xsvutils` 配下に自動インストール
+            scala    xsvutilsバイナリに内蔵
+

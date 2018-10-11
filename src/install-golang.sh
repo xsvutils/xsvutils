@@ -1,6 +1,8 @@
 
-# varの中にgolangをインストールするスクリプト。
-# ホストのグローバル環境やユーザ環境には影響を与えません。 var の中で完結しています。
+# 特定のディレクトリ($install_base)の中にgolangをインストールするスクリプト。
+# ホストのグローバル環境やユーザ環境には影響を与えません。特定のディレクトリ($install_base)の中で完結しています。
+
+install_base=$1
 
 golang_ver=1.9.2
 
@@ -16,7 +18,9 @@ else
 fi
 
 (
-    cd var
+    mkdir -p $install_base
+
+    cd $install_base
 
     fname=golang-$golang_ver.$golang_os_name-amd64
     url=https://storage.googleapis.com/golang/go$golang_ver.$golang_os_name-amd64.tar.gz
@@ -29,8 +33,7 @@ fi
         fi
 
         if [ -e go ]; then
-            echo "directory `var/go` exists" >&2
-            exit 1
+            rm -r go
         fi
         echo tar xzf $fname.tar.gz
         tar xzf $fname.tar.gz || exit $?
@@ -43,13 +46,13 @@ fi
     ln -s $fname golang || exit $?
 ) || exit $?
 
-export PATH=$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH
-export GOROOT=$(pwd)/var/golang
-export GOPATH=$(pwd)/var/golang_packages
+export PATH=$install_base/golang_packages/bin:$install_base/golang/bin:$PATH
+export GOROOT=$install_base/golang
+export GOPATH=$install_base/golang_packages
 
-mkdir -pv $GOPATH
+mkdir -p $GOPATH
 
-if [ ! -e var/golang_packages/bin/dep ]; then
+if [ ! -e $install_base/golang_packages/bin/dep ]; then
     go get -u github.com/golang/dep/cmd/dep || exit $?
 fi
 

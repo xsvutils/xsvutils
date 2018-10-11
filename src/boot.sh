@@ -78,6 +78,20 @@ if [ -n "$VERSION" ]; then
     exit $?
 fi
 
+if [ "$1" == "--install-java" ]; then
+    bash $TOOL_DIR/install-openjdk.sh $HOME/.xsvutils/repos-build/var
+    exit $?
+fi
+
+if [ ! -e $HOME/.xsvutils/repos-build/var/openjdk/bin/java ]; then
+    echo "Not found: $HOME/.xsvutils/repos-build/var/openjdk/bin/java" >&2
+    echo "To install it, \`xsvutils --install-java\`" >&2
+    exit 1
+fi
+
+export JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
+export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$PATH
+
 bash $TOOL_DIR/boot-second.sh "$@"
 
 exit $?

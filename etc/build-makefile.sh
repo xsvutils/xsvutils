@@ -19,11 +19,14 @@ if [ -n "$RM_TARGET" ]; then
     rm -r $RM_TARGET >&2
 fi
 
-bash etc/install-golang.sh >&2 || exit $?
+bash src/install-golang.sh $(pwd)/var >&2 || exit $?
+
+bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
 cat <<EOF
-export PATH=$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH
 export GOROOT=$(pwd)/var/golang
 export GOPATH=$(pwd)/var/golang_packages
+export JAVA_HOME=$(pwd)/var/openjdk
+export PATH=$(pwd)/var/openjdk/bin:$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH
 
 EOF
 
@@ -142,21 +145,20 @@ EOF
 done
 
 cat <<EOF
-var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT.zip: var/sbt/sbt/bin/sbt var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls src/*.scala | sed 's/^src\///g' | sed 's/^/var\/sbt\/src\/main\/java\//g'))
+var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT.zip: var/sbt/sbt/bin/sbt var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls src/*.scala | sed 's/^src\///g' | sed 's/^/var\/sbt\/src\/main\/java\//g'))
 	cd var/sbt; ./sbt/bin/sbt compile
 	cd var/sbt; ./sbt/bin/sbt universal:packageBin
 
 EOF
 
 cat <<EOF
-var/sbt/sbt.tgz:
+var/sbt/sbt-1.2.3.tgz:
 	mkdir -p var/sbt
-	#wget "https://github.com/sbt/sbt/releases/download/v1.1.4/sbt-1.1.4.tgz" -O var/sbt/sbt.tgz.tmp
-	wget "https://cocl.us/sbt-0.13.16.tgz" -O var/sbt/sbt.tgz.tmp
-	mv var/sbt/sbt.tgz.tmp var/sbt/sbt.tgz
+	curl -L -f "https://piccolo.link/sbt-1.2.3.tgz" -o var/sbt/sbt-1.2.3.tgz.tmp
+	mv var/sbt/sbt-1.2.3.tgz.tmp var/sbt/sbt-1.2.3.tgz
 
-var/sbt/sbt/bin/sbt: var/sbt/sbt.tgz
-	cd var/sbt; tar xzf sbt.tgz
+var/sbt/sbt/bin/sbt: var/sbt/sbt-1.2.3.tgz
+	cd var/sbt; tar xzf sbt-1.2.3.tgz
 	touch var/sbt/sbt/bin/sbt
 
 var/sbt/build.sbt: etc/build.sbt
@@ -167,11 +169,11 @@ var/sbt/project/plugins.sbt: etc/plugins.sbt
 	mkdir -p var/sbt/project
 	cp etc/plugins.sbt var/sbt/project/plugins.sbt
 
-target/java/bin/xsvutils-java: var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT.zip
-	rm -rf var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT 2>/dev/null
-	cd var/sbt/target/universal; unzip xsvutils-java-0.1-SNAPSHOT.zip
+target/java/bin/xsvutils-java: var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT.zip
+	rm -rf var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT 2>/dev/null
+	cd var/sbt/target/universal; unzip xsvutils-java-0.1.0-SNAPSHOT.zip
 	rm -rf target/java
-	mv var/sbt/target/universal/xsvutils-java-0.1-SNAPSHOT target/java
+	mv var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT target/java
 	touch target/java/bin/xsvutils-java
 
 EOF
