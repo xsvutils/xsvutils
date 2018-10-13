@@ -35,14 +35,24 @@ fi
         if [ -e jdk-$openjdk_ver ]; then
             rm -r jdk-$openjdk_ver
         fi
-        echo tar xzf $fname.tar.gz
-        tar xzf $fname.tar.gz || exit $?
-        mv jdk-$openjdk_ver $fname || exit $?
+        if [ $openjdk_os_name = 'osx' ]; then
+            echo tar xzf $fname.tar.gz
+            tar xzf $fname.tar.gz || exit $?
+            mv jdk-$openjdk_ver.jdk $fname || exit $?
+        else
+            echo tar xzf $fname.tar.gz
+            tar xzf $fname.tar.gz || exit $?
+            mv jdk-$openjdk_ver $fname || exit $?
+        fi
     fi
 
     if [ -e openjdk ]; then
         rm openjdk
     fi
-    ln -s $fname openjdk || exit $?
+    if [ $openjdk_os_name = 'osx' ]; then
+        ln -s $fname/Contents/Home openjdk || exit $?
+    else
+        ln -s $fname openjdk || exit $?
+    fi
 ) || exit $?
 
