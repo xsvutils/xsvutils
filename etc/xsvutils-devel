@@ -4,6 +4,8 @@ xsvutils_source_dir=$(dirname $(dirname $0))
 
 (
     cd $xsvutils_source_dir
+    bash etc/build-makefile.sh > var/makefile.tmp
+    mv var/makefile.tmp var/makefile
     make --question -f var/makefile target || make -f var/makefile target || exit $?
 ) >&2 || exit $?
 
