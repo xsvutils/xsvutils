@@ -1,0 +1,19 @@
+insmap subcommand
+    別ファイルのマッピングテーブルをもとに特定のカラムの値を変換した値を新しいカラムとして追加する。
+    新しいカラムは一番左に追加する。
+
+    Usage:
+        $ xsvutils insmap [--src] <SRC_COLUMN_NAME> [--dst] <DST_COLUMN_NAME> [--file] <MAPPING_FILE> [option...]
+
+    Parameter:
+        <SRC_COLUMN_NAME> 変換前の値のカラム
+        <DST_COLUMN_NAME> 変換後の値の新しいカラム
+        <MAPPING_FILE>    マッピングファイル
+
+    Options:
+        --src <SRC_COLUMN_NAME> 変換前の値のカラム
+        --dst <DST_COLUMN_NAME> 変換後の値の新しいカラム
+        --file <MAPPING_FILE>   マッピングファイル
+        --default <VALUE>       マッピングファイルになかった値の場合のデフォルト値
+        --help                  Print help information about this subcommand.
+

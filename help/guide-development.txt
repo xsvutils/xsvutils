@@ -18,3 +18,14 @@ xsvutils開発者向けの説明
                      または `xsvutils --install-java` 実行時に `$HOME/.xsvutils` 配下に自動インストール
             scala    xsvutilsバイナリに内蔵
 
+    targetディレクトリ:
+        xsvutilsのビルド時のバイナリイメージに含まれる内容である。
+
+    etc/xsvutils:
+        ./etc/xsvutils を使うと xsvutils 自体を1バイナリにビルドしなくても
+        ./target ディレクトリに存在するソースを使って実行できる。
+        ~/.xsvutils にソースを展開せずに済み、開発作業時に使用することを想定したスクリプト。
+
+        例
+            $ ./etc/xsvutils-devel data.tsv
+
