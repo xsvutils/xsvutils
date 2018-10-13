@@ -1,4 +1,14 @@
 
+uname=$(uname)
+
+if [ "$uname" = "Darwin" ]; then
+    platform_name='mac'
+elif [ "$uname" = "Linux" ]; then
+    platform_name='linux'
+else
+    echo "Unknown OS: $uname" >&2
+    exit 1
+fi
 
 TARGET_SOURCES1=$(echo $((
             echo target/golang.bin;
@@ -56,7 +66,8 @@ EOF
 for f in $(ls src | grep -v -E -e '(boot\.sh)'); do
 cat <<EOF
 target/$f: src/$f
-	cp src/$f target/$f
+	perl etc/preprocess.pl $platform_name < src/$f > target/$f.tmp
+	mv target/$f.tmp target/$f
 
 EOF
 done
