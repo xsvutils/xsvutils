@@ -543,8 +543,25 @@ case class ToolDirArgument(fname: String) extends CommandLineArgument {
 
 sealed trait CommandLine {
 	def toBash: Option[String];
-	def toDebug: String;
+	def toDebug1: String;
+	def toDebug2: String;
 	def execute();
+
+	final def toDebug: String = {
+		val debug1 = toDebug1;
+		val debug2 = toDebug2;
+		if (debug1.isEmpty && debug2.isEmpty) {
+			"";
+		} else {
+			val maxLen = 110;
+			val sep = if (debug1.length < maxLen) {
+				" " * (maxLen - debug1.length);
+			} else {
+				"    ";
+			}
+			debug1 + sep + "# " + debug2;
+		}
+	}
 }
 
 case class CommandLineImpl(args: List[CommandLineArgument],
@@ -564,29 +581,19 @@ case class CommandLineImpl(args: List[CommandLineArgument],
 			(if (background) " &" else "");
 		Some(raw);
 	}
-	def toDebug: String = {
-		if (args.isEmpty && debug.isEmpty) {
-			"";
-		} else {
-			val c = args.map(_.toDebug).mkString(" ") +
-				(in match {
-					case Some(in) => " < " + in.toDebug;
-					case None => "";
-				}) +
-				(out match {
-					case Some(out) => " > " + out.toDebug;
-					case None => "";
-				}) +
-				(if (background) " &" else "");
-			val maxLen = 110;
-			val sep = if (c.length < maxLen) {
-				" " * (maxLen - c.length);
-			} else {
-				"    ";
-			}
-			c + sep + "# " + debug;
-		}
+	def toDebug1: String = {
+		args.map(_.toDebug).mkString(" ") +
+			(in match {
+				case Some(in) => " < " + in.toDebug;
+				case None => "";
+			}) +
+			(out match {
+				case Some(out) => " > " + out.toDebug;
+				case None => "";
+			}) +
+			(if (background) " &" else "");
 	}
+	def toDebug2: String = debug;
 
 	def execute() {}
 }
@@ -597,19 +604,13 @@ case class JvmCommandLine (executor: CommandExecutor,
 
 	def toBash: Option[String] = None;
 
-	def toDebug: String = {
-		val c = "#jvm: " + executor.toString +
+	def toDebug1: String = {
+		"#jvm: " + executor.toString +
 			" < " + in.toDebug +
 			" > " + out.toDebug +
 			" &";
-		val maxLen = 110;
-		val sep = if (c.length < maxLen) {
-			" " * (maxLen - c.length);
-		} else {
-			"    ";
-		}
-		c + sep + "# " + debug;
 	}
+	def toDebug2: String = debug;
 
 	def execute() {
 		(new Thread(new Runnable() {
