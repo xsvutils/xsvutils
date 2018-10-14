@@ -15,7 +15,7 @@ xsvutils開発者向けの説明
 
         実行時
             java     make時に `$HOME/.xsvutils` 配下に自動インストール
-                     または `xsvutils --install-java` 実行時に `$HOME/.xsvutils` 配下に自動インストール
+                     または `xsvutils --install-rt` 実行時に `$HOME/.xsvutils` 配下に自動インストール
             scala    xsvutilsバイナリに内蔵
 
     targetディレクトリ:

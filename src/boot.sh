@@ -78,14 +78,14 @@ if [ -n "$VERSION" ]; then
     exit $?
 fi
 
-if [ "$1" == "--install-java" ]; then
+if [ "$1" == "--install-rt" ]; then
     bash $TOOL_DIR/install-openjdk.sh $HOME/.xsvutils/repos-build/var
     exit $?
 fi
 
 if [ ! -e $HOME/.xsvutils/repos-build/var/openjdk/bin/java ]; then
     echo "Not found: $HOME/.xsvutils/repos-build/var/openjdk/bin/java" >&2
-    echo "To install it, \`xsvutils --install-java\`" >&2
+    echo "To install it, \`xsvutils --install-rt\`" >&2
     exit 1
 fi
 
