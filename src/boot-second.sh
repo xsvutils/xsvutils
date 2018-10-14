@@ -21,6 +21,7 @@ trap "rm -rf $WORKING_DIR $HARD_WORKING_DIR; perl $TOOL_DIR/killchildren.pl $$" 
 #endif
 
 tput lines >/dev/null 2>&1 && export TERMINAL_LINES=$(tput lines);
+tput cols  >/dev/null 2>&1 && export TERMINAL_COLS=$(tput cols);
 
 perl $TOOL_DIR/main.pl "$@"
 
