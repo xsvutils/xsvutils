@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v8 -> v9 (Unreleased)
+## v8 -> v9 (2018/10/14)
 
 以下のコマンドが追加された。
 - cutidx (--jvm のみ)
@@ -117,7 +117,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ## commit log
 
-### version 0.9 (-v9) (Unreleased)
+### version 0.9 (-v9) (2018/10/14)
 - add `cutidx` subcommand on `--jvm`
 - add `stridx` subcommand on `--jvm`
 - reimplement `filter`, `where` subcommands on `--jvm`
