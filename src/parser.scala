@@ -513,10 +513,6 @@ trait Command {
 //	def output: OutputResource;
 }
 
-trait CommandExecutor {
-	def exec(inputFilePath: String, outputFilePath: String);
-}
-
 //==================================================================================================
 
 sealed trait CommandLineArgument {
