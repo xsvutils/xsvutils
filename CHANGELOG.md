@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## v9 -> v10 (Unreleased)
+
 ## v8 -> v9 (2018/10/14)
 
 以下のコマンドが追加された。
@@ -116,6 +118,8 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 
 ## commit log
+
+### version 0.10 (-v10) (Unreleased)
 
 ### version 0.9 (-v9) (2018/10/14)
 - add `cutidx` subcommand on `--jvm`
