@@ -553,7 +553,7 @@ sealed trait CommandLine {
 		if (debug1.isEmpty && debug2.isEmpty) {
 			"";
 		} else {
-			val maxLen = 110;
+			val maxLen = 120;
 			val sep = if (debug1.length < maxLen) {
 				" " * (maxLen - debug1.length);
 			} else {
@@ -652,7 +652,7 @@ sealed trait ExternalInputResource extends InputResource;
 
 case class StdinResource() extends ExternalInputResource {
 	def arg: CommandLineArgument = WorkingDirArgument("stdin");
-	def numberForDebug: String = "-";
+	def numberForDebug: String = "stdin";
 }
 
 object StdinResource {
@@ -661,7 +661,7 @@ object StdinResource {
 
 case class FileInputResource(path: String) extends ExternalInputResource {
 	def arg: CommandLineArgument = NormalArgument(path);
-	def numberForDebug: String = "x";
+	def numberForDebug: String = "File";
 }
 
 sealed trait OutputResource {
@@ -673,12 +673,12 @@ sealed trait ExternalOutputResource extends OutputResource;
 
 case class NullOutputResource() extends ExternalOutputResource {
 	def arg: CommandLineArgument = NormalArgument("/dev/null");
-	def numberForDebug: String = "n";
+	def numberForDebug: String = "null";
 }
 
 case class StdoutResource() extends ExternalOutputResource {
 	def arg: CommandLineArgument = WorkingDirArgument("stdout");
-	def numberForDebug: String = "-";
+	def numberForDebug: String = "stdout";
 }
 
 object StdoutResource {
@@ -687,7 +687,7 @@ object StdoutResource {
 
 case class FileOutputResource(path: String) extends ExternalOutputResource {
 	def arg: CommandLineArgument = NormalArgument(path);
-	def numberForDebug: String = "x";
+	def numberForDebug: String = "File";
 }
 
 case class FifoResource(id: Int) {
@@ -696,11 +696,11 @@ case class FifoResource(id: Int) {
 
 	val i = new InputResource {
 		def arg: CommandLineArgument = FifoResource.this.arg;
-		def numberForDebug: String = id.toString;
+		def numberForDebug: String = "pipe_" + id.toString;
 	}
 	val o = new OutputResource {
 		def arg: CommandLineArgument = FifoResource.this.arg;
-		def numberForDebug: String = id.toString;
+		def numberForDebug: String = "pipe_" + id.toString;
 	}
 
 	def createMkfifoCommandLines(): List[CommandLine] = {
@@ -719,11 +719,11 @@ case class HardTempFileResource(id: Int) {
 
 	val i = new InputResource {
 		def arg: CommandLineArgument = HardTempFileResource.this.arg;
-		def numberForDebug: String = "H" + id.toString;
+		def numberForDebug: String = "temp_" + id.toString;
 	}
 	val o = new OutputResource {
 		def arg: CommandLineArgument = HardTempFileResource.this.arg;
-		def numberForDebug: String = "H" + id.toString;
+		def numberForDebug: String = "temp_" + id.toString;
 	}
 }
 
