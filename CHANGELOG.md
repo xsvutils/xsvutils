@@ -18,6 +18,8 @@ To see compatibility information, `xsvutils help compatibility`.
 - filter コマンドの --stridx (--jvm のみ)
 - where コマンドの --stridx (--jvm のみ)
 
+--install-rt の仕組みによりJavaをシステムインストールのものからxsvutils自身の管理に変更した。
+
 
 ## v7 -> v8 (2018/09/26)
 
@@ -121,6 +123,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 - reimplement `filter`, `where` subcommands on `--jvm`
 - add `--stridx` option of `filter` `where` subcommands on `--jvm`
 - support creating big stridx file
+- add `--install-rt` global option
 
 ### version 0.8 (-v8) (2018/09/26)
 - kill child processes on exit
