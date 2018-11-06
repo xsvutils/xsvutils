@@ -38,9 +38,10 @@ bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
 cat <<EOF
 export GOROOT=$(pwd)/var/golang
 export GOPATH=$(pwd)/var/golang_packages
-export JAVA_HOME=$(pwd)/var/openjdk
-export PATH=$(pwd)/var/openjdk/bin:$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$(pwd)/var/rust/bin:$PATH
+export JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
+export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH:$(pwd)/var/rust/bin:$PATH
 CARGO = cargo
+
 EOF
 
 cat <<\EOF

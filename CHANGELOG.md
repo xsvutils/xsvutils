@@ -120,6 +120,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ## commit log
 
 ### version 0.10 (-v10) (Unreleased)
+- fix a buf of src/install-openjdk.sh
 
 ### version 0.9 (-v9) (2018/10/14)
 - add `cutidx` subcommand on `--jvm`
