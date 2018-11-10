@@ -12,12 +12,14 @@ fi
 
 TARGET_SOURCES1=$(echo $((
             echo target/golang.bin;
+            echo target/xsvutils-rs;
             echo target/java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
             echo target/golang.bin;
+            echo target/xsvutils-rs;
             echo target/java/bin/xsvutils-java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
@@ -30,14 +32,15 @@ if [ -n "$RM_TARGET" ]; then
 fi
 
 bash src/install-golang.sh $(pwd)/var >&2 || exit $?
+bash src/install-rust.sh $(pwd)/var >&2 || exit $?
 
 bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
 cat <<EOF
 export GOROOT=$(pwd)/var/golang
 export GOPATH=$(pwd)/var/golang_packages
 export JAVA_HOME=$(pwd)/var/openjdk
-export PATH=$(pwd)/var/openjdk/bin:$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH
-
+export PATH=$(pwd)/var/openjdk/bin:$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$(pwd)/var/rust/bin:$PATH
+CARGO = cargo
 EOF
 
 cat <<\EOF
@@ -187,5 +190,15 @@ target/java/bin/xsvutils-java: var/sbt/target/universal/xsvutils-java-0.1.0-SNAP
 	mv var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT target/java
 	touch target/java/bin/xsvutils-java
 
+EOF
+
+cat <<EOF
+
+target/xsvutils-rs: cargo-build
+	cp -p var/rust-target/release/xsvutils-rs target/xsvutils-rs
+
+.PHONY: cargo-build
+cargo-build:
+	\$(CARGO) build --quiet --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
 EOF
 

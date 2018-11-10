@@ -1300,7 +1300,7 @@ case class CutCommand (
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
 		val option = NormalArgument("--col") :: NormalArgument(columns.mkString(",")) :: Nil;
-		CommandLineImpl(NormalArgument("perl") :: ToolDirArgument("cut.pl") :: option,
+		CommandLineImpl(ToolDirArgument("xsvutils-rs") :: NormalArgument("cut") :: option,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 

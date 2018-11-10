@@ -1,0 +1,11 @@
+[package]
+name = "xsvutils"
+version = "0.1.0"
+
+[[bin]]
+name = "xsvutils-rs"
+path = "../src/main.rs"
+
+[dependencies]
+regex = "1"
+lazy_static = "1.2"
