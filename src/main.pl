@@ -2103,7 +2103,7 @@ sub build_ircode_command {
             } elsif ($curr_command->{update} eq "right") {
                 $option .= " --right-update";
             }
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/cut.pl$option"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-rs cut$option"]);
 
         } elsif ($command_name eq "rmnoname") {
             my $option = "";
