@@ -5,7 +5,7 @@ use std::io::Write;
 use memchr::memchr;
 use regex::Regex;
 
-use crate::util::{contains, pop_first_or_else};
+use crate::util;
 
 // ---- cut command option -----------------------------------------------------
 
@@ -33,20 +33,24 @@ impl CmdOpt {
             let arg = args.remove(0);
             match arg.as_str() {
                 "--col" => {
-                    opt.col =
-                        pop_first_or_else(&mut args, || die!("option --col needs an argument"))
+                    opt.col = util::pop_first_or_else(&mut args, || {
+                        die!("option --col needs an argument")
+                    })
                 }
                 "--head" => {
-                    opt.head =
-                        pop_first_or_else(&mut args, || die!("option --head needs an argument"))
+                    opt.head = util::pop_first_or_else(&mut args, || {
+                        die!("option --head needs an argument")
+                    })
                 }
                 "--last" => {
-                    opt.last =
-                        pop_first_or_else(&mut args, || die!("option --last needs an argument"))
+                    opt.last = util::pop_first_or_else(&mut args, || {
+                        die!("option --last needs an argument")
+                    })
                 }
                 "--remove" => {
-                    opt.remove =
-                        pop_first_or_else(&mut args, || die!("option --remove needs an argument"))
+                    opt.remove = util::pop_first_or_else(&mut args, || {
+                        die!("option --remove needs an argument")
+                    })
                 }
                 "--left-update" => opt.update = Some(LR::Left),
                 "--right-update" => opt.update = Some(LR::Right),
@@ -66,7 +70,7 @@ impl CmdOpt {
             indexes.append(&mut center);
         } else {
             for ix in 0..header.len() {
-                if !contains(&indexes, &ix) && !contains(&lasts, &ix) {
+                if !util::contains(&indexes, &ix) && !util::contains(&lasts, &ix) {
                     indexes.push(ix);
                 }
             }
@@ -74,13 +78,13 @@ impl CmdOpt {
         indexes.append(&mut lasts);
 
         let removes = CmdOpt::find_all_indexes(&self.remove, header);
-        indexes.retain(|x| !contains(&removes, x));
+        indexes.retain(|x| !util::contains(&removes, x));
 
         match self.update {
             Some(LR::Left) => {
                 let mut updated = vec![];
                 indexes.into_iter().for_each(|ix| {
-                    if !contains(&updated, &ix) {
+                    if !util::contains(&updated, &ix) {
                         updated.push(ix);
                     }
                 });
@@ -89,7 +93,7 @@ impl CmdOpt {
             Some(LR::Right) => {
                 let mut updated = vec![];
                 indexes.into_iter().rev().for_each(|ix| {
-                    if !contains(&updated, &ix) {
+                    if !util::contains(&updated, &ix) {
                         updated.push(ix);
                     }
                 });
@@ -202,7 +206,7 @@ pub fn cut<R: BufRead, W: Write>(
         if len == 0 {
             break;
         }
-        buff.pop();
+        util::trim_newline(&mut buff);
         buff.write_all(&tabs)?;
         pos_vec.push(0);
 
