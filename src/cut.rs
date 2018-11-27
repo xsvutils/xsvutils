@@ -1,11 +1,13 @@
 use std::io;
 use std::io::BufRead;
-use std::io::BufWriter;
 use std::io::Write;
 
+use memchr::memchr;
 use regex::Regex;
 
-type ColIx = u16;
+use crate::util::{contains, pop_first_or_else};
+
+// ---- cut command option -----------------------------------------------------
 
 #[derive(Debug)]
 enum LR {
@@ -13,6 +15,7 @@ enum LR {
     Right,
 }
 
+/// cutコマンドに渡されたコマンドライン引数を表現する構造体
 #[derive(Debug, Default)]
 struct CmdOpt {
     col: String,
@@ -23,32 +26,55 @@ struct CmdOpt {
 }
 
 impl CmdOpt {
-    pub fn create_indexes(&self, header: &[&str]) -> Vec<ColIx> {
-        let mut last_indexes = vec![];
-        if self.last.len() > 0 {
-            CmdOpt::append_indexes(&self.last, header, &mut last_indexes);
+    /// args をコマンドライン引数だと思って解析し、解析結果の構造体を返す
+    pub fn parse(mut args: Vec<String>) -> CmdOpt {
+        let mut opt = CmdOpt::default();
+        while args.len() > 0 {
+            let arg = args.remove(0);
+            match arg.as_str() {
+                "--col" => {
+                    opt.col =
+                        pop_first_or_else(&mut args, || die!("option --col needs an argument"))
+                }
+                "--head" => {
+                    opt.head =
+                        pop_first_or_else(&mut args, || die!("option --head needs an argument"))
+                }
+                "--last" => {
+                    opt.last =
+                        pop_first_or_else(&mut args, || die!("option --last needs an argument"))
+                }
+                "--remove" => {
+                    opt.remove =
+                        pop_first_or_else(&mut args, || die!("option --remove needs an argument"))
+                }
+                "--left-update" => opt.update = Some(LR::Left),
+                "--right-update" => opt.update = Some(LR::Right),
+                _ => die!("Unknown argument: {}", &arg),
+            }
         }
-        let mut remove_indexes = vec![];
-        if self.remove.len() > 0 {
-            CmdOpt::append_indexes(&self.remove, header, &mut remove_indexes);
-        }
+        return opt;
+    }
 
-        let mut indexes = vec![];
-        if self.head.len() > 0 {
-            CmdOpt::append_indexes(&self.head, header, &mut indexes);
-        }
+    /// コマンドライン引数と入力されたヘッダ配列から、出力対象の列のインデックス配列を返す
+    pub fn create_indexes(&self, header: &[&str]) -> Vec<usize> {
+        let mut lasts = CmdOpt::find_all_indexes(&self.last, header);
+
+        let mut indexes = CmdOpt::find_all_indexes(&self.head, header);
         if self.col.len() > 0 {
-            CmdOpt::append_indexes(&self.col, header, &mut indexes);
+            let mut center = CmdOpt::find_all_indexes(&self.col, header);
+            indexes.append(&mut center);
         } else {
-            for i in 0..header.len() {
-                let ix = i as ColIx;
-                if !contains(&indexes, &ix) && !contains(&last_indexes, &ix) {
+            for ix in 0..header.len() {
+                if !contains(&indexes, &ix) && !contains(&lasts, &ix) {
                     indexes.push(ix);
                 }
             }
         }
-        indexes.append(&mut last_indexes);
-        indexes.retain(|x| !contains(&remove_indexes, x));
+        indexes.append(&mut lasts);
+
+        let removes = CmdOpt::find_all_indexes(&self.remove, header);
+        indexes.retain(|x| !contains(&removes, x));
 
         match self.update {
             Some(LR::Left) => {
@@ -74,8 +100,13 @@ impl CmdOpt {
         }
     }
 
-    fn append_indexes(col: &str, header: &[&str], indexes: &mut Vec<ColIx>) {
-        let mut changed = false;
+    /// ヘッダの配列からカンマ区切りで指定したヘッダのインデックスを返す。
+    /// col1..col3 は col1,col2,col3 に展開される。
+    fn find_all_indexes(col: &str, header: &[&str]) -> Vec<usize> {
+        if col.is_empty() {
+            return vec![];
+        }
+        let mut indexes = vec![];
         lazy_static! {
             static ref RE: Regex = Regex::new(r"^(.+)(\d+)\.\.(.+)(\d+)$").unwrap();
         }
@@ -89,128 +120,115 @@ impl CmdOpt {
                     if n1 <= n2 {
                         for n in n1..n2 + 1 {
                             let col = format!("{}{}", s1, n);
-                            changed |= CmdOpt::append_index(&col, header, indexes);
+                            CmdOpt::append_index(&col, header, &mut indexes);
                         }
                     } else {
                         for n in (n2..n1 + 1).rev() {
                             let col = format!("{}{}", s1, n);
-                            changed |= CmdOpt::append_index(&col, header, indexes);
+                            CmdOpt::append_index(&col, header, &mut indexes);
                         }
                     }
                 }
             } else {
-                changed |= CmdOpt::append_index(col, header, indexes);
+                CmdOpt::append_index(col, header, &mut indexes);
             }
         });
-        if !changed {
+        if indexes.is_empty() {
             die!("Columns not specified.");
         }
+        return indexes;
     }
 
-    fn append_index(name: &str, header: &[&str], indexes: &mut Vec<ColIx>) -> bool {
+    /// `header` から `name` のインデックスを探し、見つかれば `indexes` に加える
+    fn append_index(name: &str, header: &[&str], indexes: &mut Vec<usize>) {
         if let Some(ix) = header.iter().position(|x| x == &name) {
-            indexes.push(ix as ColIx);
-            return true;
+            indexes.push(ix);
         } else {
             eprintln!("Unknown column: {}", name);
-            return false;
         }
     }
 }
 
-pub fn cut(args: Vec<String>) -> Result<(), io::Error> {
-    let opt = parse_opt(args);
+// ---- cut main procedure -----------------------------------------------------
 
-    let mut buff = String::new();
-    let stdin = io::stdin();
-    let mut stdin = stdin.lock();
-    let stdout = io::stdout();
-    let stdout = stdout.lock();
-    let mut stdout = BufWriter::new(stdout);
+/// 入力からTSVを読み取り、指定した列のみを出力する
+pub fn cut<R: BufRead, W: Write>(
+    args: Vec<String>,
+    input: &mut R,
+    output: &mut W,
+) -> Result<(), io::Error> {
+    let opt = CmdOpt::parse(args);
 
-    let len = stdin.read_line(&mut buff)?;
-    if len == 0 {
-        die!(); // NoInput
-    }
-    let indexes = {
+    // 表示する列のインデックス
+    let target_col_idx = {
+        let mut buff = String::new();
+        let len = input.read_line(&mut buff)?;
+        if len == 0 {
+            die!(); // NoInput
+        }
         let header: Vec<_> = buff.trim_end().split("\t").collect();
-        let indexes = opt.create_indexes(&header);
-        write_line(&header, &indexes, &mut stdout)?;
-        indexes
+        let target_col_idx = opt.create_indexes(&header);
+        let mut first = true;
+        for &ix in &target_col_idx {
+            if first {
+                first = false;
+            } else {
+                output.write_all(b"\t")?;
+            }
+            if let Some(val) = header.get(ix) {
+                output.write_all(val.as_bytes())?;
+            }
+        }
+        output.write_all(b"\n")?;
+
+        target_col_idx
     };
+
+    // 表示する列インデックスの最大値
+    let max_col_idx = target_col_idx.iter().max().cloned().unwrap_or(0);
+    // 行バッファのバイト列
+    // Rustではバイト列を文字列に変換するとき内部でUTF-8のバリデーションを行うので、
+    // バイト列そのままのほうがオーバーヘッドが減る
+    let mut buff = Vec::new();
+    // 各列の先頭位置
+    let mut pos_vec = Vec::with_capacity(max_col_idx + 2);
+    // 下のコードでタブ位置で列の開始位置を検索しているが、タブが足りないときの処理が面倒なので、
+    // 常に行末の改行コードを削った上で十分なタブで埋めることで、検索コードをシンプルにしている
+    let tabs = vec![b'\t'; max_col_idx + 1];
     loop {
         buff.clear();
-        let len = stdin.read_line(&mut buff)?;
+        pos_vec.clear();
+        let len = input.read_until(b'\n', &mut buff)?;
         if len == 0 {
             break;
         }
-        let row: Vec<_> = buff.trim_end().split("\t").collect();
-        write_line(&row, &indexes, &mut stdout)?;
+        buff.pop();
+        buff.write_all(&tabs)?;
+        pos_vec.push(0);
+
+        // 最大インデックス+2 のサイズだけ計算する。それ以降は不要
+        // 例えば最大 max_col_idx=2 の場合、 pos_vec[3] までアクセスするので pos_vec.len() == 4
+        let mut start = 0;
+        for _ in 0..max_col_idx + 1 {
+            let index = start + memchr(b'\t', &buff[start..]).unwrap() + 1;
+            pos_vec.push(index);
+            start = index;
+        }
+        let mut first = true;
+        for &ix in &target_col_idx {
+            // pos_vec は列の開始位置が入っており、
+            // buff[ pos_vec[i] .. pos_vec[i+1] ] だと文字列の最後にタブ文字を含んでしまう。
+            let s = pos_vec[ix];
+            let e = pos_vec[ix + 1] - 1;
+            let cell = &buff[s..e];
+            if first {
+                first = false;
+            } else {
+                output.write_all(b"\t")?;
+            }
+            output.write_all(cell)?;
+        }
+        output.write_all(b"\n")?;
     }
     Ok(())
-}
-
-fn parse_opt(mut args: Vec<String>) -> CmdOpt {
-    let mut opt = CmdOpt::default();
-    while args.len() > 0 {
-        let arg = args.remove(0);
-        match arg.as_str() {
-            "--col" => {
-                if args.len() > 0 {
-                    opt.col = args.remove(0);
-                } else {
-                    die!("option --col needs an argument")
-                }
-            }
-            "--head" => {
-                if args.len() > 0 {
-                    opt.head = args.remove(0);
-                } else {
-                    die!("option --head needs an argument")
-                }
-            }
-            "--last" => {
-                if args.len() > 0 {
-                    opt.last = args.remove(0);
-                } else {
-                    die!("option --last needs an argument")
-                }
-            }
-            "--remove" => {
-                if args.len() > 0 {
-                    opt.remove = args.remove(0);
-                } else {
-                    die!("option --remove needs an argument")
-                }
-            }
-            "--left-update" => opt.update = Some(LR::Left),
-            "--right-update" => opt.update = Some(LR::Right),
-            _ => die!("Unknown argument: {}", &arg),
-        }
-    }
-    return opt;
-}
-
-fn write_line<W: Write>(
-    cells: &[&str],
-    indexes: &[ColIx],
-    writer: &mut W,
-) -> Result<(), io::Error> {
-    let mut first_line = true;
-    for &ix in indexes {
-        if first_line {
-            first_line = false;
-        } else {
-            writer.write(b"\t")?;
-        }
-        if let Some(val) = cells.get(ix as usize) {
-            writer.write(val.as_bytes())?;
-        }
-    }
-    writer.write(b"\n")?;
-    Ok(())
-}
-
-fn contains<T: PartialEq>(slice: &[T], elem: &T) -> bool {
-    slice.iter().position(|x| x == elem).is_some()
 }

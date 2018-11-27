@@ -1,21 +1,15 @@
+use std::io;
+use std::io::BufWriter;
+
 #[macro_use]
 extern crate lazy_static;
+extern crate memchr;
 extern crate regex;
 
 use std::env;
 
-macro_rules! die {
-    () => {{
-        use std;
-        std::process::exit(1);
-    }};
-    ($( $x:expr ),*) => {{
-        use std;
-        eprintln!($( $x ),*);
-        std::process::exit(1);
-    }}
-}
-
+#[macro_use]
+mod util;
 mod cut;
 
 fn main() {
@@ -27,7 +21,12 @@ fn main() {
     if let Some(sub_command) = sub_command {
         match sub_command.as_str() {
             "cut" => {
-                let _ = cut::cut(rest);
+                let stdin = io::stdin();
+                let mut stdin = stdin.lock();
+                let stdout = io::stdout();
+                let stdout = stdout.lock();
+                let mut stdout = BufWriter::new(stdout);
+                let _ = cut::cut(rest, &mut stdin, &mut stdout);
             }
             _ => {
                 die!("unknown subcommand: {}", &sub_command);
