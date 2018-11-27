@@ -1,12 +1,12 @@
 #!/bin/bash
 
-xsvutils_source_dir=$(dirname $(dirname $0))
+xsvutils_source_dir=$(cd $(dirname $(readlink $0))/.. && pwd)
 
 (
     cd $xsvutils_source_dir
     bash etc/build-makefile.sh > var/makefile.tmp
     mv var/makefile.tmp var/makefile
-    make --question -f var/makefile target || make -f var/makefile target || exit $?
+    make --question -f var/makefile target || make -s -f var/makefile target || exit $?
 ) >&2 || exit $?
 
 export XSVUTILS_TOOL_DIR=$xsvutils_source_dir/target
