@@ -114,6 +114,7 @@ pub fn uriparams<R: BufRead, W: Write>(
                 output.write_all(name.as_bytes())?;
             }
             output.write_all(b"\n")?;
+            output.flush()?;
         }
         (index, header.len())
     };

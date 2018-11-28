@@ -184,6 +184,7 @@ pub fn cut<R: BufRead, W: Write>(
             }
         }
         output.write_all(b"\n")?;
+        output.flush()?;
 
         target_col_idx
     };
