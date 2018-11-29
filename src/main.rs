@@ -11,8 +11,18 @@ use std::env;
 
 #[macro_use]
 mod util;
+mod command;
 mod cut;
 mod uriparams;
+
+fn run<C: command::Command>(rest: Vec<String>) {
+    let stdin = io::stdin();
+    let mut stdin = stdin.lock();
+    let stdout = io::stdout();
+    let stdout = stdout.lock();
+    let mut stdout = BufWriter::new(stdout);
+    let _ = C::execute(rest, &mut stdin, &mut stdout);
+}
 
 fn main() {
     let mut argv = env::args();
@@ -22,25 +32,9 @@ fn main() {
 
     if let Some(sub_command) = sub_command {
         match sub_command.as_str() {
-            "cut" => {
-                let stdin = io::stdin();
-                let mut stdin = stdin.lock();
-                let stdout = io::stdout();
-                let stdout = stdout.lock();
-                let mut stdout = BufWriter::new(stdout);
-                let _ = cut::cut(rest, &mut stdin, &mut stdout);
-            }
-            "uriparams" => {
-                let stdin = io::stdin();
-                let mut stdin = stdin.lock();
-                let stdout = io::stdout();
-                let stdout = stdout.lock();
-                let mut stdout = BufWriter::new(stdout);
-                let _ = uriparams::uriparams(rest, &mut stdin, &mut stdout);
-            }
-            _ => {
-                die!("unknown subcommand: {}", &sub_command);
-            }
+            "cut" => run::<cut::CutCommand>(rest),
+            "uriparams" => run::<uriparams::UriParamsCommand>(rest),
+            _ => die!("unknown subcommand: {}", &sub_command),
         }
     } else {
         die!("subcommand is not specified");

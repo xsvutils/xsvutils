@@ -9,6 +9,19 @@ use url;
 
 use crate::util;
 
+pub struct UriParamsCommand;
+impl crate::command::Command for UriParamsCommand {
+    fn execute<R: BufRead, W: Write>(
+        args: Vec<String>,
+        input: &mut R,
+        output: &mut W,
+    ) -> Result<(), io::Error> {
+        uriparams(args, input, output)
+    }
+}
+
+// ---- command line arguments -------------------------------------------------
+
 #[derive(Debug, Copy, Clone)]
 enum AB {
     A,
@@ -71,7 +84,9 @@ impl CmdOpt {
     }
 }
 
-pub fn uriparams<R: BufRead, W: Write>(
+// ---- main procedure ---------------------------------------------------------
+
+fn uriparams<R: BufRead, W: Write>(
     args: Vec<String>,
     input: &mut R,
     output: &mut W,

@@ -7,7 +7,18 @@ use regex::Regex;
 
 use crate::util;
 
-// ---- cut command option -----------------------------------------------------
+pub struct CutCommand;
+impl crate::command::Command for CutCommand {
+    fn execute<R: BufRead, W: Write>(
+        args: Vec<String>,
+        input: &mut R,
+        output: &mut W,
+    ) -> Result<(), io::Error> {
+        cut(args, input, output)
+    }
+}
+
+// ---- command line arguments -------------------------------------------------
 
 #[derive(Debug)]
 enum LR {
@@ -153,10 +164,10 @@ impl CmdOpt {
     }
 }
 
-// ---- cut main procedure -----------------------------------------------------
+// ---- main procedure ---------------------------------------------------------
 
 /// 入力からTSVを読み取り、指定した列のみを出力する
-pub fn cut<R: BufRead, W: Write>(
+fn cut<R: BufRead, W: Write>(
     args: Vec<String>,
     input: &mut R,
     output: &mut W,
