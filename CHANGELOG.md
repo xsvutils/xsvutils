@@ -6,6 +6,12 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v9 -> v10 (Unreleased)
 
+以下のコマンドがRustの実装に置き換わった。
+- cut
+
+src/install-openjdk.sh でJavaインストールできないバグを修正した。
+
+
 ## v8 -> v9 (2018/10/14)
 
 以下のコマンドが追加された。
@@ -121,6 +127,8 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ### version 0.10 (-v10) (Unreleased)
 - fix a buf of src/install-openjdk.sh
+- change debug output format of `--jvm --explain`
+- replace `cut` subcommand with Rust implementation
 
 ### version 0.9 (-v9) (2018/10/14)
 - add `cutidx` subcommand on `--jvm`
