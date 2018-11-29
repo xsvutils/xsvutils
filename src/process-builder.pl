@@ -37,7 +37,7 @@ open(my $toParserFh,   '>', $toParser  ) or die $!;
 open(my $fromParserFh, '<', $fromParser) or die $!;
 my $tmpFh = select($toParserFh);
 $| = 1;
-select($toParserFh);
+select($tmpFh);
 
 sub execLine {
     my ($line) = @_;
@@ -127,7 +127,6 @@ sub execLine {
     return $result;
 }
 
-my $num = 0;
 while () {
     my $line = <$fromParserFh>;
     last if (!defined($line));
@@ -138,7 +137,5 @@ while () {
         last;
     }
     print $toParserFh "$result\n";
-
-    $num++;
 }
 
