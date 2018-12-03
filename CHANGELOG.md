@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v9 -> v10 (Unreleased)
+## v9 -> v10 (2018/12/03)
 
 以下のコマンドがRustでの実装に置き換わり、高速化された。
 - cut
@@ -128,7 +128,7 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 ## commit log
 
-### version 0.10 (-v10) (Unreleased)
+### version 0.10 (-v10) (2018/12/03)
 - fix a buf of src/install-openjdk.sh
 - change debug output format of `--jvm --explain`
 - replace `cut` subcommand with Rust implementation
