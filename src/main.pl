@@ -150,7 +150,7 @@ my @command_name_list = qw/
     where filter grep
     cut cols rmnoname mergecols
     insunixtime inshour insdate insweek inssecinterval inscopy inslinenum insmap insconst
-    addconst addcopy addlinenum addcross addmap uriparams parseuriparams
+    addconst addcopy addlinenum addcross addmap uriparams parseuriparams uriparams-v2
     update sort paste join union diff expandmultivalue assemblematrix
     wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
     tee
@@ -337,8 +337,8 @@ sub parseQuery {
                 $next_command = {command => "insconst", value => undef, dst => undef};
                 $last_command = $a;
 
-            } elsif ($a eq "uriparams") {
-                $next_command = {command => "uriparams", col => undef, names => undef,
+            } elsif ($a eq "uriparams" || $a eq "uriparams-v2") {
+                $next_command = {command => $a, col => undef, names => undef,
                                  decode => undef, multi_value => undef};
                 $last_command = $a;
 
@@ -917,7 +917,7 @@ sub parseCommandOptionInsCol {
 
 sub parseCommandOptionUriparams {
     my ($a, $argv, $command_name, $curr_command, $input) = @_;
-    return '' unless ($command_name eq "uriparams" || $command_name eq "--uriparams");
+    return '' unless ($command_name eq "uriparams" || $command_name eq "--uriparams" || $command_name eq "uriparams-v2");
 
     if ($a eq "--name" || $a eq "--names") {
         die "option $a needs an argument" unless (@$argv);
@@ -930,7 +930,7 @@ sub parseCommandOptionUriparams {
         $curr_command->{names} = "";
         return 1;
     }
-    if ($command_name eq "uriparams" && $a eq "--col") {
+    if (($command_name eq "uriparams" || $command_name eq "uriparams-v2") && $a eq "--col") {
         die "option $a needs an argument" unless (@$argv);
         die "duplicated option $a" if defined($curr_command->{col});
         $curr_command->{col} = shift(@$argv);
@@ -956,11 +956,11 @@ sub parseCommandOptionUriparams {
         $curr_command->{multi_value} = "b";
         return 1;
     }
-    if ($command_name eq "uriparams" && !defined($curr_command->{col}) && $a !~ /\A-/) {
+    if (($command_name eq "uriparams" || $command_name eq "uriparams-v2") && !defined($curr_command->{col}) && $a !~ /\A-/) {
         $curr_command->{col} = $a;
         return 1;
     }
-    if ($command_name eq "uriparams" && !defined($curr_command->{names}) && $a !~ /\A-/) {
+    if (($command_name eq "uriparams" || $command_name eq "uriparams-v2") && !defined($curr_command->{names}) && $a !~ /\A-/) {
         $curr_command->{names} = $a;
         return 1;
     }
@@ -1510,6 +1510,21 @@ sub validateParams {
             if (!defined($curr_command->{decode})) {
                 $curr_command->{decode} = "utf8";
             }
+            if (!defined($curr_command->{multi_value})) {
+                $curr_command->{multi_value} = "a";
+            }
+            push(@$commands2, $curr_command);
+
+        } elsif ($command_name eq "uriparams-v2") {
+            if (!defined($curr_command->{col})) {
+                die "subcommand \`uriparams-v2\` needs --col option";
+            }
+            if (!defined($curr_command->{names})) {
+                die "subcommand \`uriparams-v2\` needs --names option";
+            }
+            # if (!defined($curr_command->{decode})) {
+            #     $curr_command->{decode} = "utf8";
+            # }
             if (!defined($curr_command->{multi_value})) {
                 $curr_command->{multi_value} = "a";
             }
@@ -2237,6 +2252,21 @@ sub build_ircode_command {
                 push(@$ircode, ["cmd", "bash \$TOOL_DIR/decode-percent-sjis.sh"]);
             }
 
+        } elsif ($command_name eq "uriparams-v2") {
+            my $option = "";
+
+            my $col = escape_for_bash($curr_command->{col});
+            $option .= " --col $col";
+            if ($curr_command->{names} eq "") {
+                $option .= " --name-list";
+            } else {
+                my $names = escape_for_bash($curr_command->{names});
+                $option .= " --names $names";
+            }
+            if ($curr_command->{multi_value} eq "b") {
+                $option .= " --multi-value-b";
+            }
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-rs uriparams$option"]);
         } elsif ($command_name eq "update") {
             my $index = escape_for_bash($curr_command->{index});
             my $column = escape_for_bash($curr_command->{col});
