@@ -36,7 +36,7 @@ VERSION=
 
 if [ "$1" = -v11- ]; then # latest version
     shift
-elif [[ "$1" =~ -v[0-9]+ ]]; then
+elif [[ "$1" =~ ^-v[0-9]+$ ]]; then
     if [ "$1" = "-v1" ]; then
         VERSION=-v3
     elif [ "$1" = "-v2" ]; then
