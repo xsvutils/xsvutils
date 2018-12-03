@@ -1,7 +1,16 @@
-join subcommand
-    Join records of two inputs.
+union subcommand
+    Combine records from two inputs.
+
+    Usage:
+        $ xsvutils <INPUT> union [--file] <OTHER_FILE> [options...]
+
+    Parameter:
+        <OTHER_FILE>  Other input file
 
     Options:
         --file <OTHER_FILE>
         --help        Print help information about this subcommand.
+
+    以下のように、 <OTHER_FILE> の部分を `[]` で囲んで、サブコマンドを指定することも可能。
+        $ xsvutils input1.tsv cut id,name union [ input2.tsv cut id,name ]
 
