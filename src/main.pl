@@ -902,11 +902,11 @@ sub parseCommandOptionUriparams {
         $curr_command->{col} = shift(@$argv);
         return 1;
     }
-    if ($a eq "--no-decode") {
-        die "duplicated option $a" if defined($curr_command->{decode});
-        $curr_command->{decode} = "";
-        return 1;
-    }
+    #if ($a eq "--no-decode") {
+    #    die "duplicated option $a" if defined($curr_command->{decode});
+    #    $curr_command->{decode} = "";
+    #    return 1;
+    #}
     #if ($a eq "--sjis") {
     #    die "duplicated option $a" if defined($curr_command->{decode});
     #    $curr_command->{decode} = "sjis";
