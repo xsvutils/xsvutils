@@ -14,3 +14,4 @@ id	querystring	q	r
 24	http://www.example.com/foo.html?r=xxx		xxx
 25	https://www.example.com/?r=xxx		xxx
 26	https://www.example.com/foo.html?r=xxx		xxx
+30	q=a%09b	a\x09b	

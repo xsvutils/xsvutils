@@ -14,3 +14,4 @@ id	querystring	name-list
 24	http://www.example.com/foo.html?r=xxx	r
 25	https://www.example.com/?r=xxx	r
 26	https://www.example.com/foo.html?r=xxx	r
+30	q=a%09b	q
