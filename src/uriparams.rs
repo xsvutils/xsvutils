@@ -244,9 +244,18 @@ fn name_list_b(url: &[u8]) -> String {
 }
 
 fn escape(str: &str) -> String {
-    let str = str.replace("\\", "\\\\");
-    let str = str.replace(";", "\\x3B");
-    return str;
+    use std::fmt::Write;
+
+    let mut buff = String::new();
+    for ch in str.chars() {
+        match ch {
+            '\\' => buff.push_str("\\\\"),
+            ';' => buff.push_str("\\x3B"),
+            '\x00'...'\x1F' | '\x7F' => write!(buff, "\\x{:02X}", ch as u8).unwrap(),
+            _ => buff.push(ch),
+        }
+    }
+    return buff;
 }
 
 fn parse(url: &[u8]) -> url::form_urlencoded::Parse {
@@ -260,6 +269,18 @@ fn parse(url: &[u8]) -> url::form_urlencoded::Parse {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_escape() {
+        assert_eq!("a\\x00b", &names_a("q=a%00b".as_bytes(), &["q"]));
+        assert_eq!("a\\x1Fb", &names_a("q=a%1Fb".as_bytes(), &["q"]));
+        assert_eq!("a b", &names_a("q=a%20b".as_bytes(), &["q"]));
+        assert_eq!("a b", &names_a("q=a+b".as_bytes(), &["q"]));
+        assert_eq!("a\\x3Bb", &names_a("q=a%3Bb".as_bytes(), &["q"]));
+        assert_eq!("a\\x3Bb", &names_a("q=a;b".as_bytes(), &["q"]));
+        assert_eq!("a\\\\b", &names_a("q=a%5Cb".as_bytes(), &["q"]));
+        assert_eq!("a\\x7Fb", &names_a("q=a%7Fb".as_bytes(), &["q"]));
+    }
 
     #[test]
     fn query_string_types() {
