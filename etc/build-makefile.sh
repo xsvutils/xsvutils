@@ -139,9 +139,7 @@ target/xsvutils-go: var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/Gopkg.tom
 	cd $gopath_rel/src/$go_target; go vet ./...
 	cd $gopath_rel/src/$go_target; go build
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
-	cp $gopath_rel/src/$go_target/xsvutils var/xsvutils-go
-	chmod 777 var/xsvutils-go
-	mv var/xsvutils-go target/xsvutils-go
+	cp $gopath_rel/src/$go_target/xsvutils target/xsvutils-go
 
 $gopath_rel/src/$go_target/Gopkg.toml: etc/Gopkg.toml
 	cp etc/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.toml
