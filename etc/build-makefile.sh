@@ -1,4 +1,4 @@
-
+#!/bin/bash
 uname=$(uname)
 
 if [ "$uname" = "Darwin" ]; then
@@ -14,14 +14,16 @@ TARGET_SOURCES1=$(echo $((
             echo target/golang.bin;
             echo target/xsvutils-rs;
             echo target/java;
-            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
+            ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
             echo target/golang.bin;
             echo target/xsvutils-rs;
             echo target/java/bin/xsvutils-java;
-            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g'; ls help | sed 's/^/target\/help-/g';
+            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
+            ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 
@@ -31,15 +33,18 @@ if [ -n "$RM_TARGET" ]; then
     rm -r $RM_TARGET >&2
 fi
 
-bash src/install-golang.sh $(pwd)/var >&2 || exit $?
-bash src/install-rust.sh $(pwd)/var >&2 || exit $?
+bash src/install-golang.sh $PWD/var >&2 || exit $?
+bash src/install-rust.sh $PWD/var >&2 || exit $?
 
 bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
+
+GOPATH=$PWD/var/golang_packages
+JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
 cat <<EOF
-export GOROOT=$(pwd)/var/golang
-export GOPATH=$(pwd)/var/golang_packages
-export JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
-export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$(pwd)/var/golang_packages/bin:$(pwd)/var/golang/bin:$PATH:$(pwd)/var/rust/bin:$PATH
+export GOROOT=$PWD/var/golang
+export GOPATH=$GOPATH
+export JAVA_HOME=$JAVA_HOME
+export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$PWD/var/golang_packages/bin:$PWD/var/golang/bin:$PATH:$PWD/var/rust/bin:$PATH
 CARGO = cargo
 
 EOF
