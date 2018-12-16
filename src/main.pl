@@ -2207,7 +2207,7 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/update.pl $index:$column=$value"]);
 
         } elsif ($command_name eq "sort") {
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin fldsort --header"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-go fldsort --header"]);
 
         } elsif ($command_name eq "tee") {
             my $file;
@@ -2220,10 +2220,10 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "tee $file"]);
 
         } elsif ($command_name eq "buffer") {
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-go buffer"]);
 
         } elsif ($command_name eq "buffer-debug") {
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin buffer --debug"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-go buffer --debug"]);
 
         } elsif ($command_name eq "paste") {
             my $file_pipe_id = escape_for_bash($curr_command->{file_pipe_id});
@@ -2263,7 +2263,7 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/assemblematrix.pl"]);
 
         } elsif ($command_name eq "wcl") {
-            push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin wcl --header"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-go wcl --header"]);
 
         } elsif ($command_name eq "header") {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/header.pl"]);
@@ -2364,7 +2364,7 @@ sub build_ircode_input_format {
     }
 
     if ($input_pipe->{format} eq "csv") {
-        push(@$ircode, ["cmd", "\$TOOL_DIR/golang.bin csv2tsv"]);
+        push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-go csv2tsv"]);
     } elsif ($input_pipe->{format} eq "ltsv") {
         my $ltsvheader = escape_for_bash($input_pipe->{header});
         push(@$ircode, ["cmd", "perl \$TOOL_DIR/ltsv2tsv.pl --header $ltsvheader"]);

@@ -11,7 +11,7 @@ else
 fi
 
 TARGET_SOURCES1=$(echo $((
-            echo target/golang.bin;
+            echo target/xsvutils-go;
             echo target/xsvutils-rs;
             echo target/java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
@@ -19,7 +19,7 @@ TARGET_SOURCES1=$(echo $((
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
-            echo target/golang.bin;
+            echo target/xsvutils-go;
             echo target/xsvutils-rs;
             echo target/java/bin/xsvutils-java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
@@ -130,16 +130,16 @@ done
 perl etc/build-makefile-golang.pl $(find src -name '*.go')
 
 cat <<EOF
-gobuild: target/golang.bin
+gobuild: target/xsvutils-go
 
-target/golang.bin: var/GOLANG_VERSION_HASH var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock
+target/xsvutils-go: var/GOLANG_VERSION_HASH var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock
 	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; dep ensure
 	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; go vet ./...
 	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; go build
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
-	cp var/golang_packages/src/github.com/suzuki-navi/xsvutils/xsvutils var/golang.bin
-	chmod 777 var/golang.bin
-	mv var/golang.bin target/golang.bin
+	cp var/golang_packages/src/github.com/suzuki-navi/xsvutils/xsvutils var/xsvutils-go
+	chmod 777 var/xsvutils-go
+	mv var/xsvutils-go target/xsvutils-go
 
 var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml: etc/Gopkg.toml
 	cp etc/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml

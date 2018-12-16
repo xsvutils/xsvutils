@@ -961,7 +961,7 @@ case class MacNewLineToUnixCommand () extends Command {
 case class CsvToTsvCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLineImpl(ToolDirArgument("golang.bin") :: NormalArgument("csv2tsv") :: Nil,
+		CommandLineImpl(ToolDirArgument("xsvutils-go") :: NormalArgument("csv2tsv") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
@@ -1459,7 +1459,7 @@ case class WclCommandParser (
 case class WclCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLineImpl(ToolDirArgument("golang.bin") :: NormalArgument("wcl") :: NormalArgument("--header") :: Nil,
+		CommandLineImpl(ToolDirArgument("xsvutils-go") :: NormalArgument("wcl") :: NormalArgument("--header") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 
