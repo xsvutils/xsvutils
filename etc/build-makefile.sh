@@ -38,7 +38,8 @@ bash src/install-rust.sh $PWD/var >&2 || exit $?
 
 bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
 
-GOPATH=$PWD/var/golang_packages
+gopath_rel=var/golang_packages
+GOPATH=$PWD/$gopath_rel
 JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
 cat <<EOF
 export GOROOT=$PWD/var/golang
@@ -129,23 +130,24 @@ done
 
 perl etc/build-makefile-golang.pl $(find src -name '*.go')
 
+go_target=github.com/suzuki-navi/xsvutils
 cat <<EOF
 gobuild: target/xsvutils-go
 
-target/xsvutils-go: var/GOLANG_VERSION_HASH var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock
-	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; dep ensure
-	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; go vet ./...
-	cd var/golang_packages/src/github.com/suzuki-navi/xsvutils; go build
+target/xsvutils-go: var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.lock
+	cd $gopath_rel/src/$go_target; dep ensure
+	cd $gopath_rel/src/$go_target; go vet ./...
+	cd $gopath_rel/src/$go_target; go build
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
-	cp var/golang_packages/src/github.com/suzuki-navi/xsvutils/xsvutils var/xsvutils-go
+	cp $gopath_rel/src/$go_target/xsvutils var/xsvutils-go
 	chmod 777 var/xsvutils-go
 	mv var/xsvutils-go target/xsvutils-go
 
-var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml: etc/Gopkg.toml
-	cp etc/Gopkg.toml var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.toml
+$gopath_rel/src/$go_target/Gopkg.toml: etc/Gopkg.toml
+	cp etc/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.toml
 
-var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock: etc/Gopkg.lock
-	cp etc/Gopkg.lock var/golang_packages/src/github.com/suzuki-navi/xsvutils/Gopkg.lock
+$gopath_rel/src/$go_target/Gopkg.lock: etc/Gopkg.lock
+	cp etc/Gopkg.lock $gopath_rel/src/$go_target/Gopkg.lock
 
 EOF
 
