@@ -1,0 +1,182 @@
+#!/bin/bash
+set -Ceu
+
+DEFAULT_OPAM_VERSION=2.0.1
+
+usage() {
+  cat <<EOF >&2
+極力環境を汚さないようにビルドツールをインストールし、実行します。
+何も指定しない場合、インストールディレクトリは \$HOME/.anybuild です
+
+USAGE:
+  $0 [OPTIONS] <COMMAND> ... # COMMAND を実行します。
+  $0 [OPTIONS] clean         # インストールディレクトリを削除します
+  $0 help                    # このヘルプを表示します
+
+EXAMPLE:
+  $0 --rust=1.29.0 rustc --version
+
+OPTIONS:
+  --prefix          インストールディレクトリの指定
+  --go=<VERSION>    インストールする Go のバージョン
+  --ocaml=<VERSION> インストールする OCaml のバージョン
+  --rust=<VERSION>  インストールする Rust のバージョン
+  --sbt=<VERSION>   インストールする sbt のバージョン
+EOF
+  exit 1
+}
+
+# ----- Go ---------------------------------------------------------------------
+
+install_go() {
+  : "${PREFIX?not defined}"
+  : "${GO_VERSION?not defined}"
+  local fname
+  if [ ! -x "$PREFIX/go${GO_VERSION}/bin/go" ]; then
+    # refs https://golang.org/doc/install
+    case $(uname) in
+      Linux )
+        fname="go${GO_VERSION}.linux-amd64.tar.gz" ;;
+      Darwin )
+        fname="go${GO_VERSION}.darwin-amd64.tar.gz" ;;
+      * )
+        echo "$(uname) is not supported." >&2
+        exit 1
+    esac
+    mkdir -p "$PREFIX"
+    rm -rf "$PREFIX/go"
+    rm -rf "$PREFIX/go${GO_VERSION}"
+    curl -L "https://dl.google.com/go/$fname" | tar -C "$PREFIX" -xzf -
+    mv "$PREFIX/go" "$PREFIX/go${GO_VERSION}"
+  fi
+  export GOROOT="$PREFIX/go${GO_VERSION}"
+}
+
+# ----- OCaml ------------------------------------------------------------------
+
+install_opam() {
+  : "${PREFIX?not defined}"
+  local fname initopt
+  export OPAMROOT="$PREFIX/opam"
+  [ -x "$PREFIX/bin/opam" ] && return
+
+  mkdir -p "$PREFIX/bin"
+  case $(uname) in
+    Linux )
+      fname="opam-${DEFAULT_OPAM_VERSION}-x86_64-linux"
+      initopt="--disable-sandboxin"
+      ;;
+    Darwin )
+      fname="opam-${DEFAULT_OPAM_VERSION}-x86_64-darwin"
+      initopt=
+      ;;
+    * )
+      echo "$(uname) is not supported." >&2
+      exit 1
+  esac
+  curl -L -o "$PREFIX/bin/opam.tmp" "https://github.com/ocaml/opam/releases/download/${DEFAULT_OPAM_VERSION}/$fname"
+  chmod +x "$PREFIX/bin/opam.tmp"
+  mv "$PREFIX/bin/opam.tmp" "$PREFIX/bin/opam"
+  # --bare     : コンパイラをまだインストールしない
+  # --no-setup : .profileなどを変更しない
+  "$PREFIX/bin/opam" init --bare --no-setup $initopt
+}
+
+install_ocaml() {
+  : "${OCAML_VERSION?not defined}"
+  install_opam
+  if [ "$OCAML_VERSION" != "$("$PREFIX"/bin/opam switch show)" ]; then
+    "$PREFIX/bin/opam" switch create -v "$OCAML_VERSION"
+  fi
+}
+
+# ----- Rust -------------------------------------------------------------------
+
+install_rustup() {
+  : "${PREFIX?not defined}"
+  export RUSTUP_HOME="$PREFIX/rust"
+  export CARGO_HOME="$PREFIX/rust"
+  if [ -x "$RUSTUP_HOME/bin/rustup" ]; then
+    "$RUSTUP_HOME/bin/rustup" self update 2>/dev/null
+  else
+    curl https://sh.rustup.rs -sSf | sh -s -- --no-modify-path -y --default-toolchain none
+  fi
+}
+
+install_rust_toolchain() {
+  : "${RUST_VERSION?not defined}"
+  install_rustup
+  if ! "${RUSTUP_HOME}/bin/rustup" toolchain list | grep "$RUST_VERSION"- >/dev/null; then
+    "${RUSTUP_HOME}/bin/rustup" toolchain install "$RUST_VERSION"
+  fi
+}
+
+# ----- sbt --------------------------------------------------------------------
+
+install_sbt() {
+  : "${PREFIX?not defined}"
+  : "${SBT_VERSION?not defined}"
+  [ -x "$PREFIX/sbt-${SBT_VERSION}/bin/sbt" ] && return
+
+  mkdir -p "$PREFIX"
+  rm -rf "$PREFIX/sbt"
+  rm -rf "$PREFIX/sbt-${SBT_VERSION}"
+  curl -L "https://piccolo.link/sbt-${SBT_VERSION}.tgz" | tar -C "$PREFIX" -xzf -
+  mv "$PREFIX/sbt" "$PREFIX/sbt-${SBT_VERSION}"
+}
+
+# ===== MAIN ===================================================================
+
+while [ "$#" != 0 ]; do
+  case "$1" in
+    --prefix=* )
+      PREFIX="${1#*=}" ;;
+    --go=* )
+      GO_VERSION="${1#*=}" ;;
+    --ocaml=* )
+      OCAML_VERSION="${1#*=}" ;;
+    --rust=* )
+      RUST_VERSION="${1#*=}" ;;
+    --sbt=* )
+      SBT_VERSION="${1#*=}" ;;
+    --* )
+      echo "Option \`${1}\` is not supported." >&1
+      exit 1 ;;
+    * ) break
+  esac
+  shift
+done
+
+[ "$#" = 0 ] && usage
+
+: "${PREFIX:=$HOME/.anybuild}"
+
+cmd="$1"; shift
+case "$cmd" in
+  help )
+    usage ;;
+  clean )
+    echo rm -rfv "$PREFIX"
+    rm -rfv -- "$PREFIX" ;;
+  go* )
+    install_go
+    "$GOROOT/bin/$cmd" "$@" ;;
+  opam )
+    install_opam
+    "$PREFIX/bin/$cmd" "$@" ;;
+  ocaml* )
+    install_ocaml
+    "$PREFIX/opam/$OCAML_VERSION/bin/$cmd" "$@" ;;
+  rustup )
+    install_rustup
+    "$RUSTUP_HOME/bin/$cmd" "$@" ;;
+  cargo | rustc )
+    install_rust_toolchain
+    "$RUSTUP_HOME/bin/rustup" run "$RUST_VERSION" "$cmd" "$@" ;;
+  sbt )
+    install_sbt
+    "$PREFIX/sbt-${SBT_VERSION}/bin/$cmd" "$@" ;;
+  * )
+    echo "Unknown command: $cmd" >&2
+    exit 1
+esac
