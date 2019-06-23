@@ -4,6 +4,9 @@ if [ -e var/test ]; then
 fi
 mkdir -p var/test
 
+./xsvutils --install-rt
+./xsvutils -v3 --install
+
 bash ./test/case-bom.sh
 bash ./test/case-newline.sh
 bash ./test/case-ltsv.sh
