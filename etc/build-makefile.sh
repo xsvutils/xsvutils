@@ -46,10 +46,10 @@ export GOPATH=$GOPATH
 export JAVA_HOME=$JAVA_HOME
 export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
 
-GO       := $PWD/etc/anybuild --go=1.9.2 go
-SBT      := $PWD/etc/anybuild --sbt=1.2.3 sbt
-CARGO    := $PWD/etc/anybuild --rust=1.30.1 cargo
-OCAMLOPT := $PWD/etc/anybuild --ocaml=4.07.0 ocamlopt
+GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.9.2 go
+SBT      := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --sbt=1.2.3 sbt
+CARGO    := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.30.1 cargo
+OCAMLOPT := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --ocaml=4.07.0 ocamlopt
 
 EOF
 
