@@ -40,6 +40,7 @@ bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
 gopath_rel=var/golang_packages
 GOPATH=$PWD/$gopath_rel
 JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
+
 cat <<EOF
 export GOPATH=$GOPATH
 export JAVA_HOME=$JAVA_HOME
@@ -136,10 +137,10 @@ go_target=github.com/suzuki-navi/xsvutils
 cat <<EOF
 gobuild: target/xsvutils-go
 
-$GOPATH/bin/dep:
+$gopath_rel/bin/dep:
 	\$(GO) get -u github.com/golang/dep/cmd/dep
 
-target/xsvutils-go: $GOPATH/bin/dep var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.lock
+target/xsvutils-go: $gopath_rel/bin/dep var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.lock
 	cd $gopath_rel/src/$go_target; dep ensure
 	cd $gopath_rel/src/$go_target; \$(GO) vet ./...
 	cd $gopath_rel/src/$go_target; \$(GO) build
