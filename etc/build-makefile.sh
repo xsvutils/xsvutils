@@ -36,16 +36,16 @@ fi
 bash src/install-golang.sh $PWD/var >&2 || exit $?
 bash src/install-rust.sh $PWD/var >&2 || exit $?
 
-bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
+bash src/install-openjdk.sh $HOME/.xsvutils/var >&2 || exit $?
 
 gopath_rel=var/golang_packages
 GOPATH=$PWD/$gopath_rel
-JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
+JAVA_HOME=$HOME/.xsvutils/var/openjdk
 cat <<EOF
 export GOROOT=$PWD/var/golang
 export GOPATH=$GOPATH
 export JAVA_HOME=$JAVA_HOME
-export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$PWD/var/golang_packages/bin:$PWD/var/golang/bin:$PATH:$PWD/var/rust/bin:$PATH
+export PATH=$HOME/.xsvutils/var/openjdk/bin:$PWD/var/golang_packages/bin:$PWD/var/golang/bin:$PATH:$PWD/var/rust/bin:$PATH
 CARGO = cargo
 
 EOF
