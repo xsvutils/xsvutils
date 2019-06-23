@@ -35,16 +35,16 @@ if [ -n "$RM_TARGET" ]; then
     rm -r $RM_TARGET >&2
 fi
 
-bash src/install-openjdk.sh $HOME/.xsvutils/repos-build/var >&2 || exit $?
+bash src/install-openjdk.sh $HOME/.xsvutils/var >&2 || exit $?
 
 gopath_rel=var/golang_packages
 GOPATH=$PWD/$gopath_rel
-JAVA_HOME=$HOME/.xsvutils/repos-build/var/openjdk
+JAVA_HOME=$HOME/.xsvutils/var/openjdk
 
 cat <<EOF
 export GOPATH=$GOPATH
 export JAVA_HOME=$JAVA_HOME
-export PATH=$HOME/.xsvutils/repos-build/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
+export PATH=$HOME/.xsvutils/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
 
 GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.9.2 go
 SBT      := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --sbt=1.2.3 sbt
