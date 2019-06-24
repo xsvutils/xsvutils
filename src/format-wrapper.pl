@@ -246,7 +246,7 @@ if ($mode eq "file") {
 }
 
 if (defined($output_path)) {
-    open(my $output_fh, '>', $output_path) or dir $!;
+    open(my $output_fh, '>', $output_path) or die $!;
     open(STDOUT, '>&=', fileno($output_fh));
 }
 
