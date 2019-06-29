@@ -6,6 +6,13 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v10 -> v11 (Unreleased)
 
+Rustソースのビルド時にOSの共有オブジェクトへの動的リンクをなくして、バイナリのポータビリティを改善した。
+
+GithubのレポジトリのURLを変更した。
+
+sbtがインストールできないバグを修正した。
+
+
 ## v9 -> v10 (2018/12/03)
 
 以下のコマンドがRustでの実装に置き換わり、高速化された。
@@ -131,6 +138,9 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 ## commit log
 
 ### version 0.11 (-v11) (Unreleased)
+- fix error of glibc
+- change url for the git remote repository
+- fix failure downloading sbt
 
 ### version 0.10 (-v10) (2018/12/03)
 - fix a buf of src/install-openjdk.sh
