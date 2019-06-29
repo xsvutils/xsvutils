@@ -169,7 +169,13 @@ case "$cmd" in
     "$PREFIX/opam/$OCAML_VERSION/bin/$cmd" "$@" ;;
   rustup )
     install_rustup
-    "$RUSTUP_HOME/bin/$cmd" "$@" ;;
+    if [ -n "$RUST_VERSION" ]; then
+      install_rust_toolchain
+      "$RUSTUP_HOME/bin/$cmd" "$@" --toolchain="$RUST_VERSION"
+    else
+      "$RUSTUP_HOME/bin/$cmd" "$@"
+    fi
+    ;;
   cargo | rustc )
     install_rust_toolchain
     "$RUSTUP_HOME/bin/rustup" run "$RUST_VERSION" "$cmd" "$@" ;;
