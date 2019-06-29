@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## v11 -> v12 (Unreleased)
+
 ## v10 -> v11 (2019/06/29)
 
 Rustソースのビルド時にOSの共有オブジェクトへの動的リンクをなくして、バイナリのポータビリティを改善した。
@@ -136,6 +138,8 @@ insconst のパラメータの順序が逆になってしまった。 (see `xsvu
 
 
 ## commit log
+
+### version 0.12 (-v12) (Unreleased)
 
 ### version 0.11 (-v11) (2019/06/29)
 - fix error of glibc
