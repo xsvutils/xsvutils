@@ -44,11 +44,17 @@ if [ -z "$BUILD_DIR" ]; then
     export BUILD_DIR=$HOME/.xsvutils/repos-build
 fi
 
-if [ ! -e $BUILD_DIR ]; then
+if [ -e $BUILD_DIR ]; then
+    (
+        # change url for the git remote repository
+        cd $BUILD_DIR || exit $?
+        git remote set-url origin https://github.com/xsvutils/xsvutils.git
+    ) || exit $?
+else
     mkdir -p $BUILD_DIR.tmp 2>/dev/null
     (
         cd $BUILD_DIR.tmp || exit $?
-        git clone https://github.com/suzuki-navi/xsvutils.git . || exit $?
+        git clone https://github.com/xsvutils/xsvutils.git . || exit $?
     ) || exit $?
     ( mkdir -p $BUILD_DIR && mv $BUILD_DIR.tmp/* $BUILD_DIR.tmp/.git* $BUILD_DIR ) || exit $?
     rm -rvf $BUILD_DIR.tmp
