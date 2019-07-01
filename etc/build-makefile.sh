@@ -138,21 +138,17 @@ go_target=github.com/suzuki-navi/xsvutils
 cat <<EOF
 gobuild: target/xsvutils-go
 
-$gopath_rel/bin/dep:
-	\$(GO) get -u github.com/golang/dep/cmd/dep
-
-target/xsvutils-go: $gopath_rel/bin/dep var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.lock
-	cd $gopath_rel/src/$go_target; dep ensure
-	cd $gopath_rel/src/$go_target; \$(GO) vet ./...
-	cd $gopath_rel/src/$go_target; \$(GO) build
+target/xsvutils-go: var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/go.mod $gopath_rel/src/$go_target/go.sum
+	cd $gopath_rel/src/$go_target; GO111MODULE=on \$(GO) vet ./...
+	cd $gopath_rel/src/$go_target; GO111MODULE=on \$(GO) build
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
 	cp $gopath_rel/src/$go_target/xsvutils target/xsvutils-go
 
-$gopath_rel/src/$go_target/Gopkg.toml: etc/Gopkg.toml
-	cp etc/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.toml
+$gopath_rel/src/$go_target/go.mod: etc/go.mod
+	cp -p etc/go.mod $gopath_rel/src/$go_target/go.mod
 
-$gopath_rel/src/$go_target/Gopkg.lock: etc/Gopkg.lock
-	cp etc/Gopkg.lock $gopath_rel/src/$go_target/Gopkg.lock
+$gopath_rel/src/$go_target/go.sum: etc/go.sum
+	cp -p etc/go.sum $gopath_rel/src/$go_target/go.sum
 
 EOF
 
