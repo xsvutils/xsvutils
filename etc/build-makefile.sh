@@ -134,7 +134,7 @@ done
 
 perl etc/build-makefile-golang.pl $(find src -name '*.go')
 
-go_target=github.com/suzuki-navi/xsvutils
+go_target=github.com/xsvutils/xsvutils
 cat <<EOF
 gobuild: target/xsvutils-go
 

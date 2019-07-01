@@ -1,6 +1,6 @@
 package main
 
-import "github.com/suzuki-navi/xsvutils/cmd"
+import "github.com/xsvutils/xsvutils/cmd"
 
 func main() {
 	cmd.Execute()

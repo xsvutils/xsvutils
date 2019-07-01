@@ -1,4 +1,4 @@
-module github.com/suzuki-navi/xsvutils
+module github.com/xsvutils/xsvutils
 
 go 1.12
 
