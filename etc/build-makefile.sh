@@ -46,7 +46,7 @@ export GOPATH=$GOPATH
 export JAVA_HOME=$JAVA_HOME
 export PATH=$HOME/.xsvutils/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
 
-GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.9.2 go
+GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.12.6 go
 SBT      := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --sbt=1.2.3 sbt
 RUSTUP   := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 rustup
 CARGO    := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 cargo
