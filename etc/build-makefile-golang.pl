@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use utf8;
 
-my $GOLANG_SOURCE_DIR = "var/golang_packages/src/github.com/suzuki-navi/xsvutils";
+my $GOLANG_SOURCE_DIR = "var/golang_packages/src/github.com/xsvutils/xsvutils";
 
 my $sources = '';
 

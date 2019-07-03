@@ -46,7 +46,7 @@ export GOPATH=$GOPATH
 export JAVA_HOME=$JAVA_HOME
 export PATH=$HOME/.xsvutils/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
 
-GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.9.2 go
+GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.12.6 go
 SBT      := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --sbt=1.2.3 sbt
 RUSTUP   := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 rustup
 CARGO    := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 cargo
@@ -134,25 +134,21 @@ done
 
 perl etc/build-makefile-golang.pl $(find src -name '*.go')
 
-go_target=github.com/suzuki-navi/xsvutils
+go_target=github.com/xsvutils/xsvutils
 cat <<EOF
 gobuild: target/xsvutils-go
 
-$gopath_rel/bin/dep:
-	\$(GO) get -u github.com/golang/dep/cmd/dep
-
-target/xsvutils-go: $gopath_rel/bin/dep var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.lock
-	cd $gopath_rel/src/$go_target; dep ensure
-	cd $gopath_rel/src/$go_target; \$(GO) vet ./...
-	cd $gopath_rel/src/$go_target; \$(GO) build
+target/xsvutils-go: var/GOLANG_VERSION_HASH $gopath_rel/src/$go_target/go.mod $gopath_rel/src/$go_target/go.sum
+	cd $gopath_rel/src/$go_target; GO111MODULE=on \$(GO) vet ./...
+	cd $gopath_rel/src/$go_target; GO111MODULE=on \$(GO) build
 	cp var/GOLANG_VERSION_HASH var/GOLANG_VERSION_HASH-build
 	cp $gopath_rel/src/$go_target/xsvutils target/xsvutils-go
 
-$gopath_rel/src/$go_target/Gopkg.toml: etc/Gopkg.toml
-	cp etc/Gopkg.toml $gopath_rel/src/$go_target/Gopkg.toml
+$gopath_rel/src/$go_target/go.mod: etc/go.mod
+	cp -p etc/go.mod $gopath_rel/src/$go_target/go.mod
 
-$gopath_rel/src/$go_target/Gopkg.lock: etc/Gopkg.lock
-	cp etc/Gopkg.lock $gopath_rel/src/$go_target/Gopkg.lock
+$gopath_rel/src/$go_target/go.sum: etc/go.sum
+	cp -p etc/go.sum $gopath_rel/src/$go_target/go.sum
 
 EOF
 
