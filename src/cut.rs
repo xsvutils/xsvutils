@@ -1,11 +1,10 @@
+use crate::util;
+use lazy_static::lazy_static;
+use memchr::memchr;
+use regex::Regex;
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
-
-use memchr::memchr;
-use regex::Regex;
-
-use crate::util;
 
 pub struct CutCommand;
 impl crate::command::Command for CutCommand {

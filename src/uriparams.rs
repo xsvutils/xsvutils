@@ -1,13 +1,12 @@
+use crate::util;
+use lazy_static::lazy_static;
+use memchr::memchr;
+use regex::Regex;
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
 use std::iter;
-
-use memchr::memchr;
-use regex::Regex;
 use url;
-
-use crate::util;
 
 pub struct UriParamsCommand;
 impl crate::command::Command for UriParamsCommand {
@@ -251,14 +250,14 @@ fn escape(str: &str) -> String {
         match ch {
             '\\' => buff.push_str("\\\\"),
             ';' => buff.push_str("\\x3B"),
-            '\x00'...'\x1F' | '\x7F' => write!(buff, "\\x{:02X}", ch as u8).unwrap(),
+            '\x00'..='\x1F' | '\x7F' => write!(buff, "\\x{:02X}", ch as u8).unwrap(),
             _ => buff.push(ch),
         }
     }
     return buff;
 }
 
-fn parse(url: &[u8]) -> url::form_urlencoded::Parse {
+fn parse(url: &[u8]) -> url::form_urlencoded::Parse<'_> {
     let url = match memchr(b'?', url) {
         Some(ix) => &url[ix + 1..],
         None => url,
@@ -355,7 +354,8 @@ mod tests {
         let actual = run_uriparams(
             &["--col", "querystring", "--names", "q,r", "--multi-value-b"],
             input,
-        ).unwrap();
+        )
+        .unwrap();
         for (exp, act) in exptected.lines().zip(actual.lines()) {
             assert_eq!(exp, act);
         }
@@ -370,7 +370,8 @@ mod tests {
         let actual = run_uriparams(
             &["--col", "querystring", "--name-list", "--multi-value-b"],
             input,
-        ).unwrap();
+        )
+        .unwrap();
         for (exp, act) in exptected.lines().zip(actual.lines()) {
             assert_eq!(exp, act);
         }
