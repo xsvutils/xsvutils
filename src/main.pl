@@ -2116,7 +2116,7 @@ sub build_ircode_command {
         } elsif ($command_name eq "inscopy") {
             my $src = escape_for_bash($curr_command->{src});
             my $dst = escape_for_bash($curr_command->{dst});
-            push(@$ircode, ["cmd", "perl \$TOOL_DIR/addcopy.pl --name $dst --src $src"]);
+            push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-rs addcopy --name $dst --src $src"]);
 
         } elsif ($command_name eq "inslinenum") {
             my $dst = escape_for_bash($curr_command->{dst});

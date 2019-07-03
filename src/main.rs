@@ -7,6 +7,7 @@ use std::io::BufWriter;
 mod command;
 mod cut;
 mod uriparams;
+mod addcopy;
 
 fn run<C: command::Command>(rest: Vec<String>) {
     let stdin = io::stdin();
@@ -26,6 +27,7 @@ fn main() {
     if let Some(sub_command) = sub_command {
         match sub_command.as_str() {
             "cut" => run::<cut::CutCommand>(rest),
+            "addcopy" => run::<addcopy::AddCopyCommand>(rest),
             "uriparams" => run::<uriparams::UriParamsCommand>(rest),
             _ => die!("unknown subcommand: {}", &sub_command),
         }
