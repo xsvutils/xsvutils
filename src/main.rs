@@ -1,16 +1,9 @@
-use std::io;
-use std::io::BufWriter;
-
-#[macro_use]
-extern crate lazy_static;
-extern crate memchr;
-extern crate regex;
-extern crate url;
-
-use std::env;
-
 #[macro_use]
 mod util;
+
+use std::env;
+use std::io;
+use std::io::BufWriter;
 mod command;
 mod cut;
 mod uriparams;

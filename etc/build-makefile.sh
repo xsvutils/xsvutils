@@ -199,7 +199,7 @@ target/xsvutils-rs: cargo-build
 .PHONY: cargo-build
 cargo-build:
 	\$(RUSTUP) target add $target
-	\$(CARGO) build --quiet --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target --target $target
+	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target --target $target
 
 EOF
 
@@ -211,7 +211,7 @@ target/xsvutils-rs: cargo-build
 
 .PHONY: cargo-build
 cargo-build:
-	\$(CARGO) build --quiet --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
+	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
 
 EOF
 
