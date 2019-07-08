@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/xsvutils/xsvutils/buffer"
-	"github.com/xsvutils/xsvutils/csv2tsv"
 	"github.com/xsvutils/xsvutils/fldsort"
 	"github.com/xsvutils/xsvutils/uriparams2tsv"
 	"github.com/xsvutils/xsvutils/wcl"
@@ -28,7 +27,6 @@ func Execute() {
 
 func init() {
 	buffer.InitCmd(RootCmd)
-	csv2tsv.InitCmd(RootCmd)
 	fldsort.InitCmd(RootCmd)
 	uriparams2tsv.InitCmd(RootCmd)
 	wcl.InitCmd(RootCmd)
