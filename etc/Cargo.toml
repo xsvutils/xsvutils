@@ -12,6 +12,7 @@ regex = "1"
 lazy_static = "1"
 memchr = "2"
 url = "1"
+structopt = "0.2"
 
 [profile.release]
 lto = true

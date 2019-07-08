@@ -5,78 +5,38 @@ use regex::Regex;
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
+use structopt::*;
 
-pub struct CutCommand;
-impl crate::command::Command for CutCommand {
-    fn execute<R: BufRead, W: Write>(
-        args: Vec<String>,
-        input: &mut R,
-        output: &mut W,
-    ) -> Result<(), io::Error> {
-        cut(args, input, output)
-    }
+#[derive(StructOpt, Debug)]
+#[structopt(rename_all = "kebab-case")]
+pub struct Opt {
+    #[structopt(long)]
+    col: Option<String>,
+
+    #[structopt(long)]
+    head: Option<String>,
+
+    #[structopt(long)]
+    last: Option<String>,
+
+    #[structopt(long)]
+    remove: Option<String>,
+
+    #[structopt(long, group = "update")]
+    left_update: bool,
+
+    #[structopt(long, group = "update")]
+    right_update: bool,
 }
 
-// ---- command line arguments -------------------------------------------------
-
-#[derive(Debug)]
-enum LR {
-    Left,
-    Right,
-}
-
-/// cutコマンドに渡されたコマンドライン引数を表現する構造体
-#[derive(Debug, Default)]
-struct CmdOpt {
-    col: String,
-    head: String,
-    last: String,
-    remove: String,
-    update: Option<LR>,
-}
-
-impl CmdOpt {
-    /// args をコマンドライン引数だと思って解析し、解析結果の構造体を返す
-    pub fn parse(mut args: Vec<String>) -> CmdOpt {
-        let mut opt = CmdOpt::default();
-        while args.len() > 0 {
-            let arg = args.remove(0);
-            match arg.as_str() {
-                "--col" => {
-                    opt.col = util::pop_first_or_else(&mut args, || {
-                        die!("option --col needs an argument")
-                    })
-                }
-                "--head" => {
-                    opt.head = util::pop_first_or_else(&mut args, || {
-                        die!("option --head needs an argument")
-                    })
-                }
-                "--last" => {
-                    opt.last = util::pop_first_or_else(&mut args, || {
-                        die!("option --last needs an argument")
-                    })
-                }
-                "--remove" => {
-                    opt.remove = util::pop_first_or_else(&mut args, || {
-                        die!("option --remove needs an argument")
-                    })
-                }
-                "--left-update" => opt.update = Some(LR::Left),
-                "--right-update" => opt.update = Some(LR::Right),
-                _ => die!("Unknown argument: {}", &arg),
-            }
-        }
-        return opt;
-    }
-
+impl Opt {
     /// コマンドライン引数と入力されたヘッダ配列から、出力対象の列のインデックス配列を返す
     pub fn create_indexes(&self, header: &[&str]) -> Vec<usize> {
-        let mut lasts = CmdOpt::find_all_indexes(&self.last, header);
+        let mut lasts = Opt::find_all_indexes(&self.last, header);
 
-        let mut indexes = CmdOpt::find_all_indexes(&self.head, header);
-        if self.col.len() > 0 {
-            let mut center = CmdOpt::find_all_indexes(&self.col, header);
+        let mut indexes = Opt::find_all_indexes(&self.head, header);
+        if self.col.is_some() {
+            let mut center = Opt::find_all_indexes(&self.col, header);
             indexes.append(&mut center);
         } else {
             for ix in 0..header.len() {
@@ -87,39 +47,38 @@ impl CmdOpt {
         }
         indexes.append(&mut lasts);
 
-        let removes = CmdOpt::find_all_indexes(&self.remove, header);
+        let removes = Opt::find_all_indexes(&self.remove, header);
         indexes.retain(|x| !util::contains(&removes, x));
 
-        match self.update {
-            Some(LR::Left) => {
-                let mut updated = vec![];
-                indexes.into_iter().for_each(|ix| {
-                    if !util::contains(&updated, &ix) {
-                        updated.push(ix);
-                    }
-                });
-                return updated;
-            }
-            Some(LR::Right) => {
-                let mut updated = vec![];
-                indexes.into_iter().rev().for_each(|ix| {
-                    if !util::contains(&updated, &ix) {
-                        updated.push(ix);
-                    }
-                });
-                updated.reverse();
-                return updated;
-            }
-            None => return indexes,
+        if self.left_update {
+            let mut updated = vec![];
+            indexes.into_iter().for_each(|ix| {
+                if !util::contains(&updated, &ix) {
+                    updated.push(ix);
+                }
+            });
+            return updated;
         }
+        if self.right_update {
+            let mut updated = vec![];
+            indexes.into_iter().rev().for_each(|ix| {
+                if !util::contains(&updated, &ix) {
+                    updated.push(ix);
+                }
+            });
+            updated.reverse();
+            return updated;
+        }
+        indexes
     }
 
     /// ヘッダの配列からカンマ区切りで指定したヘッダのインデックスを返す。
     /// col1..col3 は col1,col2,col3 に展開される。
-    fn find_all_indexes(col: &str, header: &[&str]) -> Vec<usize> {
-        if col.is_empty() {
-            return vec![];
-        }
+    fn find_all_indexes(col: &Option<String>, header: &[&str]) -> Vec<usize> {
+        let col: &str = match col {
+            Some(x) => &*x,
+            None => return vec![],
+        };
         let mut indexes = vec![];
         lazy_static! {
             static ref RE: Regex = Regex::new(r"^(.+)(\d+)\.\.(.+)(\d+)$").unwrap();
@@ -134,17 +93,17 @@ impl CmdOpt {
                     if n1 <= n2 {
                         for n in n1..n2 + 1 {
                             let col = format!("{}{}", s1, n);
-                            CmdOpt::append_index(&col, header, &mut indexes);
+                            Opt::append_index(&col, header, &mut indexes);
                         }
                     } else {
                         for n in (n2..n1 + 1).rev() {
                             let col = format!("{}{}", s1, n);
-                            CmdOpt::append_index(&col, header, &mut indexes);
+                            Opt::append_index(&col, header, &mut indexes);
                         }
                     }
                 }
             } else {
-                CmdOpt::append_index(col, header, &mut indexes);
+                Opt::append_index(col, header, &mut indexes);
             }
         });
         if indexes.is_empty() {
@@ -166,13 +125,7 @@ impl CmdOpt {
 // ---- main procedure ---------------------------------------------------------
 
 /// 入力からTSVを読み取り、指定した列のみを出力する
-fn cut<R: BufRead, W: Write>(
-    args: Vec<String>,
-    input: &mut R,
-    output: &mut W,
-) -> Result<(), io::Error> {
-    let opt = CmdOpt::parse(args);
-
+pub fn run(opt: Opt, input: &mut impl BufRead, output: &mut impl Write) -> Result<(), io::Error> {
     // 表示する列のインデックス
     let target_col_idx = {
         let mut buff = String::new();

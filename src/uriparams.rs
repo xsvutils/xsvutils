@@ -1,4 +1,3 @@
-use crate::util;
 use lazy_static::lazy_static;
 use memchr::memchr;
 use regex::Regex;
@@ -6,92 +5,39 @@ use std::io;
 use std::io::BufRead;
 use std::io::Write;
 use std::iter;
+use structopt::*;
 use url;
 
-pub struct UriParamsCommand;
-impl crate::command::Command for UriParamsCommand {
-    fn execute<R: BufRead, W: Write>(
-        args: Vec<String>,
-        input: &mut R,
-        output: &mut W,
-    ) -> Result<(), io::Error> {
-        uriparams(args, input, output)
-    }
-}
+#[derive(StructOpt, Debug, Default)]
+#[structopt(rename_all = "kebab-case")]
+pub struct Opt {
+    #[structopt(long)]
+    names: Option<String>,
 
-// ---- command line arguments -------------------------------------------------
-
-#[derive(Debug, Copy, Clone)]
-enum AB {
-    A,
-    B,
-}
-
-impl Default for AB {
-    fn default() -> Self {
-        AB::A
-    }
-}
-
-#[derive(Debug)]
-enum Decode {
-    UTF8,
-    ShiftJIS,
-    None,
-}
-
-impl Default for Decode {
-    fn default() -> Self {
-        Decode::UTF8
-    }
-}
-
-#[derive(Debug, Default)]
-struct CmdOpt {
-    names: String,
+    #[structopt(long)]
     name_list: bool,
-    col: String,
-    decode: Decode,
-    multi_value: AB,
-}
 
-impl CmdOpt {
-    pub fn parse(mut args: Vec<String>) -> CmdOpt {
-        let mut opt = CmdOpt::default();
-        while args.len() > 0 {
-            let arg = args.remove(0);
-            match arg.as_str() {
-                "--names" => {
-                    opt.names = util::pop_first_or_else(&mut args, || {
-                        die!("option --names needs an argument")
-                    })
-                }
-                "--name-list" => opt.name_list = true,
-                "--col" => {
-                    opt.col = util::pop_first_or_else(&mut args, || {
-                        die!("option --col needs an argument")
-                    })
-                }
-                "--no-decode" => opt.decode = Decode::None,
-                "--sjis" => opt.decode = Decode::ShiftJIS,
-                "--multi-value-a" => opt.multi_value = AB::A,
-                "--multi-value-b" => opt.multi_value = AB::B,
-                _ => die!("Unknown argument: {}", &arg),
-            }
-        }
-        return opt;
-    }
+    #[structopt(long)]
+    col: String,
+
+    #[structopt(long, group = "decode")]
+    no_decode: bool,
+
+    #[structopt(long, group = "decode")]
+    sjis: bool,
+
+    // この値は使っていないが、コマンドライン引数の multi_value_b との排他制御に用いている
+    #[structopt(long, group = "multi_value")]
+    multi_value_a: bool,
+
+    #[structopt(long, group = "multi_value")]
+    multi_value_b: bool,
 }
 
 // ---- main procedure ---------------------------------------------------------
 
-fn uriparams<R: BufRead, W: Write>(
-    args: Vec<String>,
-    input: &mut R,
-    output: &mut W,
-) -> Result<(), io::Error> {
-    let opt = CmdOpt::parse(args);
-
+pub fn run(opt: Opt, input: &mut impl BufRead, output: &mut impl Write) -> Result<(), io::Error> {
+    let opt = &opt;
     let mut buff = String::new();
     let (index, num_cols) = {
         let len = input.read_line(&mut buff)?;
@@ -118,21 +64,26 @@ fn uriparams<R: BufRead, W: Write>(
         if opt.name_list {
             output.write_all(b"name-list\n")?;
         } else {
-            let mut first = true;
-            for name in opt.names.split(",") {
-                if first {
-                    first = false;
-                } else {
-                    output.write_all(b"\t")?;
+            if let Some(names) = &opt.names {
+                let mut first = true;
+                for name in names.split(",") {
+                    if first {
+                        first = false;
+                    } else {
+                        output.write_all(b"\t")?;
+                    }
+                    output.write_all(name.as_bytes())?;
                 }
-                output.write_all(name.as_bytes())?;
             }
             output.write_all(b"\n")?;
             output.flush()?;
         }
         (index, header.len())
     };
-    let names: Vec<_> = opt.names.split(",").collect();
+    let names: Vec<&str> = match &opt.names {
+        Some(x) => x.split(",").collect(),
+        None => Default::default(),
+    };
     loop {
         buff.clear();
         let len = input.read_line(&mut buff)?;
@@ -150,11 +101,11 @@ fn uriparams<R: BufRead, W: Write>(
             output.write_all(b"\t")?;
         }
         let url = row[index].as_bytes();
-        let append = match (opt.name_list, opt.multi_value) {
-            (true, AB::A) => name_list_a(url),
-            (true, AB::B) => name_list_b(url),
-            (false, AB::A) => names_a(url, &names),
-            (false, AB::B) => names_b(url, &names),
+        let append = match (opt.name_list, opt.multi_value_b) {
+            (true, false) => name_list_a(url),
+            (true, true) => name_list_b(url),
+            (false, false) => names_a(url, &names),
+            (false, true) => names_b(url, &names),
         };
         output.write_all(append.as_bytes())?;
         output.write_all(b"\n")?;
@@ -345,51 +296,57 @@ mod tests {
         let input = include_str!("../test/data/sample-querystring.tsv");
 
         let exptected = include_str!("../test/expected/case-uriparams-1.tsv");
-        let actual = run_uriparams(&["--col", "querystring", "--names", "q,r"], input).unwrap();
+        let opt = Opt {
+            col: "querystring".to_owned(),
+            names: Some("q,r".to_owned()),
+            ..Default::default()
+        };
+        let actual = run_uriparams(opt, input).unwrap();
         for (exp, act) in exptected.lines().zip(actual.lines()) {
             assert_eq!(exp, act);
         }
 
         let exptected = include_str!("../test/expected/case-uriparams-2.tsv");
-        let actual = run_uriparams(
-            &["--col", "querystring", "--names", "q,r", "--multi-value-b"],
-            input,
-        )
-        .unwrap();
+        let opt = Opt {
+            col: "querystring".to_owned(),
+            names: Some("q,r".to_owned()),
+            multi_value_b: true,
+            ..Default::default()
+        };
+        let actual = run_uriparams(opt, input).unwrap();
         for (exp, act) in exptected.lines().zip(actual.lines()) {
             assert_eq!(exp, act);
         }
 
         let exptected = include_str!("../test/expected/case-uriparams-3.tsv");
-        let actual = run_uriparams(&["--col", "querystring", "--name-list"], input).unwrap();
+        let opt = Opt {
+            col: "querystring".to_owned(),
+            name_list: true,
+            ..Default::default()
+        };
+        let actual = run_uriparams(opt, input).unwrap();
         for (exp, act) in exptected.lines().zip(actual.lines()) {
             assert_eq!(exp, act);
         }
 
         let exptected = include_str!("../test/expected/case-uriparams-4.tsv");
-        let actual = run_uriparams(
-            &["--col", "querystring", "--name-list", "--multi-value-b"],
-            input,
-        )
-        .unwrap();
+        let opt = Opt {
+            col: "querystring".to_owned(),
+            name_list: true,
+            multi_value_b: true,
+            ..Default::default()
+        };
+        let actual = run_uriparams(opt, input).unwrap();
         for (exp, act) in exptected.lines().zip(actual.lines()) {
             assert_eq!(exp, act);
         }
     }
 
-    fn run_uriparams(args: &[&str], input: &str) -> Result<String, io::Error> {
+    fn run_uriparams(opt: Opt, input: &str) -> Result<String, io::Error> {
         let mut input = io::Cursor::new(input);
         let mut output = Vec::new();
-        uriparams(to_string_vec(args), &mut input, &mut output)?;
+        run(opt, &mut input, &mut output)?;
         let s: String = String::from_utf8(output).unwrap();
         return Ok(s);
-    }
-
-    fn to_string_vec(args: &[&str]) -> Vec<String> {
-        let mut vec: Vec<String> = Vec::new();
-        for arg in args {
-            vec.push(arg.to_string());
-        }
-        return vec;
     }
 }

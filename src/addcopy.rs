@@ -1,62 +1,19 @@
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
-use crate::util;
+use structopt::*;
 
-pub struct AddCopyCommand;
-impl crate::command::Command for AddCopyCommand {
-    fn execute<R: BufRead, W: Write>(
-        args: Vec<String>,
-        input: &mut R,
-        output: &mut W,
-    ) -> Result<(), io::Error> {
-        add_copy(args, input, output)
-    }
-}
-
-// ---- command line arguments -------------------------------------------------
-
-
-/// コマンドに渡されたコマンドライン引数を表現する構造体
-#[derive(Debug, Default)]
-struct CmdOpt {
+#[derive(StructOpt, Debug)]
+pub struct Opt {
+    #[structopt(long)]
     name: String,
+    #[structopt(long)]
     src: String,
-}
-
-impl CmdOpt {
-    /// args をコマンドライン引数だと思って解析し、解析結果の構造体を返す
-    pub fn parse(mut args: Vec<String>) -> CmdOpt {
-        let mut opt = CmdOpt::default();
-        while args.len() > 0 {
-            let arg = args.remove(0);
-            match arg.as_str() {
-                "--name" => {
-                    opt.name = util::pop_first_or_else(&mut args, || {
-                        die!("option --name needs an argument")
-                    })
-                }
-                "--src" => {
-                    opt.src = util::pop_first_or_else(&mut args, || {
-                        die!("option --src needs an argument")
-                    })
-                }
-                _ => die!("Unknown argument: {}", &arg),
-            }
-        }
-        return opt;
-    }
 }
 
 // ---- main procedure ---------------------------------------------------------
 
-fn add_copy<R: BufRead, W: Write>(
-    args: Vec<String>,
-    input: &mut R,
-    output: &mut W,
-) -> Result<(), io::Error> {
-    let opt = CmdOpt::parse(args);
-
+pub fn run(opt: Opt, input: &mut impl BufRead, output: &mut impl Write) -> Result<(), io::Error> {
     let mut buff = String::new();
     let index: usize = {
         let len = input.read_line(&mut buff)?;
@@ -66,7 +23,7 @@ fn add_copy<R: BufRead, W: Write>(
         let buff = buff.trim_end_matches(|c: char| c == '\n');
         let index = match buff.split("\t").position(|x: &str| x == &opt.src) {
             Some(x) => x,
-            None => die!("Column not found: {}", &opt.src)
+            None => die!("Column not found: {}", &opt.src),
         };
         output.write_all(opt.name.as_bytes())?;
         output.write_all(b"\t")?;

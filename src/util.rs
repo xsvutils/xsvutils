@@ -11,15 +11,6 @@ macro_rules! die {
     }}
 }
 
-/// 配列が空でなければ先頭の要素を返し、空なら引数の関数を実行する
-pub fn pop_first_or_else<T, F: FnOnce() -> T>(vec: &mut Vec<T>, f: F) -> T {
-    if vec.len() > 0 {
-        vec.remove(0)
-    } else {
-        f()
-    }
-}
-
 /// 配列に指定した要素が含まれているかどうか
 pub fn contains<T: PartialEq>(slice: &[T], elem: &T) -> bool {
     slice.iter().position(|x| x == elem).is_some()

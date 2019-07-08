@@ -22,3 +22,4 @@ rust:
 	cargo clippy --all --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
 	cd etc && cargo fmt
 	cargo test --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
+	cargo build --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
