@@ -13,6 +13,7 @@ lazy_static = "1"
 memchr = "2"
 url = "1"
 structopt = "0.2"
+csv = "1"
 
 [profile.release]
 lto = true
