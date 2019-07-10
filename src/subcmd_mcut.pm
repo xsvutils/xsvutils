@@ -19,7 +19,7 @@ sub exec_help {
 sub init_command {
     my ($self, $command_name) = @_;
 
-    return {command => $command_name, num_field => undef, name_field => undef, delimiter => undef, no_header => 0};
+    return {command => $command_name, num_field => undef, name_field => undef};
 }
 
 sub parse_option {
@@ -27,24 +27,14 @@ sub parse_option {
 
     if ($a eq "-f") {
         die "option $a needs an argument" unless (@$argv);
-        die "duplicated option $a" if defined($curr_command->{num_field}) || defined($curr_command->{name_field});
+        die "duplicated option $a" if defined $curr_command->{num_field};
         $curr_command->{num_field} = shift(@$argv);
         return 1;
     }
     if ($a eq "-F") {
         die "option $a needs an argument" unless (@$argv);
-        die "duplicated option $a" if defined($curr_command->{num_field}) || defined($curr_command->{name_field});
+        die "duplicated option $a" if defined $curr_command->{name_field};
         $curr_command->{name_field} = shift(@$argv);
-        return 1;
-    }
-    if ($a eq "-d") {
-        die "option $a needs an argument" unless (@$argv);
-        die "duplicated option $a" if defined($curr_command->{delimiter});
-        $curr_command->{delimiter} = shift(@$argv);
-        return 1;
-    }
-    if ($a eq "--no-header") {
-        $curr_command->{no_header} = 1;
         return 1;
     }
 
@@ -64,19 +54,12 @@ sub build_ircode_command {
     my ($self, $curr_command) = @_;
 
     my $option = "";
-    if (defined($curr_command->{num_field})) {
+    if (defined $curr_command->{num_field}) {
         my $f = Main::escape_for_bash($curr_command->{num_field});
         $option .= " -f $f";
-    } elsif (defined($curr_command->{name_field})) {
+    } elsif (defined $curr_command->{name_field}) {
         my $f = Main::escape_for_bash($curr_command->{name_field});
         $option .= " -F $f";
-    }
-    if (defined($curr_command->{delimiter})) {
-        my $f = Main::escape_for_bash($curr_command->{delimiter});
-        $option .= " -d $f";
-    }
-    if ($curr_command->{no_header}) {
-        $option .= " --no-header";
     }
     return ["cmd", "\$TOOL_DIR/mcut $option"];
 }
