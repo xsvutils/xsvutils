@@ -961,7 +961,7 @@ case class MacNewLineToUnixCommand () extends Command {
 case class CsvToTsvCommand () extends Command {
 
 	def createCommandLines(input: InputResource, output: OutputResource): List[CommandLine] = {
-		CommandLineImpl(ToolDirArgument("xsvutils-go") :: NormalArgument("csv2tsv") :: Nil,
+		CommandLineImpl(ToolDirArgument("xsvutils-rs") :: NormalArgument("fromcsv") :: Nil,
 			Some(input.arg), Some(output.arg), true, commandLineIOStringForDebug(input, output)) :: Nil;
 	}
 

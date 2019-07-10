@@ -2364,7 +2364,7 @@ sub build_ircode_input_format {
     }
 
     if ($input_pipe->{format} eq "csv") {
-        push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-go csv2tsv"]);
+        push(@$ircode, ["cmd", "\$TOOL_DIR/xsvutils-rs fromcsv"]);
     } elsif ($input_pipe->{format} eq "ltsv") {
         my $ltsvheader = escape_for_bash($input_pipe->{header});
         push(@$ircode, ["cmd", "perl \$TOOL_DIR/ltsv2tsv.pl --header $ltsvheader"]);
