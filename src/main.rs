@@ -5,8 +5,8 @@ use std::io;
 use std::io::BufWriter;
 mod addcopy;
 mod command;
-mod csv2tsv;
 mod cut;
+mod from_csv;
 mod uriparams;
 
 use structopt::*;
@@ -16,8 +16,8 @@ enum Opt {
     #[structopt(name = "addcopy")]
     AddCopy(addcopy::Opt),
 
-    #[structopt(name = "csv2tsv")]
-    Csv2Tsv,
+    #[structopt(name = "fromcsv")]
+    FromCsv,
 
     #[structopt(name = "cut")]
     Cut(cut::Opt),
@@ -36,7 +36,7 @@ fn main() {
 
     let _ = match opt {
         Opt::AddCopy(x) => addcopy::run(x, &mut stdin, &mut stdout),
-        Opt::Csv2Tsv => csv2tsv::run(&mut stdin, &mut stdout),
+        Opt::FromCsv => from_csv::run(&mut stdin, &mut stdout),
         Opt::Cut(x) => cut::run(x, &mut stdin, &mut stdout),
         Opt::UriParams(x) => uriparams::run(x, &mut stdin, &mut stdout),
     };
