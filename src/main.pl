@@ -166,7 +166,7 @@ my @command_name_list = qw/
 
 sub isCommandName {
     my ($a) = @_;
-    (grep {$_ eq $a} @command_name_list) || ($sub_commands{$a});
+    (grep {$_ eq $a} @command_name_list) || (exists $sub_commands{$a});
 }
 
 sub parseQuery {
@@ -464,6 +464,7 @@ sub parseQuery {
 
             } elsif (exists $sub_commands{$a}) {
                 $next_command = $sub_commands{$a}->init_command($a);
+                $next_command->{command} = $a;
                 $last_command = $a;
 
             } elsif ($a eq "--tsv") {

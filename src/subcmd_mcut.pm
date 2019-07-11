@@ -6,10 +6,7 @@ use Data::Dumper;
 
 sub new {
     my $class = shift;
-    my $self = {};
-
-    bless $self, $class;
-    return $self;
+    return bless {}, $class;
 }
 
 sub exec_help {
@@ -17,9 +14,7 @@ sub exec_help {
 }
 
 sub init_command {
-    my ($self, $command_name) = @_;
-
-    return {command => $command_name, num_field => undef, name_field => undef};
+    return {num_field => undef, name_field => undef};
 }
 
 sub parse_option {
@@ -37,8 +32,6 @@ sub parse_option {
         $curr_command->{name_field} = shift(@$argv);
         return 1;
     }
-
-    0;
 }
 
 sub validate_params {
