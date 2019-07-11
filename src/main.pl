@@ -30,6 +30,15 @@ sub escape_for_bash {
 # use jvm if --java
 ################################################################################
 
+sub checkJava {
+    my $JAVA_HOME = $ENV{"JAVA_HOME"};
+    if (! -e "$JAVA_HOME/bin/java" ) {
+        print STDERR "Not found: $JAVA_HOME/bin/java\n";
+        print STDERR "To install it, \`xsvutils --install-rt\`\n";
+        exit 1;
+    }
+}
+
 sub forkJvm {
     my ($argv) = @_;
 
@@ -66,6 +75,7 @@ sub forkJvm {
 }
 
 if (@ARGV && $ARGV[0] eq '--jvm') {
+    checkJava();
     my @argv = @ARGV;
     shift(@argv);
     forkJvm(\@argv);
@@ -2289,6 +2299,7 @@ sub build_ircode_command {
                 } else {
                     $option .= " no-weight";
                 }
+                checkJava();
                 push(@$ircode, ["cmd", "\$TOOL_DIR/java/bin/xsvutils-java --facetcount facetcount$option"]);
             } else {
                 my $option = "";
