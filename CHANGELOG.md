@@ -6,6 +6,12 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v11 -> v12 (Unreleased)
 
+以下のコマンドがRustでの実装に置き換わり、高速化された。
+- insconst
+
+insconst に依存していた sort コマンドも高速化となった。
+
+
 ## v10 -> v11 (2019/06/29)
 
 Rustソースのビルド時にOSの共有オブジェクトへの動的リンクをなくして、バイナリのポータビリティを改善した。
