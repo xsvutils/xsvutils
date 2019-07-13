@@ -84,13 +84,6 @@ if [ "$1" == "--install-rt" ]; then
 fi
 
 export JAVA_HOME=$HOME/.xsvutils/var/openjdk
-
-if [ ! -e $JAVA_HOME/bin/java ]; then
-    echo "Not found: $JAVA_HOME/bin/java" >&2
-    echo "To install it, \`xsvutils --install-rt\`" >&2
-    exit 1
-fi
-
 export PATH=$JAVA_HOME/bin:$PATH
 
 bash $TOOL_DIR/boot-second.sh "$@"
