@@ -6,6 +6,9 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v11 -> v12 (Unreleased)
 
+以下のサブコマンドが追加された。
+- mcut
+
 以下のコマンドがRustでの実装に置き換わり、高速化された。
 - insconst
 
