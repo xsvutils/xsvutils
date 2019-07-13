@@ -1,3 +1,4 @@
+package Main;
 use strict;
 use warnings;
 use utf8;
@@ -6,8 +7,12 @@ use Data::Dumper;
 
 use POSIX qw/mkfifo/;
 
-my $TOOL_DIR = $ENV{"TOOL_DIR"};
-my $WORKING_DIR = $ENV{"WORKING_DIR"};
+use File::Basename;
+use lib dirname(__FILE__);
+use subcmd_mcut;
+
+our $TOOL_DIR = $ENV{"TOOL_DIR"};
+our $WORKING_DIR = $ENV{"WORKING_DIR"};
 my $isInputTty = undef;
 if (-t STDIN) {
     $isInputTty = 1;
@@ -85,6 +90,10 @@ if (@ARGV && $ARGV[0] eq '--jvm') {
 # parse command line options for help
 ################################################################################
 
+my %sub_commands = (
+    'mcut' => subcmd_mcut->new
+);
+
 my $option_help = undef;
 my $help_document = undef;
 
@@ -120,19 +129,18 @@ sub parseQueryForHelp {
             $help_document = "version";
         }
     } elsif (@argv == 2) {
+        my $a2 = undef;
         if ($argv[0] eq "help" || $argv[0] eq "--help") {
-            my $a2 = $argv[1];
+            $a2 = $argv[1];
+        } elsif ($argv[1] eq "help" || $argv[1] eq "--help") {
+            $a2 = $argv[0];
+        }
+        if (defined $a2) {
             if (getHelpFilePath($a2)) {
                 $option_help = 1;
                 $help_document = $a2;
-            } else {
-                $option_help = 1;
-                $help_document = "notfound";
-            }
-        } elsif ($argv[1] eq "help" || $argv[1] eq "--help") {
-            my $a2 = $argv[0];
-            if (getHelpFilePath($a2)) {
-                $option_help = 1;
+            } elsif (exists $sub_commands{$a2} && $sub_commands{$a2}->can('exec_help')) {
+                $option_help = 2;
                 $help_document = $a2;
             } else {
                 $option_help = 1;
@@ -165,6 +173,11 @@ my @command_name_list = qw/
     wcl header summary countcols facetcount treetable crosstable ratio wordsflags groupsum
     tee
 /;
+
+sub isCommandName {
+    my ($a) = @_;
+    (grep {$_ eq $a} @command_name_list) || (exists $sub_commands{$a});
+}
 
 sub parseQuery {
     # 2値を返す関数。
@@ -255,6 +268,7 @@ sub parseQuery {
             last if (parseCommandOptionCrosstable($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionRatio ($a, $argv, $command_name, $curr_command, $input));
             last if (parseCommandOptionTee   ($a, $argv, $command_name, $curr_command, $input));
+            last if exists $sub_commands{$command_name} && $sub_commands{$command_name}->parse_option($a, $argv, $curr_command, $input);
 
             if ($a eq "--explain") {
                 $option_explain = 1;
@@ -456,6 +470,11 @@ sub parseQuery {
 
             } elsif ($a eq "tee") {
                 $next_command = {command => "tee", file => undef};
+                $last_command = $a;
+
+            } elsif (exists $sub_commands{$a}) {
+                $next_command = $sub_commands{$a}->init_command($a);
+                $next_command->{command} = $a;
                 $last_command = $a;
 
             } elsif ($a eq "--tsv") {
@@ -696,7 +715,7 @@ sub parseCommandOptionGrep {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use -e or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use -e";
         }
         $curr_command->{value} = $a;
@@ -713,7 +732,7 @@ sub parseCommandOptionGrep {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --col or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --col";
         }
         $curr_command->{col} = $a;
@@ -743,7 +762,7 @@ sub parseCommandOptionCols {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --cols or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --cols";
         }
         $curr_command->{cols} = $a;
@@ -825,7 +844,7 @@ sub parseCommandOptionInsCol {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --src or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --src";
         }
         $curr_command->{src} = $a;
@@ -842,7 +861,7 @@ sub parseCommandOptionInsCol {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --value or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --value";
         }
         $curr_command->{value} = $a;
@@ -859,7 +878,7 @@ sub parseCommandOptionInsCol {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --dst or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --dst";
         }
         $curr_command->{dst} = $a;
@@ -970,7 +989,7 @@ sub parseCommandOptionUpdate {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --index or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --index";
         }
         $curr_command->{index} = $a;
@@ -980,7 +999,7 @@ sub parseCommandOptionUpdate {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --col or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --col";
         }
         $curr_command->{col} = $a;
@@ -990,7 +1009,7 @@ sub parseCommandOptionUpdate {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --value or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --value";
         }
         $curr_command->{value} = $a;
@@ -1014,7 +1033,7 @@ sub parseCommandOptionSort {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --cols or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --cols";
         }
         $curr_command->{cols} = $a;
@@ -1160,7 +1179,7 @@ sub parseCommandOptionExpandmultivalue {
         if (!defined($input) && -e $a) {
             die "ambiguous parameter: $a, use --col or -i";
         }
-        if (grep {$_ eq $a} @command_name_list) {
+        if (isCommandName($a)) {
             die "ambiguous parameter: $a, use --col";
         }
         $curr_command->{col} = $a;
@@ -1624,6 +1643,10 @@ sub validateParams {
             }
             push(@$commands2, $curr_command);
 
+        } elsif (exists $sub_commands{$command_name}) {
+            $sub_commands{$command_name}->validate_params($curr_command);
+            push(@$commands2, $curr_command);
+
         } else {
             die $command_name;
         }
@@ -1697,6 +1720,10 @@ if ($option_help) {
 if ($help_stdout || $help_stderr) {
     if (!$help_document) {
         $help_document = "main";
+    }
+    if ($option_help == 2) {
+        # TODO: Support `less`
+        $sub_commands{$help_document}->exec_help;
     }
     my $help_filepath = getHelpFilePath($help_document);
     if ($help_stderr) {
@@ -2348,6 +2375,10 @@ sub build_ircode_command {
         } elsif ($command_name eq "groupsum") {
             my $option = "";
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/groupsum.pl$option"]);
+
+        } elsif (exists $sub_commands{$command_name}) {
+            my $cmd = $sub_commands{$command_name}->build_ircode_command($curr_command);
+            push(@$ircode, $cmd);
 
         } else {
             die "Bug: $command_name";

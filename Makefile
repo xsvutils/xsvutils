@@ -1,5 +1,6 @@
 
 build: var/makefile
+	git submodule update --init
 	make --question -f var/makefile build || make -f var/makefile build
 
 gobuild: var/makefile

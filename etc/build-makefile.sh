@@ -14,6 +14,7 @@ TARGET_SOURCES1=$(echo $((
             echo target/xsvutils-go;
             # echo target/xsvutils-ml;
             echo target/xsvutils-rs;
+            echo target/mcut;
             echo target/java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
             ls help | sed 's/^/target\/help-/g';
@@ -23,6 +24,7 @@ TARGET_SOURCES2=$(echo $((
             echo target/xsvutils-go;
             # echo target/xsvutils-ml;
             echo target/xsvutils-rs;
+            echo target/mcut;
             echo target/java/bin/xsvutils-java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
             ls help | sed 's/^/target\/help-/g';
@@ -201,6 +203,14 @@ cargo-build:
 	\$(RUSTUP) target add $target
 	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target --target $target
 
+target/mcut: build-mcut
+	cp -p ext/mtools/target/$target/release/mcut target/mcut
+
+.PHONY: build-mcut
+build-mcut:
+	cd ext/mtools && \$(RUSTUP) target add $target
+	cd ext/mtools && \$(CARGO) build --release --target $target
+
 EOF
 
 else
@@ -212,6 +222,13 @@ target/xsvutils-rs: cargo-build
 .PHONY: cargo-build
 cargo-build:
 	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target
+
+target/mcut: build-mcut
+	cp -p ext/mtools/target/release/mcut target/mcut
+
+.PHONY: build-mcut
+build-mcut:
+	cd ext/mtools && \$(CARGO) build --release
 
 EOF
 
