@@ -11,6 +11,8 @@ To see compatibility information, `xsvutils help compatibility`.
 
 insconst に依存していた sort コマンドも高速化となった。
 
+CSVからTSVへの変換がGo言語からRustでの実装に置き換わり、CSVファイルの読み込みが高速化された。
+
 
 ## v10 -> v11 (2019/06/29)
 
