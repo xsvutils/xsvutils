@@ -4,6 +4,8 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## v12 -> v13 (Unreleased)
+
 ## v11 -> v12 (2019/07/17)
 
 以下のサブコマンドが追加された。
