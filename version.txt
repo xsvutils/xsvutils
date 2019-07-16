@@ -1,1 +1,1 @@
-xsvutils version 0.12-
+xsvutils version 0.12
