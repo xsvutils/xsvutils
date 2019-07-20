@@ -72,7 +72,7 @@ if [ ! -e $BUILD_DIR/var/xsvutils$version ]; then
     (
         cd $BUILD_DIR
         git fetch --prune
-        git checkout -q $GIT_HASH || exit $?
+        git checkout -f -q $GIT_HASH || exit $?
 
         make var/makefile || exit $?
 
