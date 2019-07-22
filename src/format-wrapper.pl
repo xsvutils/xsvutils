@@ -192,7 +192,7 @@ sub guess_charencoding {
     }
     $utf8bom = '0';
     if (!$utf8_flag && $sjis_flag) {
-        return ($head_buf, "SHIFT-JIS", $utf8bom);
+        return ($head_buf, "cp932", $utf8bom);
     } else {
         if ($len >= 3) {
             if (substr($head_buf, 0, 3) eq "\xEF\xBB\xBF") {
