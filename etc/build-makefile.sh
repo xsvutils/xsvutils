@@ -207,9 +207,12 @@ target/mcut: build-mcut
 	cp -p ext/mtools/target/$target/release/mcut target/mcut
 
 .PHONY: build-mcut
-build-mcut:
+build-mcut: git-submodule
 	cd ext/mtools && \$(RUSTUP) target add $target
 	cd ext/mtools && \$(CARGO) build --release --target $target
+
+git-submodule:
+	git submodule update --init
 
 EOF
 

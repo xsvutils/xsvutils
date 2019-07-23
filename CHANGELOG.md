@@ -6,6 +6,13 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v12 -> v13 (Unreleased)
 
+-v12 --install のバグを解決し -v13 --install はできるようにした。
+-v12 --install 自体は解決できない。
+
+~/.xsvutils/repos-build の中のソースを手動修正してある場合でも強制的に上書きして
+-vXX --install を実行できるようにした。
+
+
 ## v11 -> v12 (2019/07/17)
 
 以下のサブコマンドが追加された。
@@ -19,6 +26,9 @@ insconst に依存していた sort コマンドも高速化となった。
 CSVからTSVへの変換がGo言語からRustでの実装に置き換わり、CSVファイルの読み込みが高速化された。
 
 --install-rt はJavaが必要となるまでは実行しなくてもいいように変更した。
+
+[追記]
+-v12 --install にはバグがありビルドできない。 -v13 --install を使うこと。
 
 
 ## v10 -> v11 (2019/06/29)
