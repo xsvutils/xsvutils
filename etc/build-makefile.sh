@@ -193,23 +193,23 @@ EOF
 
 if [ "$uname" = "Linux" ]; then
 
-target=x86_64-unknown-linux-musl
+cargo_target=x86_64-unknown-linux-musl
 cat <<EOF
 target/xsvutils-rs: cargo-build
-	cp -p var/rust-target/$target/release/xsvutils-rs target/xsvutils-rs
+	cp -p var/rust-target/$cargo_target/release/xsvutils-rs target/xsvutils-rs
 
 .PHONY: cargo-build
 cargo-build:
-	\$(RUSTUP) target add $target
-	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target --target $target
+	\$(RUSTUP) target add $cargo_target
+	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target --target $cargo_target
 
 target/mcut: build-mcut
-	cp -p ext/mtools/target/$target/release/mcut target/mcut
+	cp -p ext/mtools/target/$cargo_target/release/mcut target/mcut
 
 .PHONY: build-mcut
 build-mcut: git-submodule
-	cd ext/mtools && \$(RUSTUP) target add $target
-	cd ext/mtools && \$(CARGO) build --release --target $target
+	cd ext/mtools && \$(RUSTUP) target add $cargo_target
+	cd ext/mtools && \$(CARGO) build --release --target $cargo_target
 
 git-submodule:
 	git submodule update --init
