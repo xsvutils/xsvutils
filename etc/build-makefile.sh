@@ -224,6 +224,10 @@ EOF
 
 else
 
+    # TODO このelse節(Linux以外)のコードは以下の2チケットで修正漏れ
+    # https://github.com/xsvutils/xsvutils/pull/12
+    # https://github.com/xsvutils/xsvutils/pull/15
+
 cat <<EOF
 target/xsvutils-rs: cargo-build
 	cp -p var/rust-target/release/xsvutils-rs target/xsvutils-rs
