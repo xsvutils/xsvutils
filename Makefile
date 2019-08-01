@@ -1,7 +1,7 @@
 
+# ここを修正する場合は src/install.sh の修正も必要
+# それよりは etc/build-makefile.sh の修正のほうが望ましい
 build: var/makefile
-	# ここを修正する場合は src/install.sh の修正も必要
-	# それよりは etc/build-makefile.sh の修正のほうが望ましい
 	make --question -f var/makefile build || make -f var/makefile build
 
 gobuild: var/makefile
