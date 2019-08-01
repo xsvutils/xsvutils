@@ -193,6 +193,8 @@ EOF
 
 if [ "$uname" = "Linux" ]; then
 
+mtools_hash=488b652e5c530c1f100e7f431f37ea78fe23913b
+
 cargo_target=x86_64-unknown-linux-musl
 cat <<EOF
 target/xsvutils-rs: cargo-build
@@ -203,16 +205,20 @@ cargo-build:
 	\$(RUSTUP) target add $cargo_target
 	\$(CARGO) build --release --manifest-path=etc/Cargo.toml --target-dir=var/rust-target --target $cargo_target
 
-target/mcut: build-mcut
-	cp -p ext/mtools/target/$cargo_target/release/mcut target/mcut
+target/mcut: var/mtools/target/$cargo_target/release/mcut
+	cp -p var/mtools/target/$cargo_target/release/mcut target/mcut
 
-.PHONY: build-mcut
-build-mcut: git-submodule
-	cd ext/mtools && \$(RUSTUP) target add $cargo_target
-	cd ext/mtools && \$(CARGO) build --release --target $cargo_target
+var/mtools/target/$cargo_target/release/mcut: var/mtools/hash-$mtools_hash
+	cd var/mtools && \$(RUSTUP) target add $cargo_target
+	cd var/mtools && \$(CARGO) build --release --target $cargo_target
 
-git-submodule:
-	git submodule update --init
+var/mtools/hash-$mtools_hash: var/mtools/.gitignore
+	rm -f var/mtools/hash-*
+	touch var/mtools/hash-$mtools_hash
+
+var/mtools/.gitignore:
+	git clone https://github.com/ng3rdstmadgke/mtools.git var/mtools
+	cd var/mtools && git checkout $mtools_hash
 
 EOF
 
