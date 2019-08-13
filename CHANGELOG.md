@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v12 -> v13 (Unreleased)
+## v12 -> v13 (2019/08/13)
 
 -v12 --install のバグを解決し -v13 --install はできるようにした。
 -v12 --install 自体は解決できない。
