@@ -12,6 +12,8 @@ To see compatibility information, `xsvutils help compatibility`.
 ~/.xsvutils/repos-build の中のソースを手動修正してある場合でも強制的に上書きして
 -vXX --install を実行できるようにした。
 
+git clone 以外の方法でソースをダウンロードしてきた場合にビルドできない問題を解消したつもり。
+
 
 ## v11 -> v12 (2019/07/17)
 
