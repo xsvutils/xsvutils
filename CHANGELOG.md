@@ -14,6 +14,8 @@ To see compatibility information, `xsvutils help compatibility`.
 
 git clone 以外の方法でソースをダウンロードしてきた場合にビルドできない問題を解消したつもり。
 
+入力の文字コードがSJISの場合にiconvでの指定を SHIFT-JIS から cp932 に変更した。
+
 
 ## v11 -> v12 (2019/07/17)
 
