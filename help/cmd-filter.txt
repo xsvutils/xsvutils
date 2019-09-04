@@ -28,7 +28,6 @@ filter, where subcommand
         !~   column value does not match the right regular expression
 
     Options:
-        --stridx <IDX_FILE> Use stridx file. (--jvm only)
         --help              Print help information about this subcommand.
 
     注意:
@@ -36,25 +35,4 @@ filter, where subcommand
 
     例
         $ xsvutils FILENAME filter num \>= 10  # num 列が10以上の数値を抽出
-
-    インデックスファイルについて
-        OPERATOR が eq の場合は --stridx オプションでインデックスファイルを指定できます。
-
-        --stridx を使用すると、インデックスを利用するので高速処理されます。
-        --stridx を使用し、
-        かつ 入力が標準入力やパイプでない通常のファイルで、
-        かつ gz または xz で圧縮されていないプレーンテキストで、
-        かつCSVやLTSVなどではなくTSVファイルの場合は、
-        入力ファイルを seek することが可能で先頭からの逐次読み込むが不要なため、
-        さらに高速に処理されます。
-
-        --stridx は --jvm でしか使用できません。
-
-        インデックスファイルでの使用例
-
-            # インデックスファイル生成
-            $ xsvutils --jvm bigdata.tsv cutidx uid stridx > bigdata-uid-stridx.tsv
-
-            # インデックスファイルを使った検索
-            $ xsvutils --jvm bigdata.tsv filter uid eq foobar --stridx bigdata-uid-stridx.tsv
 

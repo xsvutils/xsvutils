@@ -25,7 +25,6 @@ TARGET_SOURCES2=$(echo $((
             # echo target/xsvutils-ml;
             echo target/xsvutils-rs;
             echo target/mcut;
-            echo target/java/bin/xsvutils-java;
             ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
             ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
@@ -37,8 +36,6 @@ if [ -n "$RM_TARGET" ]; then
     rm -r $RM_TARGET >&2
 fi
 
-bash src/install-openjdk.sh $HOME/.xsvutils/var >&2 || exit $?
-
 gopath_rel=var/golang_packages
 GOPATH=$PWD/$gopath_rel
 JAVA_HOME=$HOME/.xsvutils/var/openjdk
@@ -49,7 +46,6 @@ export JAVA_HOME=$JAVA_HOME
 export PATH=$HOME/.xsvutils/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
 
 GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.12.6 go
-SBT      := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --sbt=1.2.3 sbt
 RUSTUP   := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 rustup
 CARGO    := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 cargo
 OCAMLOPT := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --ocaml=4.07.0 ocamlopt
@@ -126,6 +122,12 @@ target/help-notfound.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help
 
 EOF
 
+help_rm_target=$(diff -u <(ls help 2>/dev/null) <(ls target/help-* 2>/dev/null | sed 's/^target\/help-//g') | tail -n+4 | grep -E '^\+' | cut -b2- | grep -v -E -e 'guide-(changelog|version)\.txt')
+if [ -n "$help_rm_target" ]; then
+    echo rm $help_rm_target >&2
+    rm $help_rm_target >&2
+fi
+
 for f in $(ls help | grep -v -E -e '(main|notfound)\.txt'); do
 cat <<EOF
 target/help-$f: help/$f
@@ -154,42 +156,14 @@ $gopath_rel/src/$go_target/go.sum: etc/go.sum
 
 EOF
 
-JAVA_RM_TARGET=$(diff -u <(ls src/*.scala 2>/dev/null | sed 's/^src\///g') <(ls var/sbt/src/main/java 2>/dev/null) | tail -n+4 | grep -E '^\+' | cut -b2- | sed 's/^/var\/sbt\/src\/main\/java\//g')
-if [ -n "$JAVA_RM_TARGET" ]; then
-    echo rm -r $JAVA_RM_TARGET >&2
-    rm -r $JAVA_RM_TARGET >&2
+if [ -e var/sbt ]; then
+    echo rm -rf var/sbt >&2
+    rm -rf var/sbt >&2
 fi
-
-for f in $(ls src/*.scala | sed 's/^src\///g'); do
-    cat <<EOF
-var/sbt/src/main/java/$f: src/$f
-	mkdir -p var/sbt/src/main/java
-	cp src/$f var/sbt/src/main/java/$f
-
-EOF
-done
-
-cat <<EOF
-var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT.zip: var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls src/*.scala | sed 's/^src\///g' | sed 's/^/var\/sbt\/src\/main\/java\//g'))
-	cd var/sbt; \$(SBT) compile
-	cd var/sbt; \$(SBT) universal:packageBin
-
-var/sbt/build.sbt: etc/build.sbt
-	mkdir -p var/sbt
-	cp etc/build.sbt var/sbt/build.sbt
-
-var/sbt/project/plugins.sbt: etc/plugins.sbt
-	mkdir -p var/sbt/project
-	cp etc/plugins.sbt var/sbt/project/plugins.sbt
-
-target/java/bin/xsvutils-java: var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT.zip
-	rm -rf var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT 2>/dev/null
-	cd var/sbt/target/universal; unzip xsvutils-java-0.1.0-SNAPSHOT.zip
-	rm -rf target/java
-	mv var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT target/java
-	touch target/java/bin/xsvutils-java
-
-EOF
+if [ -e target/java ]; then
+    echo rm -rf target/java >&2
+    rm -rf target/java >&2
+fi
 
 if [ "$uname" = "Linux" ]; then
 

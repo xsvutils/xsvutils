@@ -32,61 +32,6 @@ sub escape_for_bash {
 }
 
 ################################################################################
-# use jvm if --java
-################################################################################
-
-sub checkJava {
-    my $JAVA_HOME = $ENV{"JAVA_HOME"};
-    if (! -e "$JAVA_HOME/bin/java" ) {
-        print STDERR "Not found: $JAVA_HOME/bin/java\n";
-        print STDERR "To install it, \`xsvutils --install-rt\`\n";
-        exit 1;
-    }
-}
-
-sub forkJvm {
-    my ($argv) = @_;
-
-    my @jvmOptions = ();
-    if ($isInputTty) {
-        push(@jvmOptions, '--input-tty');
-    }
-    if ($isOutputTty) {
-        push(@jvmOptions, '--output-tty');
-    }
-
-    my $fromParser = "$WORKING_DIR/from-parser";
-    my $toParser   = "$WORKING_DIR/to-parser";
-    mkfifo($fromParser, 0600) or die $!;
-    mkfifo($toParser,   0600) or die $!;
-
-    #system("ls -al $WORKING_DIR/*");
-    my $pid1 = fork;
-    if (!defined $pid1) {
-        die $!;
-    } elsif ($pid1) {
-        # parent process
-    } else {
-        # child process
-        open(my $in_fh, '<', $toParser) or die $!;
-        open(my $out_fh, '>', $fromParser) or die $!;
-        open(STDIN, '<&=', fileno($in_fh)) or die $!;
-        open(STDOUT, '>&=', fileno($out_fh)) or die $!;
-        exec("$TOOL_DIR/java/bin/xsvutils-java", "--parser", @jvmOptions, @$argv);
-    }
-
-    exec("perl", "$TOOL_DIR/process-builder.pl", $fromParser, $toParser);
-    die;
-}
-
-if (@ARGV && $ARGV[0] eq '--jvm') {
-    checkJava();
-    my @argv = @ARGV;
-    shift(@argv);
-    forkJvm(\@argv);
-}
-
-################################################################################
 # parse command line options for help
 ################################################################################
 
@@ -2317,32 +2262,14 @@ sub build_ircode_command {
             push(@$ircode, ["cmd", "perl \$TOOL_DIR/countcols.pl"]);
 
         } elsif ($command_name eq "facetcount") {
-            if ($curr_command->{ver} == 4) {
-                my $option = "";
-                if ($curr_command->{multi_value} eq "a") {
-                    $option .= " a";
-                } elsif ($curr_command->{multi_value} eq "b") {
-                    $option .= " b";
-                } else {
-                    $option .= " ''";
-                }
-                if ($curr_command->{weight}) {
-                    $option .= " weight";
-                } else {
-                    $option .= " no-weight";
-                }
-                checkJava();
-                push(@$ircode, ["cmd", "\$TOOL_DIR/java/bin/xsvutils-java --facetcount facetcount$option"]);
-            } else {
-                my $option = "";
-                if ($curr_command->{multi_value} eq "a") {
-                    $option .= " --multi-value-a";
-                }
-                if ($curr_command->{weight}) {
-                    $option .= " --weight";
-                }
-                push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
+            my $option = "";
+            if ($curr_command->{multi_value} eq "a") {
+                $option .= " --multi-value-a";
             }
+            if ($curr_command->{weight}) {
+                $option .= " --weight";
+            }
+            push(@$ircode, ["cmd", "perl \$TOOL_DIR/facetcount.pl$option"]);
 
         } elsif ($command_name eq "treetable") {
             my $option = "";

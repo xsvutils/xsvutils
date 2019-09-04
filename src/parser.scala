@@ -1,4 +1,8 @@
 
+// このソースコードが実装している機能はいったん廃止されました。
+// このソースコードはいまはビルドの対象にはなっていません。
+// 将来機能を復活させる前提でソースは残しています。
+
 import ParserMain._;
 
 class UserException(message: String) extends Exception(message);
