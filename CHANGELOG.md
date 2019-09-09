@@ -6,6 +6,9 @@ To see compatibility information, `xsvutils help compatibility`.
 
 ## v13 -> v14 (Unreleased)
 
+出力オプション `--o-chart2` が追加された。
+
+
 ## v12 -> v13 (2019/08/13)
 
 -v12 --install のバグを解決し -v13 --install はできるようにした。

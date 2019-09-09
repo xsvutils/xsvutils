@@ -51,6 +51,8 @@ Input and Output format:
 
         オプションでの形式指定
             出力: --o-chart
+            または
+            出力: --o-chart2
 
     入力フォーマットはTSV/CSVを自動判別するが、自動判別させたくない場合は
     --tsv, --csv, --ltsv いずれかのオプションを使う。
@@ -73,4 +75,30 @@ Input and Output format:
 
     圧縮ファイル:
         入力に関しては gz または xz で圧縮されたファイルをサポートする。圧縮されているかどうかは自動判別する。
+
+HTMLでのチャート形式の出力について:
+
+    --o-chart:
+
+        以下のライブラリを使ってチャートを出力する。
+        Chart.js
+        https://www.chartjs.org
+
+    --o-chart2:
+
+        以下のライブラリを使ってチャートを出力する。
+        amCharts
+        https://www.amcharts.com
+
+        横軸は1列目を使用し、縦軸は2列目以降を使用する。
+        縦軸は複数保持することができる。
+        横軸は日時で
+
+            2019-07-05T06:56:02Z
+
+        のようなフォーマットであることが前提。
+        Javaでいうと以下のフォーマット。
+
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+
 

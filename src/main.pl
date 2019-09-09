@@ -512,6 +512,11 @@ sub parseQuery {
                 die "duplicated option: $a" if defined($output_format);
                 $output_format = "chart";
 
+            } elsif ($a eq "--o-chart2") {
+                die "sub query of `$subqueryCommandName` must not have output option" if (!$outputOk);
+                die "duplicated option: $a" if defined($output_format);
+                $output_format = "chart2";
+
             } elsif ($a eq "-i") {
                 die "sub query of `$subqueryCommandName` must not have input option" if (!$inputOk);
                 die "option -i needs an argument" unless (@$argv);
@@ -2579,6 +2584,8 @@ sub appendOutputCode {
         # no operation
     } elsif ($output_format eq "chart") {
         $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-chart.pl";
+    } elsif ($output_format eq "chart2") {
+        $main_1_source = $main_1_source . " | perl \$TOOL_DIR/to-chart2.pl";
     } else {
         die;
     }
