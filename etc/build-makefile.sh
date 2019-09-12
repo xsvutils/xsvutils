@@ -16,7 +16,7 @@ TARGET_SOURCES1=$(echo $((
             echo target/xsvutils-rs;
             echo target/mcut;
             echo target/java;
-            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
+            perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
             ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
@@ -25,7 +25,7 @@ TARGET_SOURCES2=$(echo $((
             # echo target/xsvutils-ml;
             echo target/xsvutils-rs;
             echo target/mcut;
-            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
+            perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
             ls help | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
@@ -75,7 +75,7 @@ var/TARGET_VERSION_HASH: $TARGET_SOURCES2
 
 EOF
 
-for f in $(ls src | grep -v -E -e '(boot\.sh)'); do
+for f in $(perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)'); do
 cat <<EOF
 target/$f: src/$f
 	perl etc/preprocess.pl $platform_name < src/$f > target/$f.tmp
