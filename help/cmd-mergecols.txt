@@ -1,5 +1,5 @@
 mergecols subcommand
-    [EXPERIMENTAL] Merge values of same column name.
+    Merge values of same column name.
 
     Options:
         --multi-value-a 複数値A形式に対応した集計をする
