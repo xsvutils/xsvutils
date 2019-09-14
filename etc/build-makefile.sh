@@ -17,7 +17,7 @@ TARGET_SOURCES1=$(echo $((
             echo target/mcut;
             echo target/java;
             perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
-            ls help | sed 's/^/target\/help-/g';
+            bash etc/list-help.sh all | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
@@ -26,7 +26,7 @@ TARGET_SOURCES2=$(echo $((
             echo target/xsvutils-rs;
             echo target/mcut;
             perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
-            ls help | sed 's/^/target\/help-/g';
+            bash etc/list-help.sh all | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 
@@ -94,14 +94,14 @@ target/help-guide-changelog.txt: CHANGELOG.md
 EOF
 
 (
-    ls help/cmd-*.txt | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g'
+    bash etc/list-help.sh cmd | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g'
 ) | sort | column -c 80 > var/help-cmd-list.txt.tmp
 if [ ! -e var/help-cmd-list.txt ] || ! diff -q var/help-cmd-list.txt var/help-cmd-list.txt.tmp >/dev/null; then
     mv var/help-cmd-list.txt.tmp var/help-cmd-list.txt
 fi
 
 (
-    ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
+    bash etc/list-help.sh guide | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
     echo version
     echo changelog
 ) | sort | column -c 80 > var/help-guide-list.txt.tmp
@@ -110,28 +110,36 @@ if [ ! -e var/help-guide-list.txt ] || ! diff -q var/help-guide-list.txt var/hel
 fi
 
 cat <<EOF
-target/help-main.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/main.txt var/help-cmd-list.txt var/help-guide-list.txt
-	bash etc/build-help-main-1.sh help/main.txt > var/help-main.txt.tmp.1
+target/help-main.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh src/help-main.txt var/help-cmd-list.txt var/help-guide-list.txt
+	bash etc/build-help-main-1.sh src/help-main.txt > var/help-main.txt.tmp.1
 	bash etc/build-help-main-2.sh var/help-main.txt.tmp.1 > var/help-main.txt.tmp.2
 	cp var/help-main.txt.tmp.2 target/help-main.txt
 
-target/help-notfound.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/notfound.txt var/help-cmd-list.txt var/help-guide-list.txt
-	bash etc/build-help-main-1.sh help/notfound.txt > var/help-notfound.txt.tmp.1
+target/help-notfound.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh src/help-notfound.txt var/help-cmd-list.txt var/help-guide-list.txt
+	bash etc/build-help-main-1.sh src/help-notfound.txt > var/help-notfound.txt.tmp.1
 	bash etc/build-help-main-2.sh var/help-notfound.txt.tmp.1 > var/help-notfound.txt.tmp.2
 	cp var/help-notfound.txt.tmp.2 target/help-notfound.txt
 
 EOF
 
-help_rm_target=$(diff -u <(ls help 2>/dev/null) <(ls target/help-* 2>/dev/null | sed 's/^target\/help-//g') | tail -n+4 | grep -E '^\+' | cut -b2- | grep -v -E -e 'guide-(changelog|version)\.txt')
+help_rm_target=$(diff -u <(bash etc/list-help.sh all 2>/dev/null) <(ls target/help-* 2>/dev/null | sed 's/^target\/help-//g') | tail -n+4 | grep -E '^\+' | cut -b2- | grep -v -E -e 'guide-(changelog|version)\.txt')
 if [ -n "$help_rm_target" ]; then
     echo rm $help_rm_target >&2
     rm $help_rm_target >&2
 fi
 
-for f in $(ls help | grep -v -E -e '(main|notfound)\.txt'); do
+for f in $(ls src/*-help.txt | sed -E 's#^src/(.+)-help\.txt$#\1#g'); do
 cat <<EOF
-target/help-$f: help/$f
-	cp help/$f target/help-$f
+target/help-cmd-$f.txt: src/$f-help.txt
+	cp src/$f-help.txt target/help-cmd-$f.txt
+
+EOF
+done
+
+for f in $(ls src/help-*.txt | grep -v -E '(help-main|help-notfound)' | sed -E 's#^src/help-(.+)\.txt$#\1#g'); do
+cat <<EOF
+target/help-guide-$f.txt: src/help-$f.txt
+	cp src/help-$f.txt target/help-guide-$f.txt
 
 EOF
 done
