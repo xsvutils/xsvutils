@@ -57,14 +57,12 @@ my @legacy_build_targets=qw/
     install.sh
     insweek.pl
     join.pl
-    jvm-main.scala
     killchildren.pl
     ltsv2tsv.pl
     main.ml
     main.pl
     main.rs
     mergecols.pl
-    parser.scala
     paste.pl
     process-builder.pl
     ratio.pl
