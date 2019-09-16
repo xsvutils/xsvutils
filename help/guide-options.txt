@@ -7,6 +7,7 @@ Common options:
     --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
     --o-diffable     出力は diffable なテキストフォーマット
     --o-chart        出力はHTMLでのチャート
+    --o-chart2        出力はHTMLでのチャート
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
