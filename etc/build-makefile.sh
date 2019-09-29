@@ -70,6 +70,7 @@ EOF
 
 cat <<EOF
 var/TARGET_VERSION_HASH: $TARGET_SOURCES2
+	@which shasum
 	(find $TARGET_SOURCES1 -type f; cat \$\$(find $TARGET_SOURCES1 -type f)) | shasum | cut -b1-40 > var/TARGET_VERSION_HASH.tmp
 	mv var/TARGET_VERSION_HASH.tmp var/TARGET_VERSION_HASH
 
