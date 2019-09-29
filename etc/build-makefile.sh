@@ -16,8 +16,8 @@ TARGET_SOURCES1=$(echo $((
             echo target/xsvutils-rs;
             echo target/mcut;
             echo target/java;
-            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
-            ls help | sed 's/^/target\/help-/g';
+            perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
+            bash etc/list-help.sh all | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 TARGET_SOURCES2=$(echo $((
@@ -25,9 +25,8 @@ TARGET_SOURCES2=$(echo $((
             # echo target/xsvutils-ml;
             echo target/xsvutils-rs;
             echo target/mcut;
-            echo target/java/bin/xsvutils-java;
-            ls src | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
-            ls help | sed 's/^/target\/help-/g';
+            perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)' | grep -v '\.(java|scala)$' | sed 's/^/target\//g';
+            bash etc/list-help.sh all | sed 's/^/target\/help-/g';
             echo target/help-guide-version.txt;
             echo target/help-guide-changelog.txt) | LC_ALL=C sort))
 
@@ -36,8 +35,6 @@ if [ -n "$RM_TARGET" ]; then
     echo rm -r $RM_TARGET >&2
     rm -r $RM_TARGET >&2
 fi
-
-bash src/install-openjdk.sh $HOME/.xsvutils/var >&2 || exit $?
 
 gopath_rel=var/golang_packages
 GOPATH=$PWD/$gopath_rel
@@ -49,7 +46,6 @@ export JAVA_HOME=$JAVA_HOME
 export PATH=$HOME/.xsvutils/var/openjdk/bin:$PWD/var/golang_packages/bin:$PATH
 
 GO       := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --go=1.12.6 go
-SBT      := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --sbt=1.2.3 sbt
 RUSTUP   := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 rustup
 CARGO    := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --rust=1.35.0 cargo
 OCAMLOPT := $PWD/etc/anybuild --prefix=$PWD/var/anybuild --ocaml=4.07.0 ocamlopt
@@ -79,7 +75,7 @@ var/TARGET_VERSION_HASH: $TARGET_SOURCES2
 
 EOF
 
-for f in $(ls src | grep -v -E -e '(boot\.sh)'); do
+for f in $(perl etc/list-sources.pl legacy | grep -v -E -e '(boot\.sh)'); do
 cat <<EOF
 target/$f: src/$f
 	perl etc/preprocess.pl $platform_name < src/$f > target/$f.tmp
@@ -98,14 +94,14 @@ target/help-guide-changelog.txt: CHANGELOG.md
 EOF
 
 (
-    ls help/cmd-*.txt | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g'
+    bash etc/list-help.sh cmd | sed -E 's/^help\/cmd-([^.]+)\.txt$/\1/g'
 ) | sort | column -c 80 > var/help-cmd-list.txt.tmp
 if [ ! -e var/help-cmd-list.txt ] || ! diff -q var/help-cmd-list.txt var/help-cmd-list.txt.tmp >/dev/null; then
     mv var/help-cmd-list.txt.tmp var/help-cmd-list.txt
 fi
 
 (
-    ls help/guide-*.txt | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
+    bash etc/list-help.sh guide | sed -E 's/^help\/guide-([^.]+)\.txt$/\1/g'
     echo version
     echo changelog
 ) | sort | column -c 80 > var/help-guide-list.txt.tmp
@@ -114,22 +110,36 @@ if [ ! -e var/help-guide-list.txt ] || ! diff -q var/help-guide-list.txt var/hel
 fi
 
 cat <<EOF
-target/help-main.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/main.txt var/help-cmd-list.txt var/help-guide-list.txt
-	bash etc/build-help-main-1.sh help/main.txt > var/help-main.txt.tmp.1
+target/help-main.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh src/help-main.txt var/help-cmd-list.txt var/help-guide-list.txt
+	bash etc/build-help-main-1.sh src/help-main.txt > var/help-main.txt.tmp.1
 	bash etc/build-help-main-2.sh var/help-main.txt.tmp.1 > var/help-main.txt.tmp.2
 	cp var/help-main.txt.tmp.2 target/help-main.txt
 
-target/help-notfound.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh help/notfound.txt var/help-cmd-list.txt var/help-guide-list.txt
-	bash etc/build-help-main-1.sh help/notfound.txt > var/help-notfound.txt.tmp.1
+target/help-notfound.txt: etc/build-help-main-1.sh etc/build-help-main-2.sh src/help-notfound.txt var/help-cmd-list.txt var/help-guide-list.txt
+	bash etc/build-help-main-1.sh src/help-notfound.txt > var/help-notfound.txt.tmp.1
 	bash etc/build-help-main-2.sh var/help-notfound.txt.tmp.1 > var/help-notfound.txt.tmp.2
 	cp var/help-notfound.txt.tmp.2 target/help-notfound.txt
 
 EOF
 
-for f in $(ls help | grep -v -E -e '(main|notfound)\.txt'); do
+help_rm_target=$(diff -u <(bash etc/list-help.sh all 2>/dev/null) <(ls target/help-* 2>/dev/null | sed 's/^target\/help-//g') | tail -n+4 | grep -E '^\+' | cut -b2- | grep -v -E -e 'guide-(changelog|version)\.txt')
+if [ -n "$help_rm_target" ]; then
+    echo rm $help_rm_target >&2
+    rm $help_rm_target >&2
+fi
+
+for f in $(ls src/*-help.txt | sed -E 's#^src/(.+)-help\.txt$#\1#g'); do
 cat <<EOF
-target/help-$f: help/$f
-	cp help/$f target/help-$f
+target/help-cmd-$f.txt: src/$f-help.txt
+	cp src/$f-help.txt target/help-cmd-$f.txt
+
+EOF
+done
+
+for f in $(ls src/help-*.txt | grep -v -E '(help-main|help-notfound)' | sed -E 's#^src/help-(.+)\.txt$#\1#g'); do
+cat <<EOF
+target/help-guide-$f.txt: src/help-$f.txt
+	cp src/help-$f.txt target/help-guide-$f.txt
 
 EOF
 done
@@ -154,42 +164,14 @@ $gopath_rel/src/$go_target/go.sum: etc/go.sum
 
 EOF
 
-JAVA_RM_TARGET=$(diff -u <(ls src/*.scala 2>/dev/null | sed 's/^src\///g') <(ls var/sbt/src/main/java 2>/dev/null) | tail -n+4 | grep -E '^\+' | cut -b2- | sed 's/^/var\/sbt\/src\/main\/java\//g')
-if [ -n "$JAVA_RM_TARGET" ]; then
-    echo rm -r $JAVA_RM_TARGET >&2
-    rm -r $JAVA_RM_TARGET >&2
+if [ -e var/sbt ]; then
+    echo rm -rf var/sbt >&2
+    rm -rf var/sbt >&2
 fi
-
-for f in $(ls src/*.scala | sed 's/^src\///g'); do
-    cat <<EOF
-var/sbt/src/main/java/$f: src/$f
-	mkdir -p var/sbt/src/main/java
-	cp src/$f var/sbt/src/main/java/$f
-
-EOF
-done
-
-cat <<EOF
-var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT.zip: var/sbt/build.sbt var/sbt/project/plugins.sbt $(echo $(ls src/*.scala | sed 's/^src\///g' | sed 's/^/var\/sbt\/src\/main\/java\//g'))
-	cd var/sbt; \$(SBT) compile
-	cd var/sbt; \$(SBT) universal:packageBin
-
-var/sbt/build.sbt: etc/build.sbt
-	mkdir -p var/sbt
-	cp etc/build.sbt var/sbt/build.sbt
-
-var/sbt/project/plugins.sbt: etc/plugins.sbt
-	mkdir -p var/sbt/project
-	cp etc/plugins.sbt var/sbt/project/plugins.sbt
-
-target/java/bin/xsvutils-java: var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT.zip
-	rm -rf var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT 2>/dev/null
-	cd var/sbt/target/universal; unzip xsvutils-java-0.1.0-SNAPSHOT.zip
-	rm -rf target/java
-	mv var/sbt/target/universal/xsvutils-java-0.1.0-SNAPSHOT target/java
-	touch target/java/bin/xsvutils-java
-
-EOF
+if [ -e target/java ]; then
+    echo rm -rf target/java >&2
+    rm -rf target/java >&2
+fi
 
 if [ "$uname" = "Linux" ]; then
 

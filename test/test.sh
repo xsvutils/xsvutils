@@ -4,7 +4,7 @@ if [ -e var/test ]; then
 fi
 mkdir -p var/test
 
-./xsvutils --install-rt
+./xsvutils -v13 --install-rt
 ./xsvutils -v3 --install
 
 bash ./test/case-bom.sh

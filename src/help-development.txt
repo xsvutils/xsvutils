@@ -2,26 +2,22 @@ xsvutils開発者向けの説明
 
     --explain オプション:
         --explain オプションを先頭につけると、実行するスクリプトを標準エラー出力に出力する。
-        このオプションは -v* オプションよりも後で --jvm オプションよりも後で、
+        このオプションはバージョン指定の -v* オプションよりも後で、
         その他のオプションやパラメータ指定の前に置く必要がある。
 
     依存ソフトウェア:
 
         ビルド時
-            java     make時に `$HOME/.xsvutils` 配下に自動インストール
-            scala    make時にソースディレクトリ内の var 配下に自動インストール
-            sbt      make時にソースディレクトリ内の var 配下に自動インストール
             golang   make時にソースディレクトリ内の var 配下に自動インストール
+            (v13以前は java,scala に依存していたが、いまは依存が解消された)
 
         実行時
-            java     make時に `$HOME/.xsvutils` 配下に自動インストール
-                     または `xsvutils --install-rt` 実行時に `$HOME/.xsvutils` 配下に自動インストール
-            scala    xsvutilsバイナリに内蔵
+            (v13以前は java,scala に依存していたが、いまは依存が解消された)
 
     targetディレクトリ:
         xsvutilsのビルド時のバイナリイメージに含まれる内容である。
 
-    etc/xsvutils:
+    etc/xsvutils-devel:
         ./etc/xsvutils を使うと xsvutils 自体を1バイナリにビルドしなくても
         ./target ディレクトリに存在するソースを使って実行できる。
         ~/.xsvutils にソースを展開せずに済み、開発作業時に使用することを想定したスクリプト。

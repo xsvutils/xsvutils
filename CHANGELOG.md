@@ -8,6 +8,12 @@ To see compatibility information, `xsvutils help compatibility`.
 
 出力オプション `--o-chart2` が追加された。
 
+実行時のJava依存の機能が削除され、 --install-rt, --jvm は廃止された。
+
+以下のコマンドが廃止された。
+- cutidx
+- stridx
+
 
 ## v12 -> v13 (2019/08/13)
 

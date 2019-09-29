@@ -78,11 +78,6 @@ if [ -n "$VERSION" ]; then
     exit $?
 fi
 
-if [ "$1" == "--install-rt" ]; then
-    bash $TOOL_DIR/install-openjdk.sh $HOME/.xsvutils/var
-    exit $?
-fi
-
 export JAVA_HOME=$HOME/.xsvutils/var/openjdk
 export PATH=$JAVA_HOME/bin:$PATH
 

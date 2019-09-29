@@ -16,10 +16,10 @@ Available subcommands:
         rmnoname                        Remove columns of no name
 
     列の値を加工するサブコマンド
-        mergecols -v4                   [EXPERIMENTAL] Merge values of same column name
+        mergecols -v4                   Merge values of same column name
 
     列を追加するサブコマンド
-        insunixtime -v4 --local <SRC> <DST> [EXPERIMENTAL] 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
+        insunixtime -v4 --local <SRC> <DST> 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
         insdate <SRC> <DST>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
         inshour <SRC> <DST>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
         inssecinterval <SRC> <DST>      日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する
@@ -48,22 +48,15 @@ Available subcommands:
         facetcount                      カラムそれぞれのファセットカウントを集計する
         treetable                       左のカラムから順番にカラム組み合わせのファセットカウントを集計する
         crosstable                      2カラムでクロス集計する。
-        ratio -v4                       [EXPERIMENTAL] カラムの合計値を求めてから百分率に変換する
-        groupsum                        [EXPERIMENTAL]
+        ratio -v4                       カラムの合計値を求めてから百分率に変換する
+        groupsum                        
 
     その他のコマンド
         tee <OTHER_FILE>                Output to next subcommand and another file
-        cutidx <COLUMN>                 Print specified column, record offset and length (--jvm only)
-        stridx                          Create stridx file (--jvm only)
 
     各コマンドの詳細は
         $ xsvutils help <SUBCOMMAND>
     または
         $ xsvutils <SUBCOMMAND> --help
     で確認できる。
-
-`--jvm` での実装メモ
-    ほとんどすべてのサブコマンドが未実装。
-
-    実装済み(--helpオプションを除く): where, filter, cut, update, wcl, cutidx, stridx
 
