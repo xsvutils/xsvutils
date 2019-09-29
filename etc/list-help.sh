@@ -4,7 +4,7 @@ action=$1
 
 if [ "$action" = "all" ]; then
     ls src/*-help.txt | sed -E 's#^src/(.+)-help\.txt$#cmd-\1.txt#g'
-    ls src/help-*.txt | sed -E 's#^src/help-(.+)\.txt$#guide-\1.txt#g'
+    ls src/help-*.txt | grep -v -E '(main|notfound)' | sed -E 's#^src/help-(.+)\.txt$#guide-\1.txt#g'
     echo main.txt
     echo notfound.txt
 fi
