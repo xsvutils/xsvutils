@@ -129,10 +129,10 @@ if [ -n "$help_rm_target" ]; then
     rm $help_rm_target >&2
 fi
 
-for f in $(ls src/*-help.txt | sed -E 's#^src/(.+)-help\.txt$#\1#g'); do
+for f in $(ls src/*.help.txt | sed -E 's#^src/(.+)\.help\.txt$#\1#g'); do
 cat <<EOF
-target/help-cmd-$f.txt: src/$f-help.txt
-	cp src/$f-help.txt target/help-cmd-$f.txt
+target/help-cmd-$f.txt: src/$f.help.txt
+	cp src/$f.help.txt target/help-cmd-$f.txt
 
 EOF
 done
