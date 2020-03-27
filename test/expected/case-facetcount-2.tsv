@@ -1,8 +1,0 @@
-column	number	value	count	ratio1	ratio2
-col1	1	aaa	6	 60.00%	 60.00%
-col1	2	bbb	5	 50.00%	 50.00%
-col2	1	value3	5	 50.00%	 55.56%
-col2	2	value4	2	 20.00%	 22.22%
-col2	3	value1	1	 10.00%	 11.11%
-col2	4	value2	1	 10.00%	 11.11%
-col2	5	value5	1	 10.00%	 11.11%
