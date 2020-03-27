@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use utf8;
 
-my $TOOL_DIR = $ENV{"TOOL_DIR"};
+my $XSVUTILS_HOME = $ENV{"XSVUTILS_HOME"};
 
 my $format = "";
 my $charencoding = "";
@@ -40,7 +40,7 @@ while (@ARGV) {
     }
 }
 
-die "format-wrapper.pl requires argument" unless defined $format_result_path;
+#die "format-wrapper.pl requires argument" unless defined $format_result_path;
 
 my $head_size = 100 * 4096;
 
@@ -141,7 +141,7 @@ if ($gzip_flag || $xz_flag) {
         push(@options, $output_path);
     }
 
-    exec("perl", "$TOOL_DIR/format-wrapper.pl", @options);
+    exec("perl", "$XSVUTILS_HOME/src/format-wrapper.pl", @options);
 }
 
 sub guess_format {
@@ -237,9 +237,11 @@ if (!$pipe_mode && defined($input_path) && -f $input_path) {
 }
 
 # フォーマットの推定結果を出力
-open(my $format_result_fh, '>', $format_result_path) or die $!;
-print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline mode:$mode\n";
-close($format_result_fh);
+if (defined($format_result_path)) {
+    open(my $format_result_fh, '>', $format_result_path) or die $!;
+    print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline mode:$mode\n";
+    close($format_result_fh);
+}
 
 if ($mode eq "file") {
     exit(0);

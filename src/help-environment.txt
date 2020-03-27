@@ -1,0 +1,18 @@
+
+最低限必要な環境
+
+- bash
+- cat
+- head
+- cmp
+- sed
+- readlink
+- dirname
+- basename
+- tput
+- shasum
+- cut
+- less
+- perl
+- sort
+

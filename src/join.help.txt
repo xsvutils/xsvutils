@@ -2,19 +2,23 @@ join subcommand
     Join records of two inputs.
 
     Usage:
-        $ xsvutils <INPUT> join [--file] <OTHER_FILE> [options...]
+        $ xsvutils <INPUT> join [--other] <OTHER_FILE> [options...]
 
     Parameter:
         <OTHER_FILE>  Other input file
 
     Options:
-        --file <OTHER_FILE>
+        --other <OTHER_FILE>
         --inner
         --left-outer
         --right-outer
         --full-outer
+        --number
         --help        Print help information about this subcommand.
 
     以下のように、 <OTHER_FILE> の部分を `[]` で囲んで、サブコマンドを指定することも可能。
         $ xsvutils input1.tsv sort id join [ input2.tsv sort id ]
+
+    旧バージョン(-vo)からの変更点:
+        --file は --other に変わりました。
 

@@ -8,53 +8,59 @@ Available subcommands:
         offset [<N>]                    Print all except first N records
         where <CONDITION>               Print records which satisfy a condition
         filter <CONDITION>              Print records which satisfy a condition
-        grep <COLUMN> <PATTERN>         Print records matching a pattern
+        filter-record
+#        grep <COLUMN> <PATTERN>         Print records matching a pattern
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                   Print specified columns
-        cols [--col <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>]  Print specified columns
-        rmnoname                        Remove columns of no name
+        cols [--cols <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>]  Print specified columns
+        col <COLUMN>                    Print specified column
+#        rmnoname                        Remove columns of no name
 
-    列の値を加工するサブコマンド
-        mergecols -v4                   Merge values of same column name
-
-    列を追加するサブコマンド
-        insunixtime -v4 --local <SRC> <DST> 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
-        insdate <SRC> <DST>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
-        inshour <SRC> <DST>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
-        inssecinterval <SRC> <DST>      日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する
-        inscopy <SRC> <DST>             カラムをコピーする
-        inslinenum <DST>                連番カラムを追加する
-        insmap <SRC> <DST> <MAPPING_FILE>
-        insconst <VALUE> <DST>          固定値のカラムを新しいカラムとして追加する
-        uriparams <NAMES>               GETパラメータ形式の文字列から値を抽出する
-        (<SRC>, <DST> are column names)
-
+#    列の値を加工するサブコマンド
+#        mergecols -v4                   Merge values of same column name
+#
+#    列を追加するサブコマンド
+#        insunixtime -v4 --local <SRC> <DST> 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
+#        insdate <SRC> <DST>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
+#        inshour <SRC> <DST>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
+#        inssecinterval <SRC> <DST>      日時のカラムの上のレコードとの秒数での差を新しいカラムとして追加する
+#        inscopy <SRC> <DST>             カラムをコピーする
+#        inslinenum <DST>                連番カラムを追加する
+#        insmap <SRC> <DST> <MAPPING_FILE>
+#        insconst <VALUE> <DST>          固定値のカラムを新しいカラムとして追加する
+#        uriparams <NAMES>               GETパラメータ形式の文字列から値を抽出する
+#        (<SRC>, <DST> are column names)
+#
     その他のデータを加工するコマンド
-        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+#        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                Sort by specified columns
-        paste <OTHER_FILE>              Merge records of two inputs
+#        paste <OTHER_FILE>              Merge records of two inputs
         join <OTHER_FILE>               Join records of two inputs
-        union <OTHER_FILE>              Join records of two inputs vertically
-        diff <OTHER_FILE>               Compare two inputs cell by cell
-        expandmultivalue <COLUMN>       マルチバリューを複数レコードに展開する
-        assemblematrix                  3列のデータから表形式のデータを作る
+#        union <OTHER_FILE>              Join records of two inputs vertically
+#        diff <OTHER_FILE>               Compare two inputs cell by cell
+#        expandmultivalue <COLUMN>       マルチバリューを複数レコードに展開する
+#        assemblematrix                  3列のデータから表形式のデータを作る
+        trim-values                     カラム名および値の前後のスペースを削除する
+        rename-duplicated-column-name   重複したカラム名に連番を付与する
+        modify-record
 
     集計するコマンド
         wcl                             Print record count. レコード数を表示する
         header                          Print column names. カラムの一覧を表示する
+        meaningful-cols                 値が2種類以上あるカラムの一覧を表示する
         summary                         Print summary of data. データのサマリを表示する
-        countcols                       カラム数を集計する
-        facetcount                      カラムそれぞれのファセットカウントを集計する
-        treetable                       左のカラムから順番にカラム組み合わせのファセットカウントを集計する
-        crosstable                      2カラムでクロス集計する。
-        ratio -v4                       カラムの合計値を求めてから百分率に変換する
-        groupsum                        
+#        countcols                       カラム数を集計する
+#        facetcount                      カラムそれぞれのファセットカウントを集計する
+#        treetable                       左のカラムから順番にカラム組み合わせのファセットカウントを集計する
+#        crosstable                      2カラムでクロス集計する。
+#        ratio -v4                       カラムの合計値を求めてから百分率に変換する
+#        groupsum                        
 
-    その他のコマンド
-        tee <OTHER_FILE>                Output to next subcommand and another file
-
-    各コマンドの詳細は
+#    その他のコマンド
+#        tee <OTHER_FILE>                Output to next subcommand and another file
+#
+    一部のコマンドの詳細は
         $ xsvutils help <SUBCOMMAND>
     または
         $ xsvutils <SUBCOMMAND> --help

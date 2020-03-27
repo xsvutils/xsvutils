@@ -1,26 +1,26 @@
 Common options:
-    --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
-    --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
-    --ltsv <HEADERS> 入力はTSVフォーマット (省略時はTSV/CSV自動判別)
-    --o-tsv          出力はTSVフォーマット (default when stdout is file)
-    --o-csv          出力はCSVフォーマット
-    --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
-    --o-diffable     出力は diffable なテキストフォーマット
-    --o-chart        出力はHTMLでのチャート
-    --o-chart2        出力はHTMLでのチャート
+#    --tsv            入力はTSVフォーマット (省略時はTSV/CSV自動判別)
+#    --csv            入力はCSVフォーマット (省略時はTSV/CSV自動判別)
+#    --ltsv <HEADERS> 入力はTSVフォーマット (省略時はTSV/CSV自動判別)
+#    --o-tsv          出力はTSVフォーマット (default when stdout is file)
+#    --o-csv          出力はCSVフォーマット
+#    --o-table        出力は縦揃えのテキストフォーマット (default when stdout is tty)
+#    --o-diffable     出力は diffable なテキストフォーマット
+#    --o-chart        出力はHTMLでのチャート
+#    --o-chart2        出力はHTMLでのチャート
     -i <FILENAME>    Input from <FILENAME> (default is stdin)
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
-    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
-    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
-
+#    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
+#    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
+#
     --help           Print help information.
-    --version        Print version information.
+#    --version        Print version information.
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。
     入力ファイル名がサブコマンド名やオプションと解釈されうる場合には -i オプションでファイル名を与えることが必要。
-    xsvutils の直後に - を置くことでも標準入力を指定できる。 `-i -` とすると `-` という名前のファイルが入力になる。
+#    xsvutils の直後に - を置くことでも標準入力を指定できる。 `-i -` とすると `-` という名前のファイルが入力になる。
 
     以下の2つの例では $INPUT が `head` などのサブコマンド名と偶然同じだった場合に、
     1つ目ではエラーとなってしまうが、2つ目では意図したとおりに動く。
@@ -39,21 +39,21 @@ Common options:
         $ xsvutils -i FILENAME cat
         $ xsvutils < FILENAME
         $ xsvutils cat < FILENAME
-        $ xsvutils - < FILENAME
-        $ xsvutils - cat < FILENAME
-
-    入出力フォーマットについて詳しくは `xsvutils help format` を参照のこと。
+#        $ xsvutils - < FILENAME
+#        $ xsvutils - cat < FILENAME
+#
+#    入出力フォーマットについて詳しくは `xsvutils help format` を参照のこと。
 
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する
+#
+#    xsvutils開発者向けの説明は `xsvutils help development` を参照のこと。
 
-    xsvutils開発者向けの説明は `xsvutils help development` を参照のこと。
-
-特殊なオプション:
-    以下のオプションは他のオプションよりも前に付与する必要がある。
-    かつ、以下の番号順に付与する必要がある。
-
-    1. -v8 などのバージョン指定 (詳しくは `xsvutils help compatibility`)
-    2. --install
-    3. --explain (詳しくは `xsvutils help development`)
-
+#特殊なオプション:
+#    以下のオプションは他のオプションよりも前に付与する必要がある。
+#    かつ、以下の番号順に付与する必要がある。
+#
+#    1. -v8 などのバージョン指定 (詳しくは `xsvutils help compatibility`)
+#    2. --install
+#    3. --explain (詳しくは `xsvutils help development`)
+#

@@ -21,6 +21,7 @@ if (defined($ENV{TERMINAL_LINES})) {
 my $max_width = 80;
 my $option_col_number = '';
 my $option_record_number = '';
+my $option_record_number_start = 1;
 my $option_color = '';
 
 while (@ARGV) {
@@ -36,6 +37,9 @@ while (@ARGV) {
         $option_col_number = 1;
     } elsif ($a eq "--record-number") {
         $option_record_number = 1;
+    } elsif ($a eq "--record-number-start") {
+        die "option --record-number-start needs an argument" unless (@ARGV);
+        $option_record_number_start = shift(@ARGV);
     } elsif ($a eq "--color") {
         $option_color = 1;
     } else {
@@ -126,14 +130,14 @@ sub printRecord {
     print $head . join($vert, @colViews) . $tail . "\n";
 }
 
-my $max_line_count = 1010;
+my $max_line_count = 1009 + $option_record_number_start;
 
 my @records = ();
 my $headers = undef;
 my $header_count = 0;
 my $col_lengths = undef;
 
-my $record_count = 0;
+my $record_count = $option_record_number_start - 1;
 
 while (my $line = <STDIN>) {
     $line =~ s/\n\z//g;

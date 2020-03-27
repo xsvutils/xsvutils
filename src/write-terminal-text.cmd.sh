@@ -1,0 +1,3 @@
+
+exec less -SRXF
+

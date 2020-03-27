@@ -4,10 +4,11 @@ use utf8;
 
 my $right_filepath = undef;
 my $action = "inner";
+my $option_number = "";
 
 while (@ARGV) {
     my $a = shift(@ARGV);
-    if ($a eq "--right") {
+    if ($a eq "--other") {
         die "option --right needs an argument" unless (@ARGV);
         $right_filepath = shift(@ARGV);
     } elsif ($a eq "--inner") {
@@ -18,6 +19,8 @@ while (@ARGV) {
         $action = "right-outer";
     } elsif ($a eq "--full-outer") {
         $action = "full-outer";
+    } elsif ($a eq "--number") {
+        $option_number = 1;
     } else {
         die "Unknown argument: $a";
     }
@@ -27,7 +30,13 @@ die "subcommand `join` requires option --right" unless defined $right_filepath;
 
 open(my $right_in, '<', $right_filepath) or die $!;
 
+my $header_flag = 1;
+
 my $left_header_count = undef;
+my $right_header_count = undef;
+
+my $left_line_dummy = undef;
+my $right_line_dummy = undef;
 
 my $left_line = undef;
 my $right_line = undef;
@@ -38,12 +47,28 @@ my $right_id = undef;
 my $left_eof = '';
 my $right_eof = '';
 
-while () {
-    my $header_flag = '';
-    if (!defined($left_header_count)) {
-        $header_flag = 1;
-    }
+my $pending_id = undef;
+my @left_line_list = ();
+my @right_line_list = ();
 
+sub compareId {
+    my ($left_id, $right_id) = @_;
+    if (defined($left_id) && defined($right_id)) {
+        if ($option_number) {
+            return $left_id <=> $right_id;
+        } else {
+            return $left_id cmp $right_id;
+        }
+    } elsif (defined($left_id)) { # rightだけ最後に達している
+        return -1;
+    } elsif (defined($right_id)) { # leftだけ最後に達している
+        return +1;
+    } else {
+        return 0;
+    }
+}
+
+while () {
     if (!defined($left_line) && !$left_eof) {
         $left_line = <STDIN>;
 
@@ -57,8 +82,9 @@ while () {
             $left_eof = 1;
         }
 
-        if (!defined($left_header_count)) {
+        if ($header_flag) {
             $left_header_count = scalar @left_cols;
+            $left_line_dummy = join("\t", (("") x $left_header_count));
         }
 
         # カラム数を統一する
@@ -96,6 +122,13 @@ while () {
             $right_eof = 1;
         }
 
+        if ($header_flag) {
+            $right_header_count = scalar @right_cols;
+            $right_line_dummy = join("\t", (("") x $right_header_count));
+        }
+
+        # カラム数統一はrightでは不要
+
         if ($right_eof) {
             $right_id = undef;
         } else {
@@ -103,79 +136,71 @@ while () {
         }
     }
 
-    last if ($left_eof && $right_eof);
-
     if ($header_flag) {
         print "$left_line\t$right_line\n";
+        $header_flag = undef;
         $left_line = undef;
         $right_line = undef;
         next;
     }
 
-    my $r;
-    if (defined($left_id) && defined($right_id)) {
-        $r = $left_id cmp $right_id;
-    } elsif (defined($left_id)) {
-        $r = -1;
-    } elsif (defined($right_id)) {
-        $r = +1;
+    if (defined($pending_id)) {
+        my $cl = compareId($left_id, $pending_id);
+        my $cr = compareId($right_id, $pending_id);
+        if ($cl <= 0) {
+            push(@left_line_list, $left_line);
+            $left_line = undef;
+        }
+        if ($cr <= 0) {
+            push(@right_line_list, $right_line);
+            $right_line = undef;
+        }
     } else {
-        $r = 0;
+        my $r = compareId($left_id, $right_id);
+        if ($r < 0) {
+            $pending_id = $left_id;
+            push(@left_line_list, $left_line);
+            $left_line = undef;
+        } elsif ($r > 0) {
+            $pending_id = $right_id;
+            push(@right_line_list, $right_line);
+            $right_line = undef;
+        } else {
+            $pending_id = $left_id;
+            push(@left_line_list, $left_line);
+            push(@right_line_list, $right_line);
+            $left_line = undef;
+            $right_line = undef;
+        }
+    }
+    if (defined($left_id) && !defined($left_line) || defined($right_id) && !defined($right_line)) {
+        next;
     }
 
-    if ($action eq "inner") {
-        if ($r == 0) {
-            print "$left_line\t$right_line\n";
-            $left_line = undef;
-            $right_line = undef;
-        } elsif ($r > 0) {
-            $right_line = undef;
-        } else {
-            $left_line = undef;
+    if (!@left_line_list) {
+        if ($action eq "right-outer" || $action eq "full-outer") {
+            foreach my $r (@right_line_list) {
+                print "$left_line_dummy\t$r\n";
+            }
         }
-    } elsif ($action eq "left-outer") {
-        if ($r == 0) {
-            print "$left_line\t$right_line\n";
-            $left_line = undef;
-            $right_line = undef;
-        } elsif ($r > 0) {
-            $right_line = undef;
-        } else {
-            my $right_line = "";
-            print "$left_line\t$right_line\n";
-            $left_line = undef;
+    } elsif (!@right_line_list) {
+        if ($action eq "left-outer" || $action eq "full-outer") {
+            foreach my $l (@left_line_list) {
+                print "$l\t$right_line_dummy\n";
+            }
         }
-    } elsif ($action eq "right-outer") {
-        if ($r == 0) {
-            print "$left_line\t$right_line\n";
-            $left_line = undef;
-            $right_line = undef;
-        } elsif ($r > 0) {
-            my @left_cols = ("") x $left_header_count;
-            $left_cols[0] = $right_id;
-            my $left_line = join("\t", @left_cols);
-            print "$left_line\t$right_line\n";
-            $right_line = undef;
-        } else {
-            $left_line = undef;
-        }
-    } elsif ($action eq "full-outer") {
-        if ($r == 0) {
-            print "$left_line\t$right_line\n";
-            $left_line = undef;
-            $right_line = undef;
-        } elsif ($r > 0) {
-            my @left_cols = ("") x $left_header_count;
-            $left_cols[0] = $right_id;
-            my $left_line = join("\t", @left_cols);
-            print "$left_line\t$right_line\n";
-            $right_line = undef;
-        } else {
-            my $right_line = "";
-            print "$left_line\t$right_line\n";
-            $left_line = undef;
+    } else {
+        foreach my $l (@left_line_list) {
+            foreach my $r (@right_line_list) {
+                print "$l\t$r\n";
+            }
         }
     }
+    $pending_id = undef;
+    @left_line_list = ();
+    @right_line_list = ();
+
+    last if ($left_eof && $right_eof);
 }
 
 close($right_in);

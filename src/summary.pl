@@ -3,22 +3,14 @@ use warnings;
 use utf8;
 
 my $max_value_count = 167;
+my $max_values_length = 300;
 
 my $headers = undef;
 my $header_count = 0;
-my $header_indeces = [];
 
-my $col_counts = [];
-my $col_values = [];
+my $summary = [];
 
 my $record_count = 0;
-
-# Ctrl-C で中断して結果を表示するためのハンドラ
-my $interrupted = '';
-sub interrupt {
-    $interrupted = 1;
-}
-$SIG{INT} = \&interrupt;
 
 {
     my $line = <STDIN>;
@@ -27,14 +19,16 @@ $SIG{INT} = \&interrupt;
     $line =~ s/\n\z//g;
     my @cols = split(/\t/, $line, -1);
 
-    $record_count++;
-
     $headers = \@cols;
     $header_count = scalar @cols;
     for (my $i = 0; $i < $header_count; $i++) {
-        push(@$header_indeces, $i);
-        push(@$col_counts, 0);
-        push(@$col_values, []);
+        push(@$summary, {
+            "count" => 0,
+            "values" => {},
+            "values_str" => "",
+            "cardinality" => 0,
+            "is_number" => 1,
+         });
     }
 }
 
@@ -50,48 +44,82 @@ while (my $line = <STDIN>) {
     }
 
     for (my $i = 0; $i < $header_count; $i++) {
+        my $sum = $summary->[$i];
         my $v = $cols[$i];
         if ($v ne "") {
-            $col_counts->[$i]++;
+            $sum->{"count"}++;
         }
-    }
-
-    for my $i (@$header_indeces) {
-        my $v = "";
-        if (defined($cols[$i])) {
-            $v = $cols[$i];
-        }
-        if ($v ne "") {
-            if (@{$col_values->[$i]} < $max_value_count) {
-                unless (grep {$_ eq $v} @{$col_values->[$i]}) {
-                    push(@{$col_values->[$i]}, $v);
+        if ($sum->{"cardinality"} < $max_value_count) {
+            if (exists($sum->{"values"}->{$v})) {
+                $sum->{"values"}->{$v}++;
+            } else {
+                $sum->{"values"}->{$v} = 1;
+                if (length($sum->{"values_str"}) < $max_values_length) {
+                    $sum->{"values_str"} .= ", $v";
                 }
-            } elsif (@{$col_values->[$i]} == $max_value_count) {
-                unless (grep {$_ eq $v} @{$col_values->[$i]}) {
-                    push(@{$col_values->[$i]}, "...");
-                    $header_indeces = [grep {$_ ne $i} @$header_indeces];
-                }
+                $sum->{"cardinality"}++;
             }
         }
-    }
-
-    if (!@$header_indeces || $interrupted) {
-        for (my $i = 0; $i < $header_count; $i++) {
-            if (@{$col_values->[$i]} <= $max_value_count) {
-                push(@{$col_values->[$i]}, "...");
+        if ($sum->{"is_number"}) {
+            if ($v ne "" && $v !~ /\A([-+])?(0|[1-9][0-9]*)(\.[0-9]*)?\z/) {
+                $sum->{"is_number"} = "";
             }
         }
-        last;
     }
 }
-$record_count--;
 
-print "column\tratio\tvalues\n";
 for (my $i = 0; $i < $header_count; $i++) {
     my $col_name = $headers->[$i];
-    my $count = $col_counts->[$i];
-    my $ratio = sprintf("%.2f%%", 100.0 * $count / $record_count);
-    my $values = join(", ", @{$col_values->[$i]});
-    print "$col_name\t$ratio\t$values\n";
+    my $sum = $summary->[$i];
+    print("name:        $col_name\n");
+
+    my $count = $sum->{"count"};
+    print("count:       $count\n");
+
+    my $ratio;
+    if ($count == $record_count) {
+        $ratio = "100%";
+    } else {
+        $ratio = sprintf("%.2f%%", $count * 100 / $record_count);
+    }
+    print("ratio:       $ratio\n");
+
+    my $cardinality = $sum->{"cardinality"};
+    if ($cardinality >= $max_value_count) {
+        $cardinality = ">= $cardinality";
+    }
+    print("cardinality: $cardinality\n");
+
+    my $values;
+    if ($sum->{"cardinality"} < $max_value_count) {
+        my $value_list = $sum->{"values"};
+        my @values = sort {
+            my $r = - ($value_list->{$a} <=> $value_list->{$b});
+            if ($r != 0) {
+                $r;
+            } else {
+                $a cmp $b;
+            }
+        } (keys %$value_list);
+        foreach my $v (@values) {
+            my $c = $value_list->{$v};
+            $values .= ", $v ($c)";
+        }
+    } else {
+        $values = $sum->{"values_str"};
+    }
+    if (length($values) >= $max_values_length) {
+        $values = substr($values, 0, $max_values_length) . "...";
+    }
+    $values = substr($values, 2);
+    print("value:       $values\n");
+
+    my $is_number = "false";
+    if ($sum->{"count"} > 0 && $sum->{"is_number"}) {
+        $is_number = "true";
+    }
+    print("is_number:   $is_number\n");
+
+    print("\n");
 }
 

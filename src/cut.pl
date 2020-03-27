@@ -3,6 +3,7 @@ use warnings;
 use utf8;
 
 my $option_columns = undef;
+my $option_columns2 = [];
 my $option_head = undef;
 my $option_last = undef;
 my $option_remove = undef;
@@ -12,6 +13,9 @@ while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--col") {
         die "option --col needs an argument" unless (@ARGV);
+        push(@$option_columns2, shift(@ARGV));
+    } elsif ($a eq "--cols") {
+        die "option --cols needs an argument" unless (@ARGV);
         $option_columns = shift(@ARGV);
     } elsif ($a eq "--head") {
         die "option --head needs an argument" unless (@ARGV);
@@ -36,22 +40,24 @@ sub createColumnIndeces {
     my $headerCount = @$headers;
 
     my @columnLastIndeces = ();
-    if (defined($option_last)) {
+    if (defined($option_last) && $option_last ne "") {
         push(@columnLastIndeces, @{createColumnIndecesSub($headers, $option_last)});
     }
 
     my @columnRemoveIndeces = ();
-    if (defined($option_remove)) {
+    if (defined($option_remove) && $option_remove ne "") {
         push(@columnRemoveIndeces, @{createColumnIndecesSub($headers, $option_remove)});
     }
 
     my @columnIndeces = ();
-    if (defined($option_head)) {
+    if (defined($option_head) && $option_head ne "") {
         push(@columnIndeces, @{createColumnIndecesSub($headers, $option_head)});
     }
-    if (defined($option_columns)) {
+    push(@columnIndeces, @{createColumnIndecesSubSimple($headers, $option_columns2)});
+    if (defined($option_columns) && $option_columns ne "") {
         push(@columnIndeces, @{createColumnIndecesSub($headers, $option_columns)});
-    } else {
+    }
+    if (!@$option_columns2 && (!defined($option_columns) || $option_columns eq "")) {
         for (my $i = 0; $i < $headerCount; $i++) {
             if (!grep {$_ == $i} @columnIndeces) {
                 if (!grep {$_ == $i} @columnLastIndeces) {
@@ -156,6 +162,28 @@ sub createColumnIndecesSub {
     }
     unless (@columns4) {
         die "Columns not specified.";
+    }
+    return \@columns4;
+
+}
+
+sub createColumnIndecesSubSimple {
+    my ($headers, $option_columns) = @_;
+    my $headerCount = @$headers;
+
+    my @columns4 = (); # インデックスの配列
+    foreach my $f (@$option_columns) {
+        my $g = '';
+        for (my $i = 0; $i < $headerCount; $i++) {
+            if ($headers->[$i] eq $f) {
+                push(@columns4, $i);
+                $g = 1;
+                last;
+            }
+        }
+        unless ($g) {
+            print STDERR "Unknown column: $f\n";
+        }
     }
     return \@columns4;
 
