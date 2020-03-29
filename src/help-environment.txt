@@ -16,3 +16,16 @@
 - perl
 - sort
 
+入力がgzファイルの場合
+
+- gunzip
+
+
+入力がxzファイルの場合
+
+- xz
+
+入力がUTF-8以外の場合
+
+- iconv
+
