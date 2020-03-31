@@ -1,3 +1,3 @@
 
-exec less -SRXF
+exec less -iSRXF
 

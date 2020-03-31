@@ -14,5 +14,5 @@ while [ $# -gt 0 ]; do
 done
 
 
-exec perl $XSVUTILS_HOME/src/table.pl --col-number --record-number --record-number-start $record_number_start --color | less -SRX
+exec perl $XSVUTILS_HOME/src/table.pl --col-number --record-number --record-number-start $record_number_start --color | less -iSRX
 
