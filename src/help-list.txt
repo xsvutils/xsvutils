@@ -43,7 +43,8 @@ Available subcommands:
 #        assemblematrix                  3列のデータから表形式のデータを作る
         trim-values                     カラム名および値の前後のスペースを削除する
         rename-duplicated-column-name   重複したカラム名に連番を付与する
-        modify-record
+        modify-record                   
+        concat-cols                     
 
     集計するコマンド
         wcl                             Print record count. レコード数を表示する

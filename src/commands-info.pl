@@ -153,6 +153,11 @@ our %command_options = (
             "--record",
         ],
     },
+    "concat-cols" => {
+        "options" => {
+            "--col" => "A:COLUMN",
+        },
+    },
     "join" => {
         "exists_help" => $true,
         "options" => {
