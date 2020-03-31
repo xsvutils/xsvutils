@@ -28,6 +28,8 @@ my $record_count = 0;
             "values_str" => "",
             "cardinality" => 0,
             "is_number" => 1,
+            "sorted_as_number" => undef,
+            "sort_direction_number" => 0,
          });
     }
 }
@@ -63,6 +65,35 @@ while (my $line = <STDIN>) {
         if ($sum->{"is_number"}) {
             if ($v ne "" && $v !~ /\A([-+])?(0|[1-9][0-9]*)(\.[0-9]*)?\z/) {
                 $sum->{"is_number"} = "";
+            }
+        }
+        if ($record_count == 1) {
+            if ($sum->{"is_number"}) {
+                $sum->{"sorted_as_number"} = $v;
+            }
+            $sum->{"sorted_as_text"} = $v;
+        } else {
+            if (defined($sum->{"sorted_as_number"})) {
+                if ($sum->{"is_number"} && $v ne "") {
+                    if ($sum->{"sort_direction_number"} > 0) {
+                        if ($sum->{"sorted_as_number"} >= $v) {
+                            $sum->{"sorted_as_number"} = $v;
+                        } else {
+                            $sum->{"sorted_as_number"} = undef;
+                        }
+                    } elsif ($sum->{"sort_direction_number"} < 0) {
+                        if ($sum->{"sorted_as_number"} <= $v) {
+                            $sum->{"sorted_as_number"} = $v;
+                        } else {
+                            $sum->{"sorted_as_number"} = undef;
+                        }
+                    } else {
+                        $sum->{"sort_direction_number"} = $sum->{"sorted_as_number"} <=> $v;
+                        $sum->{"sorted_as_number"} = $v;
+                    }
+                } else {
+                    $sum->{"sorted_as_number"} = undef;
+                }
             }
         }
     }
@@ -119,6 +150,16 @@ for (my $i = 0; $i < $header_count; $i++) {
         $is_number = "true";
     }
     print("is_number:   $is_number\n");
+
+    my $sorted = "none";
+    if (defined($sum->{"sorted_as_number"})) {
+        if ($sum->{"sort_direction_number"} > 0) {
+            $sorted = "sorted numerically in descending order";
+        } elsif ($sum->{"sort_direction_number"} < 0) {
+            $sorted = "sorted numerically in ascending order";
+        }
+    }
+    print("sorted:      $sorted\n");
 
     print("\n");
 }
