@@ -546,7 +546,8 @@ sub walkPhase2 {
         my $command_name = $node->{"command_name"};
         if ($command_name eq "cut") {
             # SPECIAL IMPL FOR cut, cols
-            $node->{"command_name"} = "cols";
+            $node->{"command_name"} = "col-impl";
+            #$node->{"command_name"} = "cols";
         } elsif ($command_name eq "filter") {
             # SPECIAL IMPL FOR filter, where
             $node->{"command_name"} = "where";

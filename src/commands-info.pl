@@ -73,6 +73,7 @@ our %command_options = (
     "col-impl" => {
         "is_internal" => $true,
         "options" => {
+            "--cols" => "COLUMNS",
             "--col" => "A:COLUMN",
         },
     },
