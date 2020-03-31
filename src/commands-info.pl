@@ -209,6 +209,9 @@ our %command_options = (
         "input" => "text",
         "output" => "deny",
     },
+    "to-esbulk" => {
+        "output" => "text",
+    },
 );
 
 1;
