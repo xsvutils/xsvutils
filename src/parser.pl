@@ -217,6 +217,15 @@ sub parseQuery {
                 $is_explain = $true;
                 next;
             }
+            if ($a eq "--help") {
+                my $helpArg = undef;
+                $helpArg = $argv->[0] if (@$argv);
+                parseAndExecHelpQuery($curr_node, $helpArg);
+            }
+        }
+
+        # クエリオプション
+        if ($true) {
             if ($a eq "--strict") {
                 unless ($is_strict_mode) {
                     return (parseQuery(\@argv_orig, $subqueryCommandName, $is_global, $true, $inputMode, $outputMode));
@@ -249,16 +258,10 @@ sub parseQuery {
                 $output_filepath = shift(@$argv);
                 next;
             }
+        }
 
-            if ($a eq "--help") {
-                my $helpArg = undef;
-                $helpArg = $argv->[0] if (@$argv);
-                parseAndExecHelpQuery($curr_node, $helpArg);
-            }
-
-            if ($a =~ /\A-/) {
-                return (undef, undef, undef, "Unknown option: $a");
-            }
+        if ($a =~ /\A-/) {
+            return (undef, undef, undef, "Unknown option: $a");
         }
 
         if ($a eq "help") {
