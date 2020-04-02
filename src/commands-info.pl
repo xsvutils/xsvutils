@@ -7,6 +7,10 @@ our $false;
 
 our %command_options = (
     "cat" => {
+        "input" => "any",
+        "output" => sub {
+            $_[0]->{"connections"}->{"input"}->[2];
+        },
     },
     "head" => {
         "options" => {
@@ -190,6 +194,7 @@ our %command_options = (
     },
     "from-csv" => {
         "is_internal" => $true,
+        "input" => "csv",
     },
     "write-file" => {
         "is_internal" => $true,
@@ -200,16 +205,15 @@ our %command_options = (
         "input" => "any",
         "output" => "deny",
     },
-    "write-terminal-tsv" => {
+    "write-terminal" => {
         "is_internal" => $true,
-        "output" => "deny",
         "options" => {
+            "--tsv" => "",
+            "--json" => "",
+            "--text" => "",
             "--record-number-start" => "LINE_COUNT",
-        }
-    },
-    "write-terminal-text" => {
-        "is_internal" => $true,
-        "input" => "text",
+        },
+        "input" => "any",
         "output" => "deny",
     },
     "to-esbulk" => {

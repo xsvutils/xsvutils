@@ -41,8 +41,8 @@ Common options:
         $ xsvutils cat < FILENAME
 #        $ xsvutils - < FILENAME
 #        $ xsvutils - cat < FILENAME
-#
-#    入出力フォーマットについて詳しくは `xsvutils help format` を参照のこと。
+
+    入出力フォーマットについて詳しくは `xsvutils help format` を参照のこと。
 
 Common options for developer:
     --explain 実行するスクリプトを標準エラー出力に出力する

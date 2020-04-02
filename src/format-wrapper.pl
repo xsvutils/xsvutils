@@ -148,9 +148,17 @@ if ($gzip_flag || $xz_flag) {
 
 sub guess_format {
     my ($head_buf) = @_;
-    if ($head_buf =~ /\t/) {
+    my $first_line;
+    if ($head_buf =~ /\A([^\n]*)\n/s) {
+        $first_line = $1;
+    } else {
+        $first_line = $head_buf;
+    }
+    if ($first_line =~ /\t/) {
         return "tsv";
-    } elsif ($head_buf =~ /,/) {
+    } elsif ($first_line =~ /\A\{/) {
+        return "json";
+    } elsif ($first_line =~ /,/) {
         return "csv";
     } else {
         # failed to guess format

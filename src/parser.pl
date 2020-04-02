@@ -14,6 +14,7 @@ require "$ENV{XSVUTILS_HOME}/src/commands-info.pl";
 our %command_options;
 
 my @help_files = qw/
+    format
     list
     main
     options
@@ -525,29 +526,18 @@ sub connectStdout {
     }
     my $output_node2;
     if (!$isOutputTty) {
-        # ターミナル以外の標準出力
+        # ターミナル以外への標準出力
         $output_node2 = createOutputNode(undef, $graph->{"options"});
         $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
     } else {
-        if ($coi->{"output"} eq "tsv") {
-            # ターミナルへのテーブル形式の出力
-            $output_node2 = {
-                "command_name" => "write-terminal-tsv",
-                "options" => {},
-                "connections" => {
-                    "input" => [$output_node, "output"],
-                },
-            };
-        } else {
-            # ターミナルへのテキストの出力
-            $output_node2 = {
-                "command_name" => "write-terminal-text",
-                "options" => {},
-                "connections" => {
-                    "input" => [$output_node, "output"],
-                },
-            };
-        }
+        # ターミナルへの出力
+        $output_node2 = {
+            "command_name" => "write-terminal",
+            "options" => {},
+            "connections" => {
+                "input" => [$output_node, "output"],
+            },
+        };
     }
     $output_node->{"connections"}->{"output"} = [$output_node2, "input"];
     $graph->{"output"} = $output_node2;
@@ -631,8 +621,8 @@ sub fetchFormatWrapperResult {
     $node->{"internal"}->{"convert"} = [];
     if ($node->{"internal"}->{"format"} eq "csv") {
         push(@{$node->{"internal"}->{"convert"}}, "csv");
-    } elsif ($node->{"internal"}->{"format"} eq "ltsv") {
-        # TODO
+    } elsif ($node->{"internal"}->{"format"} eq "json") {
+        $node->{"connections"}->{"output"}->[2] = "json";
     }
 }
 
@@ -674,7 +664,7 @@ sub executeFormatWrapper {
                         },
                     };
                     $node->{"connections"}->{"output"}->[0]->{"connections"}->{$node->{"connections"}->{"output"}->[1]} = [$newNode, "output"];
-                    $node->{"connections"}->{"output"} = [$newNode, "input"];
+                    $node->{"connections"}->{"output"} = [$newNode, "input", "csv"];
                     $nodes = insertNode($nodes, $i + 1, $newNode);
                     $graph->{"nodes"} = $nodes;
                     $f = $true;
@@ -690,6 +680,15 @@ sub executeFormatWrapper {
 
 sub walkPhase1 {
     my ($graph) = @_;
+    walkPhase1a($graph);
+    walkPhase1b($graph);
+}
+
+# 各ノードの入力と出力が必要な箇所で接続されているかどうか
+# 各ノードの入力や出力のない箇所で接続されていないかどうか
+# をチェックする
+sub walkPhase1a {
+    my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
     for (my $i = 0; $i < @$nodes; $i++) {
         my $node = $nodes->[$i];
@@ -699,18 +698,73 @@ sub walkPhase1 {
             if (defined($node->{"connections"}->{"input"})) {
                 die "`$command_name` subcommand must not have input.";
             }
+        } else {
+            if (!defined($node->{"connections"}->{"input"})) {
+                die "`$command_name` subcommand must have input.";
+            }
         }
         if ($coi->{"output"} eq "deny") {
             if (defined($node->{"connections"}->{"output"})) {
                 die "`$command_name` subcommand must not have output.";
             }
+        } else {
+            if (!defined($node->{"connections"}->{"output"})) {
+                die "`$command_name` subcommand must have output.";
+            }
         }
-        if ($coi->{"output"} eq "text") {
-            my $output_node = $node->{"connections"}->{"output"}->[0];
-            my $output_command_name = $output_node->{"command_name"};
-            my $output_coi = $command_options{$output_command_name};
-            if ($output_coi->{"input"} eq "tsv") {
-                die "Cannot pipe `$command_name` subcommand to `$output_command_name` subcommand.";
+    }
+}
+
+# 各ノード間の接続のフォーマットがあっているかどうかをチェックする
+sub walkPhase1b {
+    my ($graph) = @_;
+    my $nodes = $graph->{"nodes"};
+    for (my $i = 0; $i < @$nodes; $i++) {
+        my $node = $nodes->[$i];
+        my $command_name = $node->{"command_name"};
+        my $coi = $command_options{$command_name};
+        foreach my $key (sort keys %{$node->{"connections"}}) {
+            my $other = $node->{"connections"}->{$key};
+            my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
+            if ($otherIdx < $i) {
+                my $format = $nodes->[$otherIdx]->{"connections"}->{$other->[1]}->[2];
+                $node->{"connections"}->{$key}->[2] = $format;
+
+                if ($key eq "input") {
+                    if ($coi->{"input"} eq "tsv") {
+                        if ($format ne "tsv") {
+                            die "`$command_name` subcommand input must be tsv.";
+                        }
+                    } elsif ($coi->{"input"} eq "csv") {
+                        if ($format ne "csv") {
+                            die "`$command_name` subcommand input must be csv.";
+                        }
+                    } elsif ($coi->{"input"} eq "text") {
+                        if ($format ne "tsv" && $format ne "csv" && $format ne "json" && $format ne "text") {
+                            die "`$command_name` subcommand input must be text.";
+                        }
+                    } elsif ($coi->{"input"} eq "any") {
+                        # nothing
+                    }
+                }
+            }
+        }
+        foreach my $key (sort keys %{$node->{"connections"}}) {
+            my $other = $node->{"connections"}->{$key};
+            my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
+            if ($otherIdx > $i && !defined($node->{"connections"}->{$key}->[2])) {
+                # $node->{"connections"}->{$key}->[2] が定義済みのケースはいまのところ read-file のみ
+                if ($key eq "output") {
+                    my $format;
+                    if ((ref $coi->{"output"}) eq "CODE") {
+                        $format = $coi->{"output"}->($node);
+                    } else {
+                        $format = $coi->{"output"};
+                    }
+                    $node->{"connections"}->{$key}->[2] = $format;
+                } else {
+                    die # TODO
+                }
             }
         }
     }
@@ -799,6 +853,17 @@ sub walkPhase2 {
                 # sort の --cols には特別に配列を入れる
                 push(@{$node->{"options"}->{"--col"}}, "$flag:$col");
             }
+        } elsif ($command_name eq "write-terminal") {
+            # SPECIAL IMPL FOR write-terminal
+            my $format = $node->{"connections"}->{"input"}->[2];
+            if ($format eq "tsv") {
+                # ターミナルへのテーブル形式の出力
+                $node->{"options"}->{"--tsv"} = "";
+            } elsif ($format eq "json") {
+                $node->{"options"}->{"--json"} = "";
+            } else {
+                $node->{"options"}->{"--text"} = "";
+            }
         }
     }
 }
@@ -852,13 +917,13 @@ sub walkPhase3 {
                     $node1->{"options"}->{"--end"} = $end;
 
                     $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
-                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output"];
+                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", "tsv"];
                     $nodes = removeNode($nodes, $i + 1);
                     $graph->{"nodes"} = $nodes;
 
                     $f = $true;
                     last;
-                } elsif ($node2->{"command_name"} eq "write-terminal-tsv" && !defined($node2->{"options"}->{"--record-number-start"})) {
+                } elsif ($node2->{"command_name"} eq "write-terminal" && !defined($node2->{"options"}->{"--record-number-start"})) {
                     # SPECIAL IMPL FOR head, offset
                     $node2->{"options"}->{"--record-number-start"} = $node1->{"options"}->{"--start"} + 1;
 
@@ -871,7 +936,7 @@ sub walkPhase3 {
                     push(@{$node1->{"options"}->{"--col"}}, @{$node2->{"options"}->{"--col"}});
 
                     $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
-                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output"];
+                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", "tsv"];
                     $nodes = removeNode($nodes, $i + 1);
                     $graph->{"nodes"} = $nodes;
 
@@ -1029,25 +1094,25 @@ sub buildNodeCode {
         if ($command_name eq "read-file") {
             # internalの利用はいまのところread-fileのみ
             $code .= "    # input:  " . $node->{"internal"}->{"input"} . "\n";
-            $code .= "    # fifo:   " . $node->{"internal"}->{"fifo"} . "\n";
             $code .= "    # format: " . $node->{"internal"}->{"format-result"} . "\n";
         }
 
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
+            my $format = $other->[2];
             if ($otherIdx < $i) {
                 my $c = $nodes->[$otherIdx]->{"command_name"};
-                $code .= "    # $key < NODE[$otherIdx]:$c/$other->[1]\n";
+                $code .= "    # $key < NODE[$otherIdx]:$c/$other->[1] $format\n";
             }
         }
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            my $ar;
+            my $format = $other->[2];
             if ($otherIdx > $i) {
                 my $c = $nodes->[$otherIdx]->{"command_name"};
-                $code .= "    # $key > NODE[$otherIdx]:$c/$other->[1]\n";
+                $code .= "    # $key > NODE[$otherIdx]:$c/$other->[1] $format\n";
             }
         }
 
