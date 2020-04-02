@@ -188,6 +188,9 @@ our %command_options = (
         },
         "input" => "deny",
     },
+    "from-csv" => {
+        "is_internal" => $true,
+    },
     "write-file" => {
         "is_internal" => $true,
         "options" => {

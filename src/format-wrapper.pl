@@ -13,6 +13,8 @@ my $format_result_path = undef;
 my $input_path = undef;
 my $output_path = undef;
 
+my $pipe_mode = '';
+
 while (@ARGV) {
     my $a = shift(@ARGV);
     if ($a eq "--tsv") {
@@ -22,7 +24,9 @@ while (@ARGV) {
     } elsif ($a eq "--ltsv") {
         $format = "ltsv";
     } elsif ($a eq "--pipe") {
-        # nothing
+        # pipeモードを強制する
+        # このオプションがない場合は状況によってfileモードまたはpipeモードになる
+        $pipe_mode = 1;
     } elsif ($a eq "-i") {
         die "option $a needs an argument" unless (@ARGV);
         $input_path = shift(@ARGV);
@@ -227,11 +231,28 @@ if ($newline eq '') {
     $newline = guess_newline($head_buf);
 }
 
+my $mode;
+if ($pipe_mode) {
+    $mode = "pipe";
+} elsif (defined($input_path) && -f $input_path) {
+    $mode = "file";
+} else {
+    $mode = "pipe";
+}
+
+if ($charencoding ne "UTF-8") {
+    $mode = "pipe";
+}
+
 # フォーマットの推定結果を出力
 if (defined($format_result_path)) {
     open(my $format_result_fh, '>', $format_result_path) or die $!;
-    print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline\n";
+    print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline mode:$mode\n";
     close($format_result_fh);
+}
+
+if ($mode eq "file") {
+    exit(0);
 }
 
 if (defined($output_path)) {

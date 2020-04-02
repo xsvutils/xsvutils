@@ -5,6 +5,8 @@ use utf8;
 use File::Path qw/mkpath/;
 use Data::Dumper;
 
+use POSIX qw/mkfifo/;
+
 our $true = 1;
 our $false = "";
 
@@ -434,6 +436,26 @@ sub parseQuery {
 
 ################################################################################
 
+sub insertNode {
+    my ($nodes, $index, $node) = @_;
+    return [@$nodes[0..$index-1], $node, @$nodes[$index..(@$nodes-1)]];
+}
+
+sub removeNode {
+    my ($nodes, $index) = @_;
+    if ($index >= 1 && $index <= @$nodes - 2) {
+        return [@$nodes[0..$index-1], @$nodes[($index+1)..(@$nodes-1)]];
+    } elsif ($index >= 1) {
+        return [@$nodes[0..$index-1]];
+    } elsif ($index <= @$nodes - 2) {
+        return [@$nodes[($index+1)..(@$nodes-1)]];
+    } else {
+        return [];
+    }
+}
+
+################################################################################
+
 sub connectStdin {
     my ($graph, $isInputTty) = @_;
     my $input_node = $graph->{"input"};
@@ -448,9 +470,7 @@ sub connectStdin {
     my $input_node2 = {
         "command_name" => "read-file",
         "parameters" => [],
-        "options" => {
-            "--stdin" => undef,
-        },
+        "options" => {},
         "connections" => {
             "output" => [$input_node, "input"],
         },
@@ -504,6 +524,129 @@ sub connectStdout {
     $output_node->{"connections"}->{"output"} = [$output_node2, "input"];
     $graph->{"output"} = $output_node2;
     push(@{$graph->{"nodes"}}, $output_node2);
+}
+
+################################################################################
+
+sub forkFormatWrapper {
+    my ($node) = @_;
+
+    my $fifoIdx = $node->{"internal"}->{"fifo"};
+    my $format_result_path = formatWrapperFormatPathRaw($fifoIdx);
+    my $output_path = formatWrapperDataPathRaw($fifoIdx);
+
+    mkfifo($format_result_path, 0600) or die $!;
+
+    my @cmd = ();
+    push(@cmd, "perl");
+    push(@cmd, "$ENV{XSVUTILS_HOME}/src/format-wrapper.pl");
+
+    if (defined($node->{"options"}->{"-i"})) {
+        push(@cmd, "-i");
+        push(@cmd, $node->{"options"}->{"-i"});
+    }
+
+    push(@cmd, "-o");
+    push(@cmd, $output_path);
+
+    push(@cmd, $format_result_path);
+
+    my $pid1 = fork;
+    if (!defined $pid1) {
+        die $!;
+    } elsif (!$pid1) {
+        # child process
+        exec(@cmd);
+    }
+}
+
+sub fetchFormatWrapperResult {
+    my ($node) = @_;
+
+    my $fifoIdx = $node->{"internal"}->{"fifo"};
+    my $format_result_path = formatWrapperFormatPathRaw($fifoIdx);
+    my $output_path = formatWrapperDataPathRaw($fifoIdx);
+
+    open(my $format_fh, '<', $format_result_path) or die $!;
+    my $format = <$format_fh>;
+    close($format_fh);
+
+    $format =~ s/\n\z//g;
+    if ($format !~ /\Aformat:([^ ]+) charencoding:([^ ]+) utf8bom:([^ ]+) newline:([^ ]+) mode:([^ ]+)\z/) {
+        die "failed to guess format";
+    }
+    $node->{"internal"}->{"format-result"} = $format;
+    $node->{"internal"}->{"format"}       = $1; # tsv, csv, ltsv
+    $node->{"internal"}->{"charencoding"} = $2; # UTF-8, SHIFT-JIS
+    $node->{"internal"}->{"utf8bom"}      = $3; # 0, 1
+    $node->{"internal"}->{"newline"}      = $4; # unix, dos, mac
+    $node->{"internal"}->{"mode"}         = $5; # pipe, file
+
+    if (defined($node->{"options"}->{"-i"})) {
+        $node->{"internal"}->{"input"} = $node->{"options"}->{"-i"};
+    } else {
+        $node->{"internal"}->{"input"} = "";
+    }
+    if ($node->{"internal"}->{"mode"} eq "pipe") {
+        delete($node->{"options"}->{"-i"});
+    }
+
+    $node->{"internal"}->{"convert"} = [];
+    if ($node->{"internal"}->{"format"} eq "csv") {
+        push(@{$node->{"internal"}->{"convert"}}, "csv");
+    } elsif ($node->{"internal"}->{"format"} eq "tsv") {
+        # TODO
+    }
+}
+
+sub executeFormatWrapper {
+    my ($graph) = @_;
+    my $nodes = $graph->{"nodes"};
+    for (my $i = 0; $i < @$nodes; $i++) {
+        my $node = $nodes->[$i];
+        my $command_name = $node->{"command_name"};
+        if ($command_name eq "read-file") {
+            my $fifoIdx = fetchFifoIdx();
+            # internalの利用はいまのところread-fileのみ
+            $node->{"internal"} = {};
+            $node->{"internal"}->{"fifo"} = $fifoIdx;
+            forkFormatWrapper($node);
+        }
+    }
+    for (my $i = 0; $i < @$nodes; $i++) {
+        my $node = $nodes->[$i];
+        my $command_name = $node->{"command_name"};
+        if ($command_name eq "read-file") {
+            fetchFormatWrapperResult($node);
+        }
+    }
+    while () {
+        my $f = $false;
+        for (my $i = 0; $i < @$nodes; $i++) {
+            my $node = $nodes->[$i];
+            my $command_name = $node->{"command_name"};
+            if ($command_name eq "read-file" && @{$node->{"internal"}->{"convert"}}) {
+                my $convert = pop(@{$node->{"internal"}->{"convert"}});
+                if ($convert eq "csv") {
+                    my $newNode = {
+                        "command_name" => "from-csv",
+                        "options" => {},
+                        "connections" => {
+                            "input" => [$node, "output"],
+                            "output" => $node->{"connections"}->{"output"},
+                        },
+                    };
+                    $node->{"connections"}->{"output"}->[0]->{"connections"}->{$node->{"connections"}->{"output"}->[1]} = [$newNode, "output"];
+                    $node->{"connections"}->{"output"} = [$newNode, "input"];
+                    $nodes = insertNode($nodes, $i + 1, $newNode);
+                    $graph->{"nodes"} = $nodes;
+                    $f = $true;
+                    last;
+                }
+            }
+        }
+        last if (!$f);
+    }
 }
 
 ################################################################################
@@ -673,7 +816,7 @@ sub walkPhase3 {
 
                     $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
                     $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output"];
-                    $nodes = [@$nodes[0..$i], @$nodes[($i+2)..(@$nodes-1)]];
+                    $nodes = removeNode($nodes, $i + 1);
                     $graph->{"nodes"} = $nodes;
 
                     $f = $true;
@@ -692,7 +835,7 @@ sub walkPhase3 {
 
                     $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
                     $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output"];
-                    $nodes = [@$nodes[0..$i], @$nodes[($i+2)..(@$nodes-1)]];
+                    $nodes = removeNode($nodes, $i + 1);
                     $graph->{"nodes"} = $nodes;
 
                     $f = $true;
@@ -705,6 +848,13 @@ sub walkPhase3 {
 }
 
 ################################################################################
+
+my $fifoCount = 0;
+
+sub fetchFifoIdx {
+    $fifoCount++;
+    return $fifoCount;
+}
 
 sub searchNodeFromNodes {
     my ($nodes, $node) = @_;
@@ -724,7 +874,6 @@ sub connectFifo {
         $node->{"fifos"} = {};
     }
 
-    my $fifoIdx = 0;
     for (my $i = 0; $i < @$nodes; $i++) {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
@@ -734,7 +883,7 @@ sub connectFifo {
             }
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            $fifoIdx++;
+            my $fifoIdx = fetchFifoIdx();
             $node->{"fifos"}->{$key} = $fifoIdx;
             $other->[0]->{"fifos"}->{$other->[1]} = $fifoIdx;
         }
@@ -768,15 +917,14 @@ sub buildCommandParametersForBash {
     foreach my $key (sort keys %{$node->{"options"}}) {
         my $param = $node->{"options"}->{$key};
         if (!defined($command_options{$command_name}->{"options"}->{$key})) {
-            print STDERR "DEBUG $command_name $key\n";
-        }
-        if ($command_options{$command_name}->{"options"}->{$key} eq "") {
+            # nothing
+        } elsif ($command_options{$command_name}->{"options"}->{$key} eq "") {
             $str .= " " . escape_for_bash($key);
         } else {
             my $type = ref $param;
             if ($type eq "HASH") {
                 my $fifoIdx = $node->{"fifos"}->{$key};
-                $str .= " " . escape_for_bash($key) . " \$WORKING_DIR/fifo-$fifoIdx";
+                $str .= " " . escape_for_bash($key) . " " . fifoPathBash($fifoIdx);
             } elsif ($type eq "ARRAY") {
                 foreach my $p (@$param) {
                     $str .= " " . escape_for_bash($key) . " " . escape_for_bash($p);
@@ -784,6 +932,12 @@ sub buildCommandParametersForBash {
             } else {
                 $str .= " " . escape_for_bash($key) . " " . escape_for_bash($param);
             }
+        }
+    }
+    if ($command_name eq "read-file") {
+        if ($node->{"internal"}->{"mode"} eq "pipe") {
+            my $fifoIdx = $node->{"internal"}->{"fifo"};
+            $str .= " -i " . formatWrapperDataPathBash($fifoIdx);
         }
     }
     return $cmd . $str;
@@ -797,6 +951,12 @@ sub dumpNodes {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
         $code .= "# NODE[$i] $command_name\n";
+        if ($command_name eq "read-file") {
+            # internalの利用はいまのところread-fileのみ
+            $code .= "#   # input:  " . $node->{"internal"}->{"input"} . "\n";
+            $code .= "#   # fifo:   " . $node->{"internal"}->{"fifo"} . "\n";
+            $code .= "#   # format: " . $node->{"internal"}->{"format-result"} . "\n";
+        }
         my $cmds = buildCommandParametersForBash($node->{"command_name"}, $node);
         $cmds =~ s/\n/\n# /g;
         $code .= "#   " . $cmds . "\n";
@@ -819,13 +979,37 @@ sub dumpNodes {
     return $code;
 }
 
+sub fifoPathRaw {
+    my ($fifoIdx) = @_;
+    return "$ENV{WORKING_DIR}/fifo-$fifoIdx";
+}
+
+sub fifoPathBash {
+    my ($fifoIdx) = @_;
+    return "\$WORKING_DIR/fifo-$fifoIdx";
+}
+
+sub formatWrapperFormatPathRaw {
+    my ($fifoIdx) = @_;
+    return "$ENV{WORKING_DIR}/fifo-$fifoIdx-f";
+}
+
+sub formatWrapperDataPathRaw {
+    my ($fifoIdx) = @_;
+    return "$ENV{WORKING_DIR}/fifo-$fifoIdx-d";
+}
+
+sub formatWrapperDataPathBash {
+    my ($fifoIdx) = @_;
+    return "\$WORKING_DIR/fifo-$fifoIdx-d";
+}
+
 sub buildMkfifoCode {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
 
     my $code = "";
 
-    my $fifoIdx = 0;
     for (my $i = 0; $i < @$nodes; $i++) {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
@@ -836,7 +1020,7 @@ sub buildMkfifoCode {
                 next;
             }
             my $fifoIdx = $node->{"fifos"}->{$key};
-            $code .= pad_len("mkfifo \$WORKING_DIR/fifo-$fifoIdx") . " # NODE[$i] -> NODE[$otherIdx]\n";
+            $code .= pad_len("mkfifo " . fifoPathBash($fifoIdx)) . " # NODE[$i] -> NODE[$otherIdx]\n";
         }
     }
 
@@ -855,16 +1039,12 @@ sub buildNodeCode {
         my $stdinStr = "";
         if (defined($node->{"fifos"}->{"input"})) {
             my $fifoIdx = $node->{"fifos"}->{"input"};
-            $stdinStr = " < \$WORKING_DIR/fifo-$fifoIdx"
-        } elsif ($command_name eq "read-file" && exists($node->{"options"}->{"--stdin"})) {
-            $stdinStr = " < /dev/stdin";
+            $stdinStr = " < " . fifoPathBash($fifoIdx);
         }
         my $stdoutStr = "";
         if (defined($node->{"fifos"}->{"output"})) {
             my $fifoIdx = $node->{"fifos"}->{"output"};
-            $stdoutStr = " > \$WORKING_DIR/fifo-$fifoIdx"
-        } elsif ($command_name eq "write-file" && exists($node->{"options"}->{"--stdout"})) {
-            $stdoutStr = " > /dev/stdout";
+            $stdoutStr = " > " . fifoPathBash($fifoIdx);
         }
         my $cmd = "bash \$XSVUTILS_HOME/src/" . $node->{"command_name"} . ".cmd.sh";
 
@@ -932,13 +1112,6 @@ if (@ARGV && $ARGV[0] =~ /\A-v(o|[0-9])+/) {
 
 my @argv = @ARGV;
 my ($graph, $tail_argv, $completion, $error) = parseQuery(\@ARGV, "", $true, $false, "may", "may");
-if (defined($graph)) {
-    connectStdin($graph, $isInputTty);
-    connectStdout($graph, $isOutputTty);
-    walkPhase1($graph);
-    walkPhase2($graph);
-    walkPhase3($graph);
-}
 
 if ($action eq "complete-zsh") {
     #if (defined($completion)) {
@@ -970,11 +1143,18 @@ if (!defined($graph)) {
     die;
 }
 
-################################################################################
-
 my $working_dir = $ENV{"XSVUTILS_HOME"} . "/var/working_dir/$$";
 mkpath($working_dir);
 $ENV{"WORKING_DIR"} = $working_dir;
+
+connectStdin($graph, $isInputTty);
+connectStdout($graph, $isOutputTty);
+executeFormatWrapper($graph);
+walkPhase1($graph);
+walkPhase2($graph);
+walkPhase3($graph);
+
+################################################################################
 
 my $source_filepath = createSourceFile($graph, $working_dir);
 
