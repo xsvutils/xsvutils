@@ -921,6 +921,7 @@ sub connectFifo {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
             my $fifoIdx = fetchFifoIdx();
+            mkfifo(fifoPathRaw($fifoIdx), 0600) or die $!;
             $node->{"fifos"}->{$key} = $fifoIdx;
             $other->[0]->{"fifos"}->{$other->[1]} = $fifoIdx;
         }
@@ -1041,29 +1042,6 @@ sub formatWrapperDataPathBash {
     return "\$WORKING_DIR/fifo-$fifoIdx-d";
 }
 
-sub buildMkfifoCode {
-    my ($graph) = @_;
-    my $nodes = $graph->{"nodes"};
-
-    my $code = "";
-
-    for (my $i = 0; $i < @$nodes; $i++) {
-        my $node = $nodes->[$i];
-        my $command_name = $node->{"command_name"};
-        foreach my $key (sort keys %{$node->{"connections"}}) {
-            my $other = $node->{"connections"}->{$key};
-            my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            if ($otherIdx < $i) {
-                next;
-            }
-            my $fifoIdx = $node->{"fifos"}->{$key};
-            $code .= pad_len("mkfifo " . fifoPathBash($fifoIdx)) . " # NODE[$i] -> NODE[$otherIdx]\n";
-        }
-    }
-
-    return $code;
-}
-
 sub buildNodeCode {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
@@ -1115,7 +1093,6 @@ sub createSourceFile {
     connectFifo($graph);
     my $code = "";
     $code .= dumpNodes($graph);
-    $code .= buildMkfifoCode($graph);
     $code .= buildNodeCode($graph);
     $code .= "wait\n";
     $code .= "rm -rf \$WORKING_DIR\n";
