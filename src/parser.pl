@@ -939,15 +939,6 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
-sub pad_len {
-    my ($str) = @_;
-    my $l = length($str);
-    if ($l < 100) {
-        $str .= " " x (100 - $l);
-    }
-    return $str;
-}
-
 sub buildCommandParametersForBash {
     my ($cmd, $node) = @_;
     my $str = "";
@@ -981,42 +972,6 @@ sub buildCommandParametersForBash {
     return $cmd . $str;
 }
 
-sub dumpNodes {
-    my ($graph) = @_;
-    my $nodes = $graph->{"nodes"};
-    my $code = "";
-    for (my $i = 0; $i < @$nodes; $i++) {
-        my $node = $nodes->[$i];
-        my $command_name = $node->{"command_name"};
-        $code .= "# NODE[$i] $command_name\n";
-        if ($command_name eq "read-file") {
-            # internalの利用はいまのところread-fileのみ
-            $code .= "#   # input:  " . $node->{"internal"}->{"input"} . "\n";
-            $code .= "#   # fifo:   " . $node->{"internal"}->{"fifo"} . "\n";
-            $code .= "#   # format: " . $node->{"internal"}->{"format-result"} . "\n";
-        }
-        my $cmds = buildCommandParametersForBash($node->{"command_name"}, $node);
-        $cmds =~ s/\n/\n# /g;
-        $code .= "#   " . $cmds . "\n";
-        foreach my $key (sort keys %{$node->{"connections"}}) {
-            my $other = $node->{"connections"}->{$key};
-            my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            if ($otherIdx < $i) {
-                $code .= "#   # $key < NODE[$otherIdx]/$other->[1]\n";
-            }
-        }
-        foreach my $key (sort keys %{$node->{"connections"}}) {
-            my $other = $node->{"connections"}->{$key};
-            my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            my $ar;
-            if ($otherIdx > $i) {
-                $code .= "#   # $key > NODE[$otherIdx]/$other->[1]\n";
-            }
-        }
-    }
-    return $code;
-}
-
 sub fifoPathRaw {
     my ($fifoIdx) = @_;
     return "$ENV{WORKING_DIR}/fifo-$fifoIdx";
@@ -1042,6 +997,7 @@ sub formatWrapperDataPathBash {
     return "\$WORKING_DIR/fifo-$fifoIdx-d";
 }
 
+# 実行するBashスクリプト(--explainで表示する内容)を生成
 sub buildNodeCode {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
@@ -1051,24 +1007,38 @@ sub buildNodeCode {
     for (my $i = 0; $i < @$nodes; $i++) {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
+
+        $code .= "# NODE[$i]:$command_name\n";
+
         my $stdinStr = "";
         if (defined($node->{"fifos"}->{"input"})) {
             my $fifoIdx = $node->{"fifos"}->{"input"};
             $stdinStr = " < " . fifoPathBash($fifoIdx);
         }
+
         my $stdoutStr = "";
         if (defined($node->{"fifos"}->{"output"})) {
             my $fifoIdx = $node->{"fifos"}->{"output"};
             $stdoutStr = " > " . fifoPathBash($fifoIdx);
         }
+
         my $cmd = "bash \$XSVUTILS_HOME/src/" . $node->{"command_name"} . ".cmd.sh";
 
-        my $comment = "NODE[$i]";
+        $code .= buildCommandParametersForBash($cmd, $node) . "$stdinStr$stdoutStr &\n";
+
+        if ($command_name eq "read-file") {
+            # internalの利用はいまのところread-fileのみ
+            $code .= "    # input:  " . $node->{"internal"}->{"input"} . "\n";
+            $code .= "    # fifo:   " . $node->{"internal"}->{"fifo"} . "\n";
+            $code .= "    # format: " . $node->{"internal"}->{"format-result"} . "\n";
+        }
+
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
             if ($otherIdx < $i) {
-                $comment .= " $key<NODE[$otherIdx]/$other->[1]";
+                my $c = $nodes->[$otherIdx]->{"command_name"};
+                $code .= "    # $key < NODE[$otherIdx]:$c/$other->[1]\n";
             }
         }
         foreach my $key (sort keys %{$node->{"connections"}}) {
@@ -1076,11 +1046,12 @@ sub buildNodeCode {
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
             my $ar;
             if ($otherIdx > $i) {
-                $comment .= " $key>NODE[$otherIdx]/$other->[1]";
+                my $c = $nodes->[$otherIdx]->{"command_name"};
+                $code .= "    # $key > NODE[$otherIdx]:$c/$other->[1]\n";
             }
         }
 
-        $code .= pad_len(buildCommandParametersForBash($cmd, $node) . "$stdinStr$stdoutStr &") . " # $comment\n";
+        $code .= "\n";
     }
 
     return $code;
@@ -1088,11 +1059,11 @@ sub buildNodeCode {
 
 ################################################################################
 
+# 実行するBashスクリプト(--explainで表示する内容)を生成
 sub createSourceFile {
     my ($graph, $working_dir) = @_;
     connectFifo($graph);
     my $code = "";
-    $code .= dumpNodes($graph);
     $code .= buildNodeCode($graph);
     $code .= "wait\n";
     $code .= "rm -rf \$WORKING_DIR\n";
