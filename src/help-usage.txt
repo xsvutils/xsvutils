@@ -3,8 +3,8 @@ USAGE:
 
     SUBCOMMAND には cut, limit などがある。`xsvutils help list` でサブコマンドの一覧を確認できる。
 
-#    オプションについての詳細は `xsvutils help options` を見ること。
-#
+    オプションについての詳細は `xsvutils help options` を見ること。
+
     SUBCOMMAND は内容により複数を組み合わせることも可能。
 
     以下の例では cut がサブコマンド、 id,name がcutサブコマンドのパラメータである。

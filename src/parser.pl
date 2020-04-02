@@ -170,6 +170,8 @@ sub parseQuery {
     my $input_filepath = undef;
     my $output_filepath = undef;
 
+    my $query_options = {};
+
     while () {
         my $a;
         if (@$argv) {
@@ -230,6 +232,20 @@ sub parseQuery {
                 unless ($is_strict_mode) {
                     return (parseQuery(\@argv_orig, $subqueryCommandName, $is_global, $true, $inputMode, $outputMode));
                 }
+                next;
+            }
+            if ($a eq "--tsv") {
+                unless ($inputMode eq "must" || $inputMode eq "may") {
+                    return (undef, undef, undef, "--tsv not allowed");
+                }
+                $query_options->{"--tsv"} = "";
+                next;
+            }
+            if ($a eq "--csv") {
+                unless ($inputMode eq "must" || $inputMode eq "may") {
+                    return (undef, undef, undef, "--csv not allowed");
+                }
+                $query_options->{"--csv"} = "";
                 next;
             }
             if ($a eq "-i") {
@@ -366,14 +382,7 @@ sub parseQuery {
     }
 
     if (defined($input_filepath)) {
-        my $input_node2 = {
-            "command_name" => "read-file",
-            "parameters" => [],
-            "options" => {
-                "-i" => $input_filepath,
-            },
-            "connections" => {},
-        };
+        my $input_node2 = createInputNode($input_filepath, $query_options);
         if (@nodes) {
             $input_node2->{"connections"}->{"output"} = [$input_node, "input"];
             $input_node->{"connections"}->{"input"} = [$input_node2, "output"];
@@ -384,14 +393,7 @@ sub parseQuery {
         $input_node = $input_node2;
     }
     if (defined($output_filepath)) {
-        my $output_node2 = {
-            "command_name" => "write-file",
-            "parameters" => [],
-            "options" => {
-                "-o" => $output_filepath,
-            },
-            "connections" => {},
-        };
+        my $output_node2 = createOutputNode($output_filepath, $query_options);
         if (@nodes) {
             $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
             $output_node->{"connections"}->{"output"} = [$output_node2, "input"];
@@ -433,6 +435,7 @@ sub parseQuery {
         "input" => $input_node,
         "output" => $output_node,
         "nodes" => \@nodes,
+        "options" => $query_options,
     };
     return ($graph, $argv, $completion, undef);
 }
@@ -459,6 +462,25 @@ sub removeNode {
 
 ################################################################################
 
+sub createInputNode {
+    my ($input_filepath, $options) = @_;
+    my $input_node2 = {
+        "command_name" => "read-file",
+        "parameters" => [],
+        "options" => {},
+        "connections" => {},
+    };
+    if (defined($input_filepath)) {
+        $input_node2->{"options"}->{"-i"} = $input_filepath;
+    }
+    if (defined($options->{"--tsv"})) {
+        $input_node2->{"options"}->{"--tsv"} = "";
+    } elsif (defined($options->{"--csv"})) {
+        $input_node2->{"options"}->{"--csv"} = "";
+    }
+    return $input_node2;
+}
+
 sub connectStdin {
     my ($graph, $isInputTty) = @_;
     my $input_node = $graph->{"input"};
@@ -470,20 +492,28 @@ sub connectStdin {
     if ($isInputTty) {
         die "Input not found";
     }
-    my $input_node2 = {
-        "command_name" => "read-file",
-        "parameters" => [],
-        "options" => {},
-        "connections" => {
-            "output" => [$input_node, "input"],
-        },
-    };
+    my $input_node2 = createInputNode(undef, $graph->{"options"});
+    $input_node2->{"connections"}->{"output"} = [$input_node, "input"];
     $input_node->{"connections"}->{"input"} = [$input_node2, "output"];
     $graph->{"input"} = $input_node2;
     unshift(@{$graph->{"nodes"}}, $input_node2);
 }
 
 ################################################################################
+
+sub createOutputNode {
+    my ($output_filepath, $options) = @_;
+    my $output_node2 = {
+        "command_name" => "write-file",
+        "parameters" => [],
+        "options" => {},
+        "connections" => {},
+    };
+    if (defined($output_filepath)) {
+        $output_node2->{"options"}->{"-o"} = $output_filepath;
+    }
+    return $output_node2;
+}
 
 sub connectStdout {
     my ($graph, $isOutputTty) = @_;
@@ -496,13 +526,8 @@ sub connectStdout {
     my $output_node2;
     if (!$isOutputTty) {
         # ターミナル以外の標準出力
-        $output_node2 = {
-            "command_name" => "write-file",
-            "options" => {},
-            "connections" => {
-                "input" => [$output_node, "output"],
-            },
-        };
+        $output_node2 = createOutputNode(undef, $graph->{"options"});
+        $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
     } else {
         if ($coi->{"output"} eq "tsv") {
             # ターミナルへのテーブル形式の出力
@@ -547,6 +572,15 @@ sub forkFormatWrapper {
     if (defined($node->{"options"}->{"-i"})) {
         push(@cmd, "-i");
         push(@cmd, $node->{"options"}->{"-i"});
+    }
+
+    if (defined($node->{"options"}->{"--tsv"})) {
+        push(@cmd, "--tsv");
+        delete($node->{"options"}->{"--tsv"});
+    }
+    if (defined($node->{"options"}->{"--csv"})) {
+        push(@cmd, "--csv");
+        delete($node->{"options"}->{"--csv"});
     }
 
     push(@cmd, "-o");
@@ -597,7 +631,7 @@ sub fetchFormatWrapperResult {
     $node->{"internal"}->{"convert"} = [];
     if ($node->{"internal"}->{"format"} eq "csv") {
         push(@{$node->{"internal"}->{"convert"}}, "csv");
-    } elsif ($node->{"internal"}->{"format"} eq "tsv") {
+    } elsif ($node->{"internal"}->{"format"} eq "ltsv") {
         # TODO
     }
 }
