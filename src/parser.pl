@@ -25,30 +25,6 @@ my @help_files = qw/
 
 ################################################################################
 
-foreach my $command_name (keys %command_options) {
-    my $coi = $command_options{$command_name};
-    if (!defined($coi->{"exists_help"})) {
-        $coi->{"exists_help"} = $false;
-    }
-    if (!defined($coi->{"is_internal"})) {
-        $coi->{"is_internal"} = $false;
-    }
-    if (!defined($coi->{"options"})) {
-        $coi->{"options"} = {};
-    }
-    if (!defined($coi->{"parameters"})) {
-        $coi->{"parameters"} = [];
-    }
-    if (!defined($coi->{"input"})) {
-        $coi->{"input"} = "tsv";
-    }
-    if (!defined($coi->{"output"})) {
-        $coi->{"output"} = "tsv";
-    }
-}
-
-################################################################################
-
 my $isInputTty = $false;
 if (-t STDIN) {
     $isInputTty = $true;
@@ -136,8 +112,8 @@ sub parseAndExecHelpQuery {
 }
 
 ################################################################################
-################################################################################
 
+# --explainオプションが指定されているかどうか
 my $is_explain = $false;
 
 ################################################################################
@@ -151,9 +127,11 @@ sub parseQuery {
     # $outputMode="may"
     # $outputMode="mustNot"
 
-    # 2値を返す関数。
+    # 4値を返す関数。
     # 1つ目の返り値の例
-    # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列。
+    # 2つ目は閉じ括弧よりも後ろの残ったパラメータの配列
+    # 3つ目はコマンド補完の情報 (未実装)
+    # 4つ目はエラーの情報
 
     my @argv_orig = @$argv;
     my @argv = @argv_orig;
@@ -416,7 +394,7 @@ sub parseQuery {
         push(@nodes, $input_node);
     }
 
-    my $input_node_input_policy = $command_options{$input_node->{"command_name"}}->{"input"};
+    my $input_node_input_policy = $command_options{$input_node->{"command_name"}}->{"input"}->[0];
     if ($inputMode eq "must" && $input_node_input_policy ne "deny") {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must have input");
     }
@@ -424,7 +402,7 @@ sub parseQuery {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must not have input");
     }
 
-    my $output_node_output_policy = $command_options{$output_node->{"command_name"}}->{"output"};
+    my $output_node_output_policy = $command_options{$output_node->{"command_name"}}->{"output"}->[0];
     if ($outputMode eq "must" && $output_node_output_policy ne "deny") {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must have output");
     }
@@ -487,7 +465,7 @@ sub connectStdin {
     my $input_node = $graph->{"input"};
     my $command_name = $input_node->{"command_name"};
     my $coi = $command_options{$command_name};
-    if ($coi->{"input"} eq "deny") {
+    if ($coi->{"input"}->[0] eq "deny") {
         return;
     }
     if ($isInputTty) {
@@ -521,7 +499,7 @@ sub connectStdout {
     my $output_node = $graph->{"output"};
     my $command_name = $output_node->{"command_name"};
     my $coi = $command_options{$command_name};
-    if ($coi->{"output"} eq "deny") {
+    if ($coi->{"output"}->[0] eq "deny") {
         return;
     }
     my $output_node2;
@@ -618,17 +596,18 @@ sub fetchFormatWrapperResult {
         delete($node->{"options"}->{"-i"});
     }
 
-    $node->{"internal"}->{"convert"} = [];
     if ($node->{"internal"}->{"format"} eq "csv") {
-        push(@{$node->{"internal"}->{"convert"}}, "csv");
+        $node->{"connections"}->{"output"}->[2] = ["csv", "lf"];
     } elsif ($node->{"internal"}->{"format"} eq "json") {
-        $node->{"connections"}->{"output"}->[2] = "json";
+        $node->{"connections"}->{"output"}->[2] = ["json", "lf"];
     }
 }
 
 sub executeFormatWrapper {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
+
+    # format-wrapper.pl を起動
     for (my $i = 0; $i < @$nodes; $i++) {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
@@ -640,6 +619,8 @@ sub executeFormatWrapper {
             forkFormatWrapper($node);
         }
     }
+
+    # 起動した format-wrapper.pl からフォーマット推定情報を読み取り
     for (my $i = 0; $i < @$nodes; $i++) {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
@@ -647,37 +628,29 @@ sub executeFormatWrapper {
             fetchFormatWrapperResult($node);
         }
     }
-    while () {
-        my $f = $false;
-        for (my $i = 0; $i < @$nodes; $i++) {
-            my $node = $nodes->[$i];
-            my $command_name = $node->{"command_name"};
-            if ($command_name eq "read-file" && @{$node->{"internal"}->{"convert"}}) {
-                my $convert = pop(@{$node->{"internal"}->{"convert"}});
-                if ($convert eq "csv") {
-                    my $newNode = {
-                        "command_name" => "from-csv",
-                        "options" => {},
-                        "connections" => {
-                            "input" => [$node, "output"],
-                            "output" => $node->{"connections"}->{"output"},
-                        },
-                    };
-                    $node->{"connections"}->{"output"}->[0]->{"connections"}->{$node->{"connections"}->{"output"}->[1]} = [$newNode, "output"];
-                    $node->{"connections"}->{"output"} = [$newNode, "input", "csv"];
-                    $nodes = insertNode($nodes, $i + 1, $newNode);
-                    $graph->{"nodes"} = $nodes;
-                    $f = $true;
-                    last;
-                }
-            }
-        }
-        last if (!$f);
-    }
 }
 
 ################################################################################
 
+sub insertCsvToTsvNode {
+    my ($nodes, $index, $inputName) = @_;
+    my $newNode = {
+        "command_name" => "from-csv",
+        "options" => {},
+        "connections" => {},
+    };
+    my $node = $nodes->[$index];
+    my $inputNodeInfo = $node->{"connections"}->{$inputName};
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[0] = $newNode;
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[1] = "input";
+    $newNode->{"connections"}->{"input"} = [@$inputNodeInfo];
+    $newNode->{"connections"}->{"output"} = [$node, $inputName, ["tsv", "lf"]];
+    $node->{"connections"}->{$inputName} = [$newNode, "output", ["tsv", "lf"]];
+    return insertNode($nodes, $index, $newNode);
+}
+
+# 各ノード間の入出力フォーマットが一致しているかを検査する
+# 一致していなくて可能であれば変換処理のノードを挿入する
 sub walkPhase1 {
     my ($graph) = @_;
     walkPhase1a($graph);
@@ -686,7 +659,7 @@ sub walkPhase1 {
 
 # 各ノードの入力と出力が必要な箇所で接続されているかどうか
 # 各ノードの入力や出力のない箇所で接続されていないかどうか
-# をチェックする
+# を検査する
 sub walkPhase1a {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
@@ -694,7 +667,7 @@ sub walkPhase1a {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
         my $coi = $command_options{$command_name};
-        if ($coi->{"input"} eq "deny") {
+        if ($coi->{"input"}->[0] eq "deny") {
             if (defined($node->{"connections"}->{"input"})) {
                 die "`$command_name` subcommand must not have input.";
             }
@@ -703,7 +676,7 @@ sub walkPhase1a {
                 die "`$command_name` subcommand must have input.";
             }
         }
-        if ($coi->{"output"} eq "deny") {
+        if ($coi->{"output"}->[0] eq "deny") {
             if (defined($node->{"connections"}->{"output"})) {
                 die "`$command_name` subcommand must not have output.";
             }
@@ -715,7 +688,8 @@ sub walkPhase1a {
     }
 }
 
-# 各ノード間の接続のフォーマットがあっているかどうかをチェックする
+# 各ノード間の入出力フォーマットがあっているかどうかを検査する
+# 一致していなくて可能であれば変換処理のノードを挿入する
 sub walkPhase1b {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
@@ -723,6 +697,8 @@ sub walkPhase1b {
         my $node = $nodes->[$i];
         my $command_name = $node->{"command_name"};
         my $coi = $command_options{$command_name};
+
+        # 入力側を検査
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
@@ -731,24 +707,39 @@ sub walkPhase1b {
                 $node->{"connections"}->{$key}->[2] = $format;
 
                 if ($key eq "input") {
-                    if ($coi->{"input"} eq "tsv") {
-                        if ($format ne "tsv") {
+                    if ($coi->{"input"}->[0] eq "tsv") {
+                        if ($format->[0] eq "csv") {
+                            # CSV->TSV 変換ノードを挿入
+                            $nodes = insertCsvToTsvNode($nodes, $i, "input");
+                            $graph->{"nodes"} = $nodes;
+                            $i++;
+                        } elsif ($format->[0] ne "tsv") {
                             die "`$command_name` subcommand input must be tsv.";
                         }
-                    } elsif ($coi->{"input"} eq "csv") {
-                        if ($format ne "csv") {
+                    } elsif ($coi->{"input"}->[0] eq "csv") {
+                        if ($format->[0] ne "csv") {
                             die "`$command_name` subcommand input must be csv.";
                         }
-                    } elsif ($coi->{"input"} eq "text") {
-                        if ($format ne "tsv" && $format ne "csv" && $format ne "json" && $format ne "text") {
+                    } elsif ($coi->{"input"}->[0] eq "text") {
+                        if ($format->[0] !~ /\A(tsv|csv|json|text)\z/) {
                             die "`$command_name` subcommand input must be text.";
                         }
-                    } elsif ($coi->{"input"} eq "any") {
-                        # nothing
+                    } elsif ($coi->{"input"}->[0] eq "any") {
+                        if ($format->[0] eq "csv" && ($command_name eq "write-file" || $command_name eq "write-terminal")) {
+                            # SPECIAL IMPL FOR write-file, write-terminal
+                            # CSV->TSV 変換ノードを挿入
+                            $nodes = insertCsvToTsvNode($nodes, $i, "input");
+                            $graph->{"nodes"} = $nodes;
+                            $i++;
+                        }
                     }
+                } else {
+                    # TODO
                 }
             }
         }
+
+        # 出力側を検査
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
@@ -856,10 +847,10 @@ sub walkPhase2 {
         } elsif ($command_name eq "write-terminal") {
             # SPECIAL IMPL FOR write-terminal
             my $format = $node->{"connections"}->{"input"}->[2];
-            if ($format eq "tsv") {
+            if ($format->[0] eq "tsv") {
                 # ターミナルへのテーブル形式の出力
                 $node->{"options"}->{"--tsv"} = "";
-            } elsif ($format eq "json") {
+            } elsif ($format->[0] eq "json") {
                 $node->{"options"}->{"--json"} = "";
             } else {
                 $node->{"options"}->{"--text"} = "";
@@ -936,7 +927,7 @@ sub walkPhase3 {
                     push(@{$node1->{"options"}->{"--col"}}, @{$node2->{"options"}->{"--col"}});
 
                     $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
-                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", "tsv"];
+                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", ["tsv", "lf"]];
                     $nodes = removeNode($nodes, $i + 1);
                     $graph->{"nodes"} = $nodes;
 
@@ -1062,6 +1053,11 @@ sub formatWrapperDataPathBash {
     return "\$WORKING_DIR/fifo-$fifoIdx-d";
 }
 
+sub formatToString {
+    my ($format) = @_;
+    return join("/", @$format);
+}
+
 # 実行するBashスクリプト(--explainで表示する内容)を生成
 sub buildNodeCode {
     my ($graph) = @_;
@@ -1100,7 +1096,7 @@ sub buildNodeCode {
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            my $format = $other->[2];
+            my $format = formatToString($other->[2]);
             if ($otherIdx < $i) {
                 my $c = $nodes->[$otherIdx]->{"command_name"};
                 $code .= "    # $key < NODE[$otherIdx]:$c/$other->[1] $format\n";
@@ -1109,7 +1105,7 @@ sub buildNodeCode {
         foreach my $key (sort keys %{$node->{"connections"}}) {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
-            my $format = $other->[2];
+            my $format = formatToString($other->[2]);
             if ($otherIdx > $i) {
                 my $c = $nodes->[$otherIdx]->{"command_name"};
                 $code .= "    # $key > NODE[$otherIdx]:$c/$other->[1] $format\n";

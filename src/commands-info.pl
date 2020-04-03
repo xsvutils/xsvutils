@@ -5,6 +5,8 @@ use utf8;
 our $true;
 our $false;
 
+################################################################################
+
 our %command_options = (
     "cat" => {
         "input" => "any",
@@ -220,5 +222,35 @@ our %command_options = (
         "output" => "text",
     },
 );
+
+################################################################################
+
+foreach my $command_name (keys %command_options) {
+    my $coi = $command_options{$command_name};
+    if (!defined($coi->{"exists_help"})) {
+        $coi->{"exists_help"} = $false;
+    }
+    if (!defined($coi->{"is_internal"})) {
+        $coi->{"is_internal"} = $false;
+    }
+    if (!defined($coi->{"options"})) {
+        $coi->{"options"} = {};
+    }
+    if (!defined($coi->{"parameters"})) {
+        $coi->{"parameters"} = [];
+    }
+    if (!defined($coi->{"input"})) {
+        $coi->{"input"} = ["tsv", "lf"];
+    } elsif ((ref $coi->{"input"}) eq "") {
+        $coi->{"input"} = [$coi->{"input"}, "lf"];
+    }
+    if (!defined($coi->{"output"})) {
+        $coi->{"output"} = ["tsv", "lf"];
+    } elsif ((ref $coi->{"output"}) eq "") {
+        $coi->{"output"} = [$coi->{"output"}, "lf"];
+    }
+}
+
+################################################################################
 
 1;
