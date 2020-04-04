@@ -7,8 +7,6 @@ while [ $# -gt 0 ]; do
     if [ "$a" = "-i" ]; then
         filepath=$1
         shift
-    elif [ "$a" = "--stdin" ]; then
-        filepath=
     else
         echo "Unknown parameter: $a" >&2
         exit 1
@@ -16,9 +14,10 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$filepath" ]; then
-    exec perl $XSVUTILS_HOME/src/format-wrapper.pl --pipe
+    echo "Error" >&2
+    exit 1
 else
-    exec perl $XSVUTILS_HOME/src/format-wrapper.pl -i "$filepath" --pipe
+    exec cat "$filepath"
 fi
 
 

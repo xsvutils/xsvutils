@@ -394,19 +394,24 @@ sub parseQuery {
         push(@nodes, $input_node);
     }
 
-    my $input_node_input_policy = $command_options{$input_node->{"command_name"}}->{"input"}->[0];
-    if ($inputMode eq "must" && $input_node_input_policy ne "deny") {
+    my $input_node_input_format = $command_options{$input_node->{"command_name"}}->{"input"}->[0];
+    if ($inputMode eq "must" && $input_node_input_format ne "deny") {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must have input");
     }
-    if ($inputMode eq "mustNot" && $input_node_input_policy eq "deny") {
+    if ($inputMode eq "mustNot" && $input_node_input_format eq "deny") {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must not have input");
     }
 
-    my $output_node_output_policy = $command_options{$output_node->{"command_name"}}->{"output"}->[0];
-    if ($outputMode eq "must" && $output_node_output_policy ne "deny") {
+    my $output_node_output_format;
+    if ((ref $command_options{$output_node->{"command_name"}}->{"output"}) eq "CODE") {
+        $output_node_output_format = [""];
+    } else {
+        $output_node_output_format = $command_options{$output_node->{"command_name"}}->{"output"};
+    }
+    if ($outputMode eq "must" && $output_node_output_format->[0] ne "deny") {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must have output");
     }
-    if ($outputMode eq "mustNot" && $output_node_output_policy eq "deny") {
+    if ($outputMode eq "mustNot" && $output_node_output_format->[0] eq "deny") {
         return (undef, undef, undef, "sub query of '$subqueryCommandName' must not have output");
     }
 
@@ -499,7 +504,13 @@ sub connectStdout {
     my $output_node = $graph->{"output"};
     my $command_name = $output_node->{"command_name"};
     my $coi = $command_options{$command_name};
-    if ($coi->{"output"}->[0] eq "deny") {
+    my $output_format;
+    if ((ref $coi->{"output"}) eq "CODE") {
+        $output_format = [""];
+    } else {
+        $output_format = $coi->{"output"};
+    }
+    if ($output_format->[0] eq "deny") {
         return;
     }
     my $output_node2;
@@ -581,7 +592,7 @@ sub fetchFormatWrapperResult {
         die "failed to guess format";
     }
     $node->{"internal"}->{"format-result"} = $format;
-    $node->{"internal"}->{"format"}       = $1; # tsv, csv, ltsv
+    $node->{"internal"}->{"format"}       = $1; # tsv, csv, json, text
     $node->{"internal"}->{"charencoding"} = $2; # UTF-8, SHIFT-JIS
     $node->{"internal"}->{"utf8bom"}      = $3; # 0, 1
     $node->{"internal"}->{"newline"}      = $4; # unix, dos, mac
@@ -600,6 +611,8 @@ sub fetchFormatWrapperResult {
         $node->{"connections"}->{"output"}->[2] = ["csv", "lf"];
     } elsif ($node->{"internal"}->{"format"} eq "json") {
         $node->{"connections"}->{"output"}->[2] = ["json", "lf"];
+    } elsif ($node->{"internal"}->{"format"} eq "text") {
+        $node->{"connections"}->{"output"}->[2] = ["text", "lf"];
     }
 }
 
@@ -676,7 +689,13 @@ sub walkPhase1a {
                 die "`$command_name` subcommand must have input.";
             }
         }
-        if ($coi->{"output"}->[0] eq "deny") {
+        my $output_format;
+        if ((ref $coi->{"output"}) eq "CODE") {
+            $output_format = [""];
+        } else {
+            $output_format = $coi->{"output"};
+        }
+        if ($output_format->[0] eq "deny") {
             if (defined($node->{"connections"}->{"output"})) {
                 die "`$command_name` subcommand must not have output.";
             }
@@ -721,7 +740,7 @@ sub walkPhase1b {
                             die "`$command_name` subcommand input must be csv.";
                         }
                     } elsif ($coi->{"input"}->[0] eq "text") {
-                        if ($format->[0] !~ /\A(tsv|csv|json|text)\z/) {
+                        if ($format->[0] !~ /\A(tsv|csv|json|text|string)\z/) {
                             die "`$command_name` subcommand input must be text.";
                         }
                     } elsif ($coi->{"input"}->[0] eq "any") {
@@ -732,6 +751,8 @@ sub walkPhase1b {
                             $graph->{"nodes"} = $nodes;
                             $i++;
                         }
+                    } else {
+                        die;
                     }
                 } else {
                     # TODO
@@ -852,6 +873,8 @@ sub walkPhase2 {
                 $node->{"options"}->{"--tsv"} = "";
             } elsif ($format->[0] eq "json") {
                 $node->{"options"}->{"--json"} = "";
+            } elsif ($format->[0] eq "string") {
+                $node->{"options"}->{"--string"} = "";
             } else {
                 $node->{"options"}->{"--text"} = "";
             }

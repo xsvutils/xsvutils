@@ -162,7 +162,7 @@ sub guess_format {
         return "csv";
     } else {
         # failed to guess format
-        return "tsv";
+        return "text";
     }
 }
 

@@ -77,14 +77,14 @@ if (!defined $pid1) {
     die $!;
 } elsif ($pid1) {
     # parent process
+    close $PARENT_WRITER;
+    open(STDIN, '<&=', fileno($CHILD1_READER));
+    exec("sort", "-t", "\t", "-s", @sort_options);
+} else {
+    # child process
     close($CHILD1_READER);
     open(STDOUT, '>&=', fileno($PARENT_WRITER));
     syswrite(STDOUT, $body);
     exec("cat");
-} else {
-    # child process
-    close $PARENT_WRITER;
-    open(STDIN, '<&=', fileno($CHILD1_READER));
-    exec("sort", "-t", "\t", "-s", @sort_options);
 }
 

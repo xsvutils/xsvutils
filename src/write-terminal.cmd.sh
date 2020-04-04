@@ -11,6 +11,8 @@ while [ $# -gt 0 ]; do
         format=json
     elif [ "$a" = "--text" ]; then
         format=text
+    elif [ "$a" = "--string" ]; then
+        format=string
     elif [ "$a" = "--record-number-start" ]; then
         record_number_start=$1
         shift
@@ -28,6 +30,8 @@ elif [ $format = json ]; then
     else
         exec less -iSRXF
     fi
+elif [ $format = text ]; then
+    exec less -iSRXFN
 else
     exec less -iSRXF
 fi

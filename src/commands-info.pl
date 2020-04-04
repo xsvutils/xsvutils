@@ -11,6 +11,7 @@ our %command_options = (
     "cat" => {
         "input" => "any",
         "output" => sub {
+            # outputが関数の場合はdenyを返してはいけない
             $_[0]->{"connections"}->{"input"}->[2];
         },
     },
@@ -130,14 +131,14 @@ our %command_options = (
             "--comma" => "",
             "--col" => "",
         },
-        "output" => "text",
+        "output" => "string",
     },
     "meaningful-cols" => {
         "options" => {
             "--comma" => "",
             "--col" => "",
         },
-        "output" => "text",
+        "output" => "string",
     },
     "rename-duplicated-column-name" => {
     },
@@ -180,7 +181,7 @@ our %command_options = (
     },
     "wcl" => {
         "exists_help" => $true,
-        "output" => "text",
+        "output" => "string",
     },
     "summary" => {
         "exists_help" => $true,
@@ -213,6 +214,7 @@ our %command_options = (
             "--tsv" => "",
             "--json" => "",
             "--text" => "",
+            "--string" => "",
             "--record-number-start" => "LINE_COUNT",
         },
         "input" => "any",
