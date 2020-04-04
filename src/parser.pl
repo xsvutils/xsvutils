@@ -662,6 +662,23 @@ sub insertCsvToTsvNode {
     return insertNode($nodes, $index, $newNode);
 }
 
+sub insertJsonToTsvNode {
+    my ($nodes, $index, $inputName) = @_;
+    my $newNode = {
+        "command_name" => "from-json",
+        "options" => {},
+        "connections" => {},
+    };
+    my $node = $nodes->[$index];
+    my $inputNodeInfo = $node->{"connections"}->{$inputName};
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[0] = $newNode;
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[1] = "input";
+    $newNode->{"connections"}->{"input"} = [@$inputNodeInfo];
+    $newNode->{"connections"}->{"output"} = [$node, $inputName, ["tsv", "lf"]];
+    $node->{"connections"}->{$inputName} = [$newNode, "output", ["tsv", "lf"]];
+    return insertNode($nodes, $index, $newNode);
+}
+
 # 各ノード間の入出力フォーマットが一致しているかを検査する
 # 一致していなくて可能であれば変換処理のノードを挿入する
 sub walkPhase1 {
@@ -730,6 +747,11 @@ sub walkPhase1b {
                         if ($format->[0] eq "csv") {
                             # CSV->TSV 変換ノードを挿入
                             $nodes = insertCsvToTsvNode($nodes, $i, "input");
+                            $graph->{"nodes"} = $nodes;
+                            $i++;
+                        } elsif ($format->[0] eq "json") {
+                            # JSON->TSV 変換ノードを挿入
+                            $nodes = insertJsonToTsvNode($nodes, $i, "input");
                             $graph->{"nodes"} = $nodes;
                             $i++;
                         } elsif ($format->[0] ne "tsv") {

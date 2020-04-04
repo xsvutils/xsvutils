@@ -84,6 +84,13 @@ our %command_options = (
             "--col" => "A:COLUMN",
         },
     },
+    "from-json" => {
+        "is_internal" => $true,
+        "options" => {
+            "--col" => "A:COLUMN",
+        },
+        "input" => "json",
+    },
     "sort" => {
         "options" => {
             "--cols" => "COLUMNS",
@@ -221,7 +228,7 @@ our %command_options = (
         "output" => "deny",
     },
     "to-esbulk" => {
-        "output" => "text",
+        "output" => "json",
     },
 );
 
