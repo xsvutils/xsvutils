@@ -58,9 +58,11 @@ Available subcommands:
 #        ratio -v4                       カラムの合計値を求めてから百分率に変換する
 #        groupsum                        
 
-    その他のコマンド
-#        tee <OTHER_FILE>                Output to next subcommand and another file
+    入出力のコマンド
         to-esbulk                        
+
+#    その他のコマンド
+#        tee <OTHER_FILE>                Output to next subcommand and another file
 
     一部のコマンドの詳細は
         $ xsvutils help <SUBCOMMAND>

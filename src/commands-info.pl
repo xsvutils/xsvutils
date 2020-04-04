@@ -8,6 +8,7 @@ our $false;
 ################################################################################
 
 our %command_options = (
+    # なにもしないサブコマンド
     "cat" => {
         "input" => "any",
         "output" => sub {
@@ -15,6 +16,8 @@ our %command_options = (
             $_[0]->{"connections"}->{"input"}->[2];
         },
     },
+
+    # レコード選択に関するサブコマンド
     "head" => {
         "options" => {
             "-n" => "LINE_COUNT",
@@ -46,67 +49,6 @@ our %command_options = (
             "--end" => "LINE_COUNT",
         },
     },
-    "cols" => {
-        "exists_help" => $true,
-        "options" => {
-            "--cols" => "COLUMNS",
-            "--head" => "COLUMNS",
-            "--last" => "COLUMNS",
-            "--remove" => "COLUMNS",
-            "--left-update" => "",
-            "--right-update" => "",
-        },
-        "parameters" => [
-        ],
-    },
-    "cut" => {
-        "exists_help" => $true,
-        "options" => {
-            "--cols" => "COLUMNS",
-        },
-        "parameters" => [
-            "--cols",
-        ],
-    },
-    "col" => {
-        "options" => {
-            "--cols" => "COLUMNS",
-            "--col" => "COLUMN",
-        },
-        "parameters" => [
-            "--col",
-        ],
-    },
-    "col-impl" => {
-        "is_internal" => $true,
-        "options" => {
-            "--cols" => "COLUMNS",
-            "--col" => "A:COLUMN",
-        },
-    },
-    "from-json" => {
-        "is_internal" => $true,
-        "options" => {
-            "--col" => "A:COLUMN",
-        },
-        "input" => "json",
-    },
-    "sort" => {
-        "options" => {
-            "--cols" => "COLUMNS",
-            "--col" => "COLUMN",
-            "--number" => "",
-        },
-        "parameters" => [
-            "--col",
-        ],
-    },
-    "sort-impl" => {
-        "is_internal" => $true,
-        "options" => {
-            "--col" => "A:COLUMN",
-        },
-    },
     "where" => {
         "options" => {
             "--col" => "COLUMN",
@@ -131,24 +73,6 @@ our %command_options = (
             "--val",
         ],
     },
-    "trim-values" => {
-    },
-    "header" => {
-        "options" => {
-            "--comma" => "",
-            "--col" => "",
-        },
-        "output" => "string",
-    },
-    "meaningful-cols" => {
-        "options" => {
-            "--comma" => "",
-            "--col" => "",
-        },
-        "output" => "string",
-    },
-    "rename-duplicated-column-name" => {
-    },
     "filter-record" => {
         "options" => {
             "--record" => "PERL_CODE",
@@ -157,17 +81,60 @@ our %command_options = (
             "--record",
         ],
     },
-    "modify-record" => {
+
+    # 列の選択に関するサブコマンド
+    "cut" => {
+        "exists_help" => $true,
         "options" => {
-            "--header" => "PERL_CODE",
-            "--record" => "PERL_CODE",
+            "--cols" => "COLUMNS",
         },
         "parameters" => [
-            "--header",
-            "--record",
+            "--cols",
         ],
     },
-    "concat-cols" => {
+    "cols" => {
+        "exists_help" => $true,
+        "options" => {
+            "--cols" => "COLUMNS",
+            "--head" => "COLUMNS",
+            "--last" => "COLUMNS",
+            "--remove" => "COLUMNS",
+            "--left-update" => "",
+            "--right-update" => "",
+        },
+        "parameters" => [
+        ],
+    },
+    "col" => {
+        "options" => {
+            "--cols" => "COLUMNS",
+            "--col" => "COLUMN",
+        },
+        "parameters" => [
+            "--col",
+        ],
+    },
+    "col-impl" => {
+        "is_internal" => $true,
+        "options" => {
+            "--cols" => "COLUMNS",
+            "--col" => "A:COLUMN",
+        },
+    },
+
+    # その他のデータを加工するコマンド
+    "sort" => {
+        "options" => {
+            "--cols" => "COLUMNS",
+            "--col" => "COLUMN",
+            "--number" => "",
+        },
+        "parameters" => [
+            "--col",
+        ],
+    },
+    "sort-impl" => {
+        "is_internal" => $true,
         "options" => {
             "--col" => "A:COLUMN",
         },
@@ -186,14 +153,51 @@ our %command_options = (
             "--other",
         ],
     },
+    "trim-values" => {
+    },
+    "rename-duplicated-column-name" => {
+    },
+    "modify-record" => {
+        "options" => {
+            "--header" => "PERL_CODE",
+            "--record" => "PERL_CODE",
+        },
+        "parameters" => [
+            "--header",
+            "--record",
+        ],
+    },
+    "concat-cols" => {
+        "options" => {
+            "--col" => "A:COLUMN",
+        },
+    },
+
+    # 集計するコマンド
     "wcl" => {
         "exists_help" => $true,
+        "output" => "string",
+    },
+    "header" => {
+        "options" => {
+            "--comma" => "",
+            "--col" => "",
+        },
+        "output" => "string",
+    },
+    "meaningful-cols" => {
+        "options" => {
+            "--comma" => "",
+            "--col" => "",
+        },
         "output" => "string",
     },
     "summary" => {
         "exists_help" => $true,
         "output" => "text",
     },
+
+    # 入出力のコマンド
     "read-file" => {
         "is_internal" => $true,
         "options" => {
@@ -201,10 +205,6 @@ our %command_options = (
             "--stdin" => "",
         },
         "input" => "deny",
-    },
-    "from-csv" => {
-        "is_internal" => $true,
-        "input" => "csv",
     },
     "write-file" => {
         "is_internal" => $true,
@@ -229,6 +229,19 @@ our %command_options = (
     },
     "to-esbulk" => {
         "output" => "json",
+    },
+
+    # フォーマット変換のコマンド
+    "from-csv" => {
+        "is_internal" => $true,
+        "input" => "csv",
+    },
+    "from-json" => {
+        "is_internal" => $true,
+        "options" => {
+            "--col" => "A:COLUMN",
+        },
+        "input" => "json",
     },
 );
 
