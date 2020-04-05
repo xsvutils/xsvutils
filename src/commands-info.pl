@@ -173,7 +173,19 @@ our %command_options = (
         },
     },
 
-    # その他のデータを加工するコマンド
+    # 列を追加するサブコマンド
+    "ins-concat" => {
+        "options" => {
+            "--col" => "A:COLUMN",
+            "--dst" => "COLUMN",
+        },
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/ins-concat.pl"], @$args];
+        },
+    },
+
+    # その他のデータを加工するサブコマンド
     "sort" => {
         "options" => {
             "--cols" => "COLUMNS",
@@ -238,16 +250,6 @@ our %command_options = (
             ["perl", ["\$XSVUTILS_HOME/src/modify-record.pl"], $header, $record];
         },
     },
-    "concat-cols" => {
-        "options" => {
-            "--col" => "A:COLUMN",
-            "--dst" => "COLUMN",
-        },
-        "code" => sub {
-            my ($node, $args) = @_;
-            ["perl", ["\$XSVUTILS_HOME/src/concat-cols.pl"], @$args];
-        },
-    },
     "jq" => {
         "options" => {
             "-q" => "JQ_CODE",
@@ -265,7 +267,7 @@ our %command_options = (
         },
     },
 
-    # 集計するコマンド
+    # 集計するサブコマンド
     "wcl" => {
         "exists_help" => $true,
         "output" => "string",
@@ -337,7 +339,7 @@ our %command_options = (
         },
     },
 
-    # フォーマット変換のコマンド
+    # フォーマット変換のサブコマンド
     "from-csv" => {
         "is_internal" => $true,
         "input" => "csv",

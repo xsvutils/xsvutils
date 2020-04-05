@@ -20,8 +20,8 @@ Available subcommands:
 
 #    列の値を加工するサブコマンド
 #        mergecols -v4                   Merge values of same column name
-#
-#    列を追加するサブコマンド
+
+    列を追加するサブコマンド
 #        insunixtime -v4 --local <SRC> <DST> 日時のカラムをローカルタイムとみなしてUNIXタイムスタンプを新しいカラムとして追加する
 #        insdate <SRC> <DST>             日時のカラムから日付を抽出した値を新しいカラムとして追加する
 #        inshour <SRC> <DST>             日時のカラムから日付と時間までを抽出した値を新しいカラムとして追加する
@@ -31,9 +31,10 @@ Available subcommands:
 #        insmap <SRC> <DST> <MAPPING_FILE>
 #        insconst <VALUE> <DST>          固定値のカラムを新しいカラムとして追加する
 #        uriparams <NAMES>               GETパラメータ形式の文字列から値を抽出する
-#        (<SRC>, <DST> are column names)
-#
-    その他のデータを加工するコマンド
+        ins-concat --col <SRC> ... --dst <DST> 2つのカラムの値を連結した値を新しいカラムとして追加する
+        (<SRC>, <DST> are column names)
+
+    その他のデータを加工するサブコマンド
 #        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                Sort by specified columns
 #        paste <OTHER_FILE>              Merge records of two inputs
@@ -45,10 +46,9 @@ Available subcommands:
         trim-values                     カラム名および値の前後のスペースを削除する
         rename-duplicated-column-name   重複したカラム名に連番を付与する
         modify-record <PERL_CODE>
-        concat-cols --col <COLUMN> ... --dst <COLUMN>
         jq <JQ_QUERY>
 
-    集計するコマンド
+    集計するサブコマンド
         wcl                             Print record count. レコード数を表示する
         header                          Print column names. カラムの一覧を表示する
         meaningful-cols                 値が2種類以上あるカラムの一覧を表示する
