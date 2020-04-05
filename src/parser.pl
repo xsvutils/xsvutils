@@ -793,7 +793,7 @@ sub walkPhase1b {
             my $other = $node->{"connections"}->{$key};
             my $otherIdx = searchNodeFromNodes($nodes, $other->[0]);
             if ($otherIdx > $i && !defined($node->{"connections"}->{$key}->[2])) {
-                # $node->{"connections"}->{$key}->[2] が定義済みのケースはいまのところ read-file のみ
+                # $node->{"connections"}->{$key}->[2] がこの段階で定義済みのケースはいまのところ read-file のみ
                 if ($key eq "output") {
                     my $format;
                     if ((ref $coi->{"output"}) eq "CODE") {
@@ -1042,6 +1042,18 @@ sub buildNodeCommandParametersForBash {
 
     my @args = ();
 
+    if ($command_name eq "read-file") {
+        push(@args, "cat");
+        if ($node->{"internal"}->{"mode"} eq "pipe") {
+            my $fifoIdx = $node->{"internal"}->{"fifo"};
+            push(@args, [formatWrapperDataPathBash($fifoIdx)]);
+        } else {
+            my $path = $node->{"options"}->{"-i"};
+            push(@args, $path);
+        }
+        return \@args;
+    }
+
     push(@args, "bash");
     push(@args, ["\$XSVUTILS_HOME/src/" . $command_name . ".cmd.sh"]);
 
@@ -1066,14 +1078,6 @@ sub buildNodeCommandParametersForBash {
                 push(@args, $key);
                 push(@args, $param);
             }
-        }
-    }
-
-    if ($command_name eq "read-file") {
-        if ($node->{"internal"}->{"mode"} eq "pipe") {
-            my $fifoIdx = $node->{"internal"}->{"fifo"};
-            push(@args, "-i");
-            push(@args, [formatWrapperDataPathBash($fifoIdx)]);
         }
     }
 

@@ -298,7 +298,6 @@ our %command_options = (
         "is_internal" => $true,
         "options" => {
             "-i" => "FILE",
-            "--stdin" => "",
         },
         "input" => "deny",
     },
@@ -306,7 +305,6 @@ our %command_options = (
         "is_internal" => $true,
         "options" => {
             "-o" => "FILE",
-            "--stdout" => "",
         },
         "input" => "any",
         "output" => "deny",
