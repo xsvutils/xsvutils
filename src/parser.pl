@@ -34,6 +34,8 @@ if (-t STDOUT) {
     $isOutputTty = $true;
 }
 
+$ENV{"LC_ALL"} = "C";
+
 ################################################################################
 # help
 ################################################################################
@@ -1033,7 +1035,7 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
-sub builcNodeCommandParametersForBash {
+sub buildNodeCommandParametersForBash {
     my ($node) = @_;
     my $command_name = $node->{"command_name"};
     my $coi = $command_options{$command_name};
@@ -1083,11 +1085,9 @@ sub buildCommandParametersForBash {
     my $command_name = $node->{"command_name"};
     my $coi = $command_options{$command_name};
 
-    my $args = ();
+    my $args = buildNodeCommandParametersForBash($node);
     if (defined($coi->{"code"})) {
-        $args = $coi->{"code"}->($node);
-    } else {
-        $args = builcNodeCommandParametersForBash($node);
+        $args = $coi->{"code"}->($node, [(@$args)[2..(@$args - 1)]]);
     }
 
     my @args2 = ();

@@ -17,7 +17,7 @@ head, limit subcommand
     以下は同じ意味である。
 
         $ xsvutils FILENAME head -n 5
-        $ xsvutils FILENAME head -n5
+#        $ xsvutils FILENAME head -n5
         $ xsvutils FILENAME head 5
 
     他のサブコマンドと組み合わせることも可能で、以下は結果が同じになる。

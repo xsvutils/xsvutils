@@ -15,7 +15,7 @@ offset subcommand
     以下は同じ意味である。
 
         $ xsvutils FILENAME offset -n 5
-        $ xsvutils FILENAME offset -n5
+#        $ xsvutils FILENAME offset -n5
         $ xsvutils FILENAME offset 5
 
     他のサブコマンドとの組み合わせは `head` サブコマンドと同様に可能である。

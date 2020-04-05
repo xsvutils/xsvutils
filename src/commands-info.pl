@@ -10,15 +10,21 @@ our $false;
 our %command_options = (
     # なにもしないサブコマンド
     "cat" => {
+        "exists_help" => $true,
         "input" => "any",
         "output" => sub {
             # outputが関数の場合はdenyを返してはいけない
             $_[0]->{"connections"}->{"input"}->[2];
         },
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["cat", @$args];
+        },
     },
 
     # レコード選択に関するサブコマンド
     "head" => {
+        "exists_help" => $true,
         "options" => {
             "-n" => "LINE_COUNT",
         },
@@ -27,6 +33,7 @@ our %command_options = (
         ],
     },
     "limit" => {
+        "exists_help" => $true,
         "options" => {
             "-n" => "LINE_COUNT",
         },
@@ -35,6 +42,7 @@ our %command_options = (
         ],
     },
     "offset" => {
+        "exists_help" => $true,
         "options" => {
             "-n" => "LINE_COUNT",
         },
@@ -47,6 +55,26 @@ our %command_options = (
         "options" => {
             "--start" => "LINE_COUNT",
             "--end" => "LINE_COUNT",
+        },
+        "code" => sub {
+            my ($node, $args) = @_;
+            my $start = $node->{"options"}->{"--start"};
+            my $end = $node->{"options"}->{"--end"};
+            # rangeはこの2つのオプションが必ず設定されている
+            $start += 2;
+            $end += 1;
+            if ($end == 0) {
+                $end = '$';
+            }
+            if ($start == 2) {
+                if ($end eq '$') {
+                    ["cat"];
+                } else {
+                    ["head", "-n", $end];
+                }
+            } else {
+                ["sed", "-n", "-e", "1p", "-e", "${start},${end}p"];
+            }
         },
     },
     "where" => {
@@ -80,6 +108,12 @@ our %command_options = (
         "parameters" => [
             "--record",
         ],
+        "code" => sub {
+            my ($node, $args) = @_;
+            my $record = $node->{"options"}->{"--record"};
+            $record = "." if !defined($record);
+            ["perl", ["\$XSVUTILS_HOME/src/filter-record.pl"], $record];
+        },
     },
 
     # 列の選択に関するサブコマンド
@@ -104,6 +138,10 @@ our %command_options = (
         },
         "parameters" => [
         ],
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/cut.pl"], @$args];
+        },
     },
     "col" => {
         "options" => {
@@ -119,6 +157,10 @@ our %command_options = (
         "options" => {
             "--cols" => "COLUMNS",
             "--col" => "A:COLUMN",
+        },
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/cut.pl"], @$args];
         },
     },
 
@@ -138,6 +180,10 @@ our %command_options = (
         "options" => {
             "--col" => "A:COLUMN",
         },
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/sort.pl"], @$args];
+        },
     },
     "join" => {
         "exists_help" => $true,
@@ -154,8 +200,16 @@ our %command_options = (
         ],
     },
     "trim-values" => {
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/trim-values.pl"], @$args];
+        },
     },
     "rename-duplicated-column-name" => {
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/rename-duplicated-column-name.pl"], @$args];
+        },
     },
     "modify-record" => {
         "options" => {
@@ -166,11 +220,23 @@ our %command_options = (
             "--header",
             "--record",
         ],
+        "code" => sub {
+            my ($node, $args) = @_;
+            my $header = $node->{"options"}->{"--header"};
+            my $record = $node->{"options"}->{"--record"};
+            $header = "." if !defined($header);
+            $record = "." if !defined($record);
+            ["perl", ["\$XSVUTILS_HOME/src/modify-record.pl"], $header, $record];
+        },
     },
     "concat-cols" => {
         "options" => {
             "--col" => "A:COLUMN",
             "--dst" => "COLUMN",
+        },
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/concat-cols.pl"], @$args];
         },
     },
     "jq" => {
@@ -183,7 +249,7 @@ our %command_options = (
         "input" => "json",
         "output" => "json",
         "code" => sub {
-            my ($node) = @_;
+            my ($node, $args) = @_;
             my $q = $node->{"options"}->{"-q"};
             $q = "." if !defined($q);
             ["jq", $q];
@@ -201,6 +267,10 @@ our %command_options = (
             "--col" => "",
         },
         "output" => "string",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/header.pl"], @$args];
+        },
     },
     "meaningful-cols" => {
         "options" => {
@@ -208,10 +278,18 @@ our %command_options = (
             "--col" => "",
         },
         "output" => "string",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/meaningful-cols.pl"], @$args];
+        },
     },
     "summary" => {
         "exists_help" => $true,
         "output" => "text",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/summary.pl"], @$args];
+        },
     },
 
     # 入出力のコマンド
@@ -246,12 +324,20 @@ our %command_options = (
     },
     "to-esbulk" => {
         "output" => "json",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/to-esbulk.pl"], @$args];
+        },
     },
 
     # フォーマット変換のコマンド
     "from-csv" => {
         "is_internal" => $true,
         "input" => "csv",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["bash", ["\$XSVUTILS_HOME/src/run-rust.sh"], "fromcsv", @$args];
+        },
     },
     "from-json" => {
         "is_internal" => $true,
@@ -259,6 +345,10 @@ our %command_options = (
             "--col" => "A:COLUMN",
         },
         "input" => "json",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/from-json.pl"], @$args];
+        },
     },
 );
 
