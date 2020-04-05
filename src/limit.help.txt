@@ -26,3 +26,6 @@ head, limit subcommand
         $ xsvutils FILENAME head 20 cut id,name
         $ xsvutils FILENAME cut id,name head 20
 
+    旧バージョン(20より前)からのユーザ向けの説明
+        オプションとそのあとの数値を連結する書き方(`head -n10`のような書き方)は認められなくなった。
+

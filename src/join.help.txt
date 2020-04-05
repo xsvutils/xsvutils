@@ -19,6 +19,6 @@ join subcommand
     以下のように、 <OTHER_FILE> の部分を `[]` で囲んで、サブコマンドを指定することも可能。
         $ xsvutils input1.tsv sort id join [ input2.tsv sort id ]
 
-    旧バージョン(-vo)からの変更点:
-        --file は --other に変わりました。
+    旧バージョン(20より前)からのユーザ向けの説明
+        --file は --other に変わった。
 

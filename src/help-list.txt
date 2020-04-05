@@ -14,7 +14,7 @@ Available subcommands:
     列の選択に関するサブコマンド
         cut <COLUMNS>                   Print specified columns
         cols [--cols <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>]  Print specified columns
-        col <COLUMN>                    Print specified column
+        col <COLUMN> col <COLUMN> ...   Print specified column
 #        rmnoname                        Remove columns of no name
 
 #    列の値を加工するサブコマンド

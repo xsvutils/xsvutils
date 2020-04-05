@@ -476,7 +476,7 @@ sub connectStdin {
         return;
     }
     if ($isInputTty) {
-        die "Input not found";
+        parseAndExecHelpQuery(undef, undef);
     }
     my $input_node2 = createInputNode(undef, $graph->{"options"});
     $input_node2->{"connections"}->{"output"} = [$input_node, "input"];
@@ -860,13 +860,13 @@ sub walkPhase2 {
             if (defined($cols)) {
                 $node->{"options"}->{"--col"} = [];
                 foreach my $c (split(/,/, $cols, -1)) {
-                    push(@{$node->{"options"}->{"--col"}}, ":$c");
+                    push(@{$node->{"options"}->{"--col"}}, $c);
                 }
             } else {
                 $node->{"options"}->{"--col"} = [];
             }
             if (defined($col)) {
-                push(@{$node->{"options"}->{"--col"}}, $col);
+                push(@{$node->{"options"}->{"--col"}}, @$col);
             }
         } elsif ($command_name eq "sort") {
             # SPECIAL IMPL FOR sort

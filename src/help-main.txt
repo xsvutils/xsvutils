@@ -52,6 +52,7 @@ DETAILS:
     `xsvutils help list` list available subcommands.
 
     Other <DOCUMENT> are following.
+        format
         list
         options
         usage

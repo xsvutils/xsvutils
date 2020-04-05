@@ -18,5 +18,5 @@ offset subcommand
 #        $ xsvutils FILENAME offset -n5
         $ xsvutils FILENAME offset 5
 
-    他のサブコマンドとの組み合わせは `head` サブコマンドと同様に可能である。
-
+    旧バージョン(20より前)からのユーザ向けの説明
+        オプションとそのあとの数値を連結する書き方(`head -n10`のような書き方)は認められなくなった。

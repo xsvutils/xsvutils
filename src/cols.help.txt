@@ -2,7 +2,7 @@ cols subcommand
     Print specified columns.
 
     Usage:
-        $ xsvutils cols [--col <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>] [--remove <COLUMNS>] [option...]
+        $ xsvutils cols [--cols <COLUMNS>] [--head <COLUMNS>] [--last <COLUMNS>] [--remove <COLUMNS>] [option...]
 
     Parameter:
         <COLUMNS>         (optional) Print <COLUMNS>
@@ -16,13 +16,8 @@ cols subcommand
         --right-update     Remove duplicated columns. Overwrite left columns with the right one.
         --help             Print help information about this subcommand.
 
+    See also `xsvutils help cut`, `xsvutils help col`.
 
-    以下は同じ意味である。
-
-        $ xsvutils FILENAME cols --col name1,name2,name3
-        $ xsvutils FILENAME cols --col name1..name3
-        $ xsvutils FILENAME cut name1,name2,name3
-
-    旧バージョン(-vo)からの変更点:
-        --col は --cols に変わりました。
+    旧バージョン(20より前)からのユーザ向けの説明
+        --col は --cols に変わった。
 

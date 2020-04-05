@@ -144,9 +144,10 @@ our %command_options = (
         },
     },
     "col" => {
+        "exists_help" => $true,
         "options" => {
             "--cols" => "COLUMNS",
-            "--col" => "COLUMN",
+            "--col" => "A:COLUMN",
         },
         "parameters" => [
             "--col",
