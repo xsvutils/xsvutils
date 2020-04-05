@@ -50,6 +50,14 @@ our %command_options = (
                 "-n",
         ],
     },
+    "offset-random" => {
+        "options" => {
+            "-n" => "LINE_COUNT",
+        },
+        "parameters" => [
+                "-n",
+        ],
+    },
     "range" => {
         "is_internal" => $true,
         "options" => {

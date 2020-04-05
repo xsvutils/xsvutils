@@ -6,6 +6,7 @@ Available subcommands:
         head [<N>]                      Print first N records
         limit [<N>]                     Print first N records
         offset [<N>]                    Print all except first N records
+        offset-random <N>               Print all except first n records where n is a random number less than N
         where <CONDITION>               Print records which satisfy a condition
         filter <CONDITION>              Print records which satisfy a condition
         filter-record

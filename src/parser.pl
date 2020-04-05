@@ -848,6 +848,17 @@ sub walkPhase2 {
             $node->{"command_name"} = "range";
             $node->{"options"}->{"--start"} = $n;
             $node->{"options"}->{"--end"} = -1;
+        } elsif ($command_name eq "offset-random") {
+            # SPECIAL IMPL FOR offset-random
+            my $n = $node->{"options"}->{"-n"};
+            if (defined($n)) {
+                delete($node->{"options"}->{"-n"});
+            } else {
+                $n = 10;
+            }
+            $node->{"command_name"} = "range";
+            $node->{"options"}->{"--start"} = int(rand($n));
+            $node->{"options"}->{"--end"} = -1;
         } elsif ($command_name eq "col") {
             # SPECIAL IMPL FOR col
             my $new_node = {};
