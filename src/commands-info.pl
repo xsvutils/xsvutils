@@ -170,6 +170,7 @@ our %command_options = (
     "concat-cols" => {
         "options" => {
             "--col" => "A:COLUMN",
+            "--dst" => "COLUMN",
         },
     },
 
