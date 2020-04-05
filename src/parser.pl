@@ -761,6 +761,10 @@ sub walkPhase1b {
                         if ($format->[0] ne "csv") {
                             die "`$command_name` subcommand input must be csv.";
                         }
+                    } elsif ($coi->{"input"}->[0] eq "json") {
+                        if ($format->[0] ne "json") {
+                            die "`$command_name` subcommand input must be json.";
+                        }
                     } elsif ($coi->{"input"}->[0] eq "text") {
                         if ($format->[0] !~ /\A(tsv|csv|json|text|string)\z/) {
                             die "`$command_name` subcommand input must be text.";
@@ -806,6 +810,7 @@ sub walkPhase1b {
 
 ################################################################################
 
+# ノード単位でパラメータを見て書き換え
 sub walkPhase2 {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
@@ -933,55 +938,43 @@ sub unifyRange {
     return ($start, $end);
 }
 
+# 各ノード間単の関係を見て書き換え
 sub walkPhase3 {
     my ($graph) = @_;
     my $nodes = $graph->{"nodes"};
-    while () {
-        my $f = $false;
-        for (my $i = 0; $i < @$nodes; $i++) {
-            my $node1 = $nodes->[$i];
-            next if (!defined($node1->{"connections"}->{"output"}));
-            my $node2 = $node1->{"connections"}->{"output"}->[0];
-            my $command_name = $node1->{"command_name"};
-            if ($command_name eq "range") {
-                if ($node2->{"command_name"} eq "range") {
-                    # SPECIAL IMPL FOR head, offset
-                    my ($start, $end) = unifyRange(
-                        $node1->{"options"}->{"--start"}, $node1->{"options"}->{"--end"},
-                        $node2->{"options"}->{"--start"}, $node2->{"options"}->{"--end"});
-                    $node1->{"options"}->{"--start"} = $start;
-                    $node1->{"options"}->{"--end"} = $end;
-
-                    $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
-                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", "tsv"];
-                    $nodes = removeNode($nodes, $i + 1);
-                    $graph->{"nodes"} = $nodes;
-
-                    $f = $true;
-                    last;
-                } elsif ($node2->{"command_name"} eq "write-terminal" && !defined($node2->{"options"}->{"--record-number-start"})) {
-                    # SPECIAL IMPL FOR head, offset
-                    $node2->{"options"}->{"--record-number-start"} = $node1->{"options"}->{"--start"} + 1;
-
-                    $f = $true;
-                    last;
-                }
-            } elsif ($command_name eq "col-impl" || $command_name eq "sort-impl") {
-                if ($node2->{"command_name"} eq $command_name) {
-                    # SPECIAL IMPL FOR col, sort
-                    push(@{$node1->{"options"}->{"--col"}}, @{$node2->{"options"}->{"--col"}});
-
-                    $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
-                    $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", ["tsv", "lf"]];
-                    $nodes = removeNode($nodes, $i + 1);
-                    $graph->{"nodes"} = $nodes;
-
-                    $f = $true;
-                    last;
-                }
+    for (my $i = 0; $i < @$nodes; $i++) {
+        my $node1 = $nodes->[$i];
+        next if (!defined($node1->{"connections"}->{"output"}));
+        my $node2 = $node1->{"connections"}->{"output"}->[0];
+        my $command_name = $node1->{"command_name"};
+        if ($command_name eq "range") {
+            if ($node2->{"command_name"} eq "range") {
+                # SPECIAL IMPL FOR head, offset
+                my ($start, $end) = unifyRange(
+                    $node1->{"options"}->{"--start"}, $node1->{"options"}->{"--end"},
+                    $node2->{"options"}->{"--start"}, $node2->{"options"}->{"--end"});
+                $node1->{"options"}->{"--start"} = $start;
+                $node1->{"options"}->{"--end"} = $end;
+                $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
+                $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", ["tsv", "lf"]];
+                $nodes = removeNode($nodes, $i + 1);
+                $graph->{"nodes"} = $nodes;
+                $i--;
+            } elsif ($node2->{"command_name"} eq "write-terminal" && !defined($node2->{"options"}->{"--record-number-start"})) {
+                # SPECIAL IMPL FOR head, offset
+                $node2->{"options"}->{"--record-number-start"} = $node1->{"options"}->{"--start"} + 1;
+            }
+        } elsif ($command_name eq "col-impl" || $command_name eq "sort-impl") {
+            if ($node2->{"command_name"} eq $command_name) {
+                # SPECIAL IMPL FOR col, sort
+                push(@{$node1->{"options"}->{"--col"}}, @{$node2->{"options"}->{"--col"}});
+                $node1->{"connections"}->{"output"} = $node2->{"connections"}->{"output"};
+                $node1->{"connections"}->{"output"}->[0]->{"connections"}->{"input"} = [$node1, "output", ["tsv", "lf"]];
+                $nodes = removeNode($nodes, $i + 1);
+                $graph->{"nodes"} = $nodes;
+                $i--;
             }
         }
-        last if (!$f);
     }
 }
 
@@ -1040,37 +1033,73 @@ sub escape_for_bash {
     return "'" . $str . "'";
 }
 
-sub buildCommandParametersForBash {
-    my ($cmd, $node) = @_;
-    my $str = "";
+sub builcNodeCommandParametersForBash {
+    my ($node) = @_;
     my $command_name = $node->{"command_name"};
+    my $coi = $command_options{$command_name};
+
+    my @args = ();
+
+    push(@args, "bash");
+    push(@args, ["\$XSVUTILS_HOME/src/" . $command_name . ".cmd.sh"]);
+
     foreach my $key (sort keys %{$node->{"options"}}) {
         my $param = $node->{"options"}->{$key};
-        if (!defined($command_options{$command_name}->{"options"}->{$key})) {
+        if (!defined($coi->{"options"}->{$key})) {
             # nothing
-        } elsif ($command_options{$command_name}->{"options"}->{$key} eq "") {
-            $str .= " " . escape_for_bash($key);
+        } elsif ($coi->{"options"}->{$key} eq "") {
+            push(@args, $key);
         } else {
             my $type = ref $param;
             if ($type eq "HASH") {
                 my $fifoIdx = $node->{"fifos"}->{$key};
-                $str .= " " . escape_for_bash($key) . " " . fifoPathBash($fifoIdx);
+                push(@args, $key);
+                push(@args, [fifoPathBash($fifoIdx)]);
             } elsif ($type eq "ARRAY") {
                 foreach my $p (@$param) {
-                    $str .= " " . escape_for_bash($key) . " " . escape_for_bash($p);
+                    push(@args, $key);
+                    push(@args, $p);
                 }
             } else {
-                $str .= " " . escape_for_bash($key) . " " . escape_for_bash($param);
+                push(@args, $key);
+                push(@args, $param);
             }
         }
     }
+
     if ($command_name eq "read-file") {
         if ($node->{"internal"}->{"mode"} eq "pipe") {
             my $fifoIdx = $node->{"internal"}->{"fifo"};
-            $str .= " -i " . formatWrapperDataPathBash($fifoIdx);
+            push(@args, "-i");
+            push(@args, [formatWrapperDataPathBash($fifoIdx)]);
         }
     }
-    return $cmd . $str;
+
+    return \@args;
+}
+
+sub buildCommandParametersForBash {
+    my ($node) = @_;
+    my $command_name = $node->{"command_name"};
+    my $coi = $command_options{$command_name};
+
+    my $args = ();
+    if (defined($coi->{"code"})) {
+        $args = $coi->{"code"}->($node);
+    } else {
+        $args = builcNodeCommandParametersForBash($node);
+    }
+
+    my @args2 = ();
+    foreach my $a (@$args) {
+        if ((ref $a) eq "ARRAY") {
+            push(@args2, $a->[0]);
+        } else {
+            push(@args2, escape_for_bash($a));
+        }
+    }
+
+    return join(" ", @args2);
 }
 
 sub fifoPathRaw {
@@ -1128,9 +1157,7 @@ sub buildNodeCode {
             $stdoutStr = " > " . fifoPathBash($fifoIdx);
         }
 
-        my $cmd = "bash \$XSVUTILS_HOME/src/" . $node->{"command_name"} . ".cmd.sh";
-
-        $code .= buildCommandParametersForBash($cmd, $node) . "$stdinStr$stdoutStr &\n";
+        $code .= buildCommandParametersForBash($node) . "$stdinStr$stdoutStr &\n";
 
         if ($command_name eq "read-file") {
             # internalの利用はいまのところread-fileのみ
@@ -1177,10 +1204,7 @@ sub createSourceFile {
     open(my $fh, ">", $filepath) or die $!;
     print $fh $code;
     close($fh);
-    if ($is_explain) {
-        print STDERR $code;
-    }
-    return $filepath;
+    return ($filepath, $code);
 }
 
 ################################################################################
@@ -1247,7 +1271,12 @@ walkPhase3($graph);
 
 ################################################################################
 
-my $source_filepath = createSourceFile($graph, $working_dir);
+my ($source_filepath, $code) = createSourceFile($graph, $working_dir);
+if ($is_explain) {
+    print STDERR $code;
+}
+
+# TODO 必要なランタイムのチェックは explain のあとの、ここのタイミングでしたい
 
 exec("bash", $source_filepath);
 

@@ -173,6 +173,22 @@ our %command_options = (
             "--dst" => "COLUMN",
         },
     },
+    "jq" => {
+        "options" => {
+            "-q" => "JQ_CODE",
+        },
+        "parameters" => [
+            "-q",
+        ],
+        "input" => "json",
+        "output" => "json",
+        "code" => sub {
+            my ($node) = @_;
+            my $q = $node->{"options"}->{"-q"};
+            $q = "." if !defined($q);
+            ["jq", $q];
+        },
+    },
 
     # 集計するコマンド
     "wcl" => {

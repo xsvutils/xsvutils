@@ -45,6 +45,7 @@ Available subcommands:
         rename-duplicated-column-name   重複したカラム名に連番を付与する
         modify-record <PERL_CODE>
         concat-cols --col <COLUMN> ... --dst <COLUMN>
+        jq <JQ_QUERY>
 
     集計するコマンド
         wcl                             Print record count. レコード数を表示する
