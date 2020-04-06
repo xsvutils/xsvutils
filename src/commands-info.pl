@@ -348,6 +348,14 @@ our %command_options = (
             ["bash", ["\$XSVUTILS_HOME/src/run-rust.sh"], "fromcsv", @$args];
         },
     },
+    "to-csv" => {
+        "is_internal" => $true,
+        "output" => "csv",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/to-csv.pl"], @$args];
+        },
+    },
     "from-json" => {
         "is_internal" => $true,
         "options" => {

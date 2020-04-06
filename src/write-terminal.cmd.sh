@@ -26,12 +26,12 @@ if [ $format = tsv ]; then
     perl $XSVUTILS_HOME/src/table.pl --col-number --record-number --record-number-start $record_number_start --color | less -iSRX
 elif [ $format = json ]; then
     if type jq >/dev/null 2>&1; then
-        jq . -C | less -iSRXF
+        jq . -C | less -iSRX
     else
-        exec less -iSRXF
+        exec less -iSRX
     fi
 elif [ $format = text ]; then
-    exec less -iSRXFN
+    exec less -iSRXN
 else
     exec less -iSRXF
 fi

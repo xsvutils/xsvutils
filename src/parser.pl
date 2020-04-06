@@ -220,6 +220,7 @@ sub parseQuery {
                     return (undef, undef, undef, "--tsv not allowed");
                 }
                 $query_options->{"--tsv"} = "";
+                delete($query_options->{"--csv"});
                 next;
             }
             if ($a eq "--csv") {
@@ -227,6 +228,23 @@ sub parseQuery {
                     return (undef, undef, undef, "--csv not allowed");
                 }
                 $query_options->{"--csv"} = "";
+                delete($query_options->{"--tsv"});
+                next;
+            }
+            if ($a eq "--o-tsv") {
+                unless ($outputMode eq "must" || $outputMode eq "may") {
+                    return (undef, undef, undef, "--o-tsv not allowed");
+                }
+                $query_options->{"--o-tsv"} = "";
+                delete($query_options->{"--o-csv"});
+                next;
+            }
+            if ($a eq "--o-csv") {
+                unless ($outputMode eq "must" || $outputMode eq "may") {
+                    return (undef, undef, undef, "--o-csv not allowed");
+                }
+                $query_options->{"--o-csv"} = "";
+                delete($query_options->{"--o-tsv"});
                 next;
             }
             if ($a eq "-i") {
@@ -491,12 +509,35 @@ sub createOutputNode {
     my ($output_filepath, $options) = @_;
     my $output_node2 = {
         "command_name" => "write-file",
-        "parameters" => [],
         "options" => {},
         "connections" => {},
+        "internal" => {},
     };
     if (defined($output_filepath)) {
         $output_node2->{"options"}->{"-o"} = $output_filepath;
+    }
+    $output_node2->{"internal"}->{"format"} = "any";
+    if (defined($options->{"--o-tsv"})) {
+        $output_node2->{"internal"}->{"format"} = "tsv";
+    } elsif (defined($options->{"--o-csv"})) {
+        $output_node2->{"internal"}->{"format"} = "csv";
+    }
+    return $output_node2;
+}
+
+sub createOutputTerminalNode {
+    my ($output_filepath, $options) = @_;
+    my $output_node2 = {
+        "command_name" => "write-terminal",
+        "options" => {},
+        "connections" => {},
+        "internal" => {},
+    };
+    $output_node2->{"internal"}->{"format"} = "any";
+    if (defined($options->{"--o-tsv"})) {
+        $output_node2->{"internal"}->{"format"} = "tsv";
+    } elsif (defined($options->{"--o-csv"})) {
+        $output_node2->{"internal"}->{"format"} = "csv";
     }
     return $output_node2;
 }
@@ -519,17 +560,11 @@ sub connectStdout {
     if (!$isOutputTty) {
         # ターミナル以外への標準出力
         $output_node2 = createOutputNode(undef, $graph->{"options"});
-        $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
     } else {
         # ターミナルへの出力
-        $output_node2 = {
-            "command_name" => "write-terminal",
-            "options" => {},
-            "connections" => {
-                "input" => [$output_node, "output"],
-            },
-        };
+        $output_node2 = createOutputTerminalNode(undef, $graph->{"options"});
     }
+    $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
     $output_node->{"connections"}->{"output"} = [$output_node2, "input"];
     $graph->{"output"} = $output_node2;
     push(@{$graph->{"nodes"}}, $output_node2);
@@ -664,6 +699,23 @@ sub insertCsvToTsvNode {
     return insertNode($nodes, $index, $newNode);
 }
 
+sub insertTsvToCsvNode {
+    my ($nodes, $index, $inputName) = @_;
+    my $newNode = {
+        "command_name" => "to-csv",
+        "options" => {},
+        "connections" => {},
+    };
+    my $node = $nodes->[$index];
+    my $inputNodeInfo = $node->{"connections"}->{$inputName};
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[0] = $newNode;
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[1] = "input";
+    $newNode->{"connections"}->{"input"} = [@$inputNodeInfo];
+    $newNode->{"connections"}->{"output"} = [$node, $inputName, ["csv", "lf"]];
+    $node->{"connections"}->{$inputName} = [$newNode, "output", ["csv", "lf"]];
+    return insertNode($nodes, $index, $newNode);
+}
+
 sub insertJsonToTsvNode {
     my ($nodes, $index, $inputName) = @_;
     my $newNode = {
@@ -745,17 +797,63 @@ sub walkPhase1b {
                 $node->{"connections"}->{$key}->[2] = $format;
 
                 if ($key eq "input") {
-                    if ($coi->{"input"}->[0] eq "tsv") {
-                        if ($format->[0] eq "csv") {
+                    if ($command_name eq "write-file" || $command_name eq "write-terminal") {
+                        # SPECIAL IMPL FOR write-file, write-terminal
+                        if ($node->{"internal"}->{"format"} eq "tsv") {
+                            if ($format->[0] eq "tsv") {
+                                # nothing
+                            } elsif ($format->[0] eq "csv") {
+                                # CSV->TSV 変換ノードを挿入
+                                $nodes = insertCsvToTsvNode($nodes, $i, "input");
+                                $i++;
+                                $graph->{"nodes"} = $nodes;
+                            } elsif ($format->[0] eq "json") {
+                                # JSON->TSV 変換ノードを挿入
+                                $nodes = insertJsonToTsvNode($nodes, $i, "input");
+                                $i++;
+                                $graph->{"nodes"} = $nodes;
+                            } else {
+                                die "Cannot convert format from $format->[0] to tsv.";
+                            }
+                        } elsif ($node->{"internal"}->{"format"} eq "csv") {
+                            if ($format->[0] eq "tsv") {
+                                # TSV->CSV 変換ノードを挿入
+                                $nodes = insertTsvToCsvNode($nodes, $i, "input");
+                                $i++;
+                                $graph->{"nodes"} = $nodes;
+                            } elsif ($format->[0] eq "csv") {
+                                # nothing
+                            } elsif ($format->[0] eq "json") {
+                                # JSON->CSV 変換ノードを挿入
+                                $nodes = insertJsonToTsvNode($nodes, $i, "input");
+                                $i++;
+                                $nodes = insertTsvToCsvNode($nodes, $i, "input");
+                                $i++;
+                                $graph->{"nodes"} = $nodes;
+                            } else {
+                                die "Cannot convert format from $format->[0] to csv.";
+                            }
+                        } else {
+                            if ($format->[0] eq "csv") {
+                                # CSV->TSV 変換ノードを挿入
+                                $nodes = insertCsvToTsvNode($nodes, $i, "input");
+                                $i++;
+                                $graph->{"nodes"} = $nodes;
+                            }
+                        }
+                    } elsif ($coi->{"input"}->[0] eq "tsv") {
+                        if ($format->[0] eq "tsv") {
+                            # nothing
+                        } elsif ($format->[0] eq "csv") {
                             # CSV->TSV 変換ノードを挿入
                             $nodes = insertCsvToTsvNode($nodes, $i, "input");
-                            $graph->{"nodes"} = $nodes;
                             $i++;
+                            $graph->{"nodes"} = $nodes;
                         } elsif ($format->[0] eq "json") {
                             # JSON->TSV 変換ノードを挿入
                             $nodes = insertJsonToTsvNode($nodes, $i, "input");
-                            $graph->{"nodes"} = $nodes;
                             $i++;
+                            $graph->{"nodes"} = $nodes;
                         } elsif ($format->[0] ne "tsv") {
                             die "`$command_name` subcommand input must be tsv.";
                         }
@@ -772,13 +870,7 @@ sub walkPhase1b {
                             die "`$command_name` subcommand input must be text.";
                         }
                     } elsif ($coi->{"input"}->[0] eq "any") {
-                        if ($format->[0] eq "csv" && ($command_name eq "write-file" || $command_name eq "write-terminal")) {
-                            # SPECIAL IMPL FOR write-file, write-terminal
-                            # CSV->TSV 変換ノードを挿入
-                            $nodes = insertCsvToTsvNode($nodes, $i, "input");
-                            $graph->{"nodes"} = $nodes;
-                            $i++;
-                        }
+                        # nothing
                     } else {
                         die;
                     }
@@ -911,6 +1003,9 @@ sub walkPhase2 {
             if ($format->[0] eq "tsv") {
                 # ターミナルへのテーブル形式の出力
                 $node->{"options"}->{"--tsv"} = "";
+            } elsif ($format->[0] eq "csv") {
+                # CSV形式はそのまま表示
+                $node->{"options"}->{"--text"} = "";
             } elsif ($format->[0] eq "json") {
                 $node->{"options"}->{"--json"} = "";
             } elsif ($format->[0] eq "string") {
@@ -1174,10 +1269,14 @@ sub buildNodeCode {
 
         $code .= buildCommandParametersForBash($node) . "$stdinStr$stdoutStr &\n";
 
+        # internalの利用はいまのところ read-file, write-file, write-terminal のみ
         if ($command_name eq "read-file") {
-            # internalの利用はいまのところread-fileのみ
             $code .= "    # input:  " . $node->{"internal"}->{"input"} . "\n";
             $code .= "    # format: " . $node->{"internal"}->{"format-result"} . "\n";
+        } elsif ($command_name eq "write-file") {
+            $code .= "    # format: " . $node->{"internal"}->{"format"} . "\n";
+        } elsif ($command_name eq "write-terminal") {
+            $code .= "    # format: " . $node->{"internal"}->{"format"} . "\n";
         }
 
         foreach my $key (sort keys %{$node->{"connections"}}) {
@@ -1211,15 +1310,17 @@ sub buildNodeCode {
 sub createSourceFile {
     my ($graph, $working_dir) = @_;
     connectFifo($graph);
-    my $code = "";
-    $code .= buildNodeCode($graph);
-    $code .= "wait\n";
-    $code .= "rm -rf \$WORKING_DIR\n";
+    my $code1 = "";
+    my $code2 = "";
+    $code1 .= buildNodeCode($graph);
+    $code2 .= "wait\n";
+    $code2 .= "rm -rf \$WORKING_DIR\n";
     my $filepath = $working_dir . "/script.sh";
     open(my $fh, ">", $filepath) or die $!;
-    print $fh $code;
+    print $fh $code1;
+    print $fh $code2;
     close($fh);
-    return ($filepath, $code);
+    return ($filepath, $code1);
 }
 
 ################################################################################
