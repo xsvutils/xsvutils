@@ -53,6 +53,7 @@ DETAILS:
 
     Other <DOCUMENT> are following.
         format
+        install
         list
         options
         usage

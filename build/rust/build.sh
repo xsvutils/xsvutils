@@ -1,6 +1,10 @@
 
 set -Ceu
 
+export XSVUTILS_HOME=$(cd $(dirname $0)/../..; pwd)
+
+cd $XSVUTILS_HOME
+
 mkdir -p var/rust
 
 for f in $(ls src/*.rs | LC_ALL=C sort); do

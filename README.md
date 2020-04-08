@@ -1,6 +1,6 @@
 # xsvutils
 
-A set of command line utilities for handling tabular data files.
+A set of command line utilities for handling tabular data files.  
 CSVファイルやTSVファイルをCUIで扱うツール。
 
 https://www.slideshare.net/suzuki-navi/xsvutils-overview
@@ -17,7 +17,7 @@ To see help documents,
 
 ## Example
 
-Print tsv/csv data to the terminal.
+Print tsv/csv data to the terminal.  
 TSV/CSVファイルを端末に見やすく表示する。
 
     $ xsvutils data.tsv
@@ -35,7 +35,7 @@ TSV/CSVファイルを端末に見やすく表示する。
     | 4  | 040002 | 宮城県   | ミヤギケン   |
     | 5  | 050008 | 秋田県   | アキタケン   |
 
-Retrieve specified columns.
+Retrieve specified columns.  
 一部のカラムのみを表示する。
 
     $ xsvutils data.tsv cut foo,col1,col20    # retrieve only 3 columns: foo, col1, col20
@@ -80,6 +80,10 @@ jqがインストールされていれば、JSONも便利。
     $ git clone https://github.com/xsvutils/xsvutils.git
     $ cd xsvutils
     $ PATH=$(pwd)/bin:$PATH # add xsvutils to $PATH
+
+機能によっては別途ビルドが必要なものがある。詳細は以下を参照。
+
+    $ xsvutils --help install
 
 
 ## License

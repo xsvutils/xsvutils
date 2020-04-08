@@ -15,6 +15,7 @@ our %command_options;
 
 my @help_files = qw/
     format
+    install
     list
     main
     options
