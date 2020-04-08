@@ -53,6 +53,7 @@ sub interrupt {
 }
 $SIG{INT} = \&interrupt;
 
+# chart-bar.pl にも同じ関数が定義されている
 sub charWidth {
     my ($ch) = @_;
     my $o = ord($ch);
@@ -65,6 +66,7 @@ sub charWidth {
     }
 }
 
+# chart-bar.pl にも同じ関数が定義されている
 sub stringViewLength {
     my ($str) = @_;
     my $str2 = decode_utf8($str);

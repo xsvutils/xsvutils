@@ -60,6 +60,9 @@ Available subcommands:
 #        ratio -v4                       カラムの合計値を求めてから百分率に変換する
 #        groupsum                        
 
+    グラフ化するサブコマンド
+        chart-bar
+
     入出力のコマンド
         to-esbulk                        
 

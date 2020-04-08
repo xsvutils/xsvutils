@@ -303,6 +303,15 @@ our %command_options = (
         },
     },
 
+    # グラフ化するサブコマンド
+    "chart-bar" => {
+        "output" => "textsimple",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/chart-bar.pl"], @$args];
+        },
+    },
+
     # 入出力のコマンド
     "read-file" => {
         "is_internal" => $true,
@@ -325,6 +334,7 @@ our %command_options = (
             "--tsv" => "",
             "--json" => "",
             "--text" => "",
+            "--textsimple" => "",
             "--string" => "",
             "--record-number-start" => "LINE_COUNT",
         },

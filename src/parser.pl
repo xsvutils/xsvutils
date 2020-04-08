@@ -866,7 +866,7 @@ sub walkPhase1b {
                             die "`$command_name` subcommand input must be json.";
                         }
                     } elsif ($coi->{"input"}->[0] eq "text") {
-                        if ($format->[0] !~ /\A(tsv|csv|json|text|string)\z/) {
+                        if ($format->[0] !~ /\A(tsv|csv|json|text|textsimple|string)\z/) {
                             die "`$command_name` subcommand input must be text.";
                         }
                     } elsif ($coi->{"input"}->[0] eq "any") {
@@ -1010,6 +1010,8 @@ sub walkPhase2 {
                 $node->{"options"}->{"--json"} = "";
             } elsif ($format->[0] eq "string") {
                 $node->{"options"}->{"--string"} = "";
+            } elsif ($format->[0] eq "textsimple") {
+                $node->{"options"}->{"--textsimple"} = "";
             } else {
                 $node->{"options"}->{"--text"} = "";
             }
