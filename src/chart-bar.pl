@@ -30,6 +30,7 @@ sub stringViewLength {
     $resultLength;
 }
 
+# total.pl にも同じ関数が定義されている
 sub normalizeNumber {
     my ($str) = @_;
     if ($str =~ /\A *([-+]?[0-9]+(\.[0-9]*)?) *\z/) {

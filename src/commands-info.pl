@@ -302,6 +302,18 @@ our %command_options = (
             ["perl", ["\$XSVUTILS_HOME/src/summary.pl"], @$args];
         },
     },
+    "sum" => {
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/total.pl"], "--sum", @$args];
+        },
+    },
+    "average" => {
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/total.pl"], "--avg", @$args];
+        },
+    },
 
     # グラフ化するサブコマンド
     "chart-bar" => {

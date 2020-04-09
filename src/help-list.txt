@@ -53,6 +53,8 @@ Available subcommands:
         header                          Print column names. カラムの一覧を表示する
         meaningful-cols                 値が2種類以上あるカラムの一覧を表示する
         summary                         Print summary of data. データのサマリを表示する
+        sum                             合計を計算する
+        average                         平均を計算する
 #        countcols                       カラム数を集計する
 #        facetcount                      カラムそれぞれのファセットカウントを集計する
 #        treetable                       左のカラムから順番にカラム組み合わせのファセットカウントを集計する
