@@ -79,29 +79,33 @@ for (my $i = 0; $i < @$data; $i++) {
     if ($y_len > $y_len_max) {
         $y_len_max = $y_len;
     }
-    if ($y < $y_min) {
+    if ($y < $y_min || $i == 0) {
         $y_min = $y;
     }
-    if ($y > $y_max) {
+    if ($y > $y_max || $i == 0) {
         $y_max = $y;
     }
 }
 
 my $TERMINAL_COLS = $ENV{"TERMINAL_COLS"};
+$TERMINAL_COLS = 80 if (defined($TERMINAL_COLS));
+
 my $bar_max = $TERMINAL_COLS - $x_len_max - $y_len_max - 2;
 
 my $y_ratio1 = 1;
 my $y_ratio2 = 1;
-while   ($bar_max * $y_ratio2      > ($y_max - $y_min) * $y_ratio1) {
-    $y_ratio1 *= 10;
-}
-while   ($bar_max * $y_ratio2 * 10 < ($y_max - $y_min) * $y_ratio1) {
-    $y_ratio2 *= 10;
-}
-if      ($bar_max * $y_ratio2 * 5  < ($y_max - $y_min) * $y_ratio1) {
-    $y_ratio2 *= 10;
-} elsif ($bar_max * $y_ratio2 * 2  < ($y_max - $y_min) * $y_ratio1) {
-    $y_ratio2 *= 5;
+if ($y_max > 0) {
+    while   ($bar_max * $y_ratio2      > $y_max * $y_ratio1) {
+        $y_ratio1 *= 10;
+    }
+    while   ($bar_max * $y_ratio2 * 10 < $y_max * $y_ratio1) {
+        $y_ratio2 *= 10;
+    }
+    if      ($bar_max * $y_ratio2 * 5  < $y_max * $y_ratio1) {
+        $y_ratio2 *= 10;
+    } elsif ($bar_max * $y_ratio2 * 2  < $y_max * $y_ratio1) {
+        $y_ratio2 *= 5;
+    }
 }
 
 for (my $i = 0; $i < @$data; $i++) {
@@ -110,7 +114,13 @@ for (my $i = 0; $i < @$data; $i++) {
     my $y_str = $data->[$i]->[1];
     my $y_len = stringViewLength($y_str);
     my $y = normalizeNumber($y_str);
-    my $y2 = int($y * $y_ratio1 / $y_ratio2);
-    print $x_str . (" " x ($x_len_max - $x_len + 1)) . (" " x ($y_len_max - $y_len)) . $y_str . " " . ("*" x $y2) . "\n";
+    my $pd1 = $x_len_max - $x_len + 1;
+    my $pd2 = $y_len_max - $y_len;
+    if ($y_max > 0) {
+        my $y2 = int($y * $y_ratio1 / $y_ratio2);
+        print $x_str . (" " x $pd1) . (" " x $pd2) . $y_str . " " . ("*" x $y2) . "\n";
+    } else {
+        print $x_str . (" " x $pd1) . (" " x $pd2) . $y_str . " " . "\n";
+    }
 }
 
