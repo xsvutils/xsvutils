@@ -53,7 +53,9 @@ while (my $line = <STDIN>) {
     @cols = ();
     for (my $i = 0; $i < $headerCount2; $i++) {
         my $h = $header2->[$i];
-        push(@cols, $rec{$h});
+        my $v = $rec{$h};
+        $v = "" if (!defined($v));
+        push(@cols, $v);
     }
     print encode_utf8(join("\t", @cols)) . "\n";
 }
