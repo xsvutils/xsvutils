@@ -395,6 +395,15 @@ our %command_options = (
             ["perl", ["\$XSVUTILS_HOME/src/from-json.pl"], @$args];
         },
     },
+    "no-header" => {
+        "is_internal" => $true,
+        "input" => "any",
+        "output" => "any",
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["tail", "-n+2", @$args];
+        },
+    },
 );
 
 ################################################################################

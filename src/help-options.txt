@@ -12,8 +12,8 @@ Common options:
     -o <FILENAME>    Output to <FILENAME>  (default is stdout)
 
 #    --header <HEADERS> 入力にはヘッダーがないためヘッダーをオプションで指定。HEADERS はコンマ区切り
-#    --o-no-header    出力にはヘッダを付けない。端末に表形式で表示する場合には無意味
-#
+    --o-no-header    出力にはヘッダを付けない
+
     --help           Print help information.
 #    --version        Print version information.
 
@@ -28,8 +28,7 @@ Common options:
         $ xsvutils $INPUT cut title
         $ xsvutils -i $INPUT cut --col title
 
-    これら共通オプションは FILENAME, SUBCOMMAND の前に置くことも可能だが、
-    サブコマンドに固有のオプションは SUBCOMMAND の後ろであることが必要。
+    これら共通オプションは FILENAME, SUBCOMMAND の前に置くことも可能。
 
     以下は同じ意味になる。
 

@@ -248,6 +248,13 @@ sub parseQuery {
                 delete($query_options->{"--o-tsv"});
                 next;
             }
+            if ($a eq "--o-no-header") {
+                unless ($outputMode eq "must" || $outputMode eq "may") {
+                    return (undef, undef, undef, "--o-no-header not allowed");
+                }
+                $query_options->{"--o-no-header"} = "";
+                next;
+            }
             if ($a eq "-i") {
                 unless ($inputMode eq "must" || $inputMode eq "may") {
                     return (undef, undef, undef, "File path of input not allowed");
@@ -523,6 +530,9 @@ sub createOutputNode {
     } elsif (defined($options->{"--o-csv"})) {
         $output_node2->{"internal"}->{"format"} = "csv";
     }
+    if (defined($options->{"--o-no-header"})) {
+        $output_node2->{"internal"}->{"--o-no-header"} = "";
+    }
     return $output_node2;
 }
 
@@ -558,8 +568,16 @@ sub connectStdout {
         return;
     }
     my $output_node2;
+    my $isFile = '';
     if (!$isOutputTty) {
-        # ターミナル以外への標準出力
+        # ターミナル以外への標準出力は出力を整形しない
+        $isFile = 1;
+    } elsif (defined($graph->{"options"}->{"--o-no-header"})) {
+        # このオプションが指定されている場合は出力を整形しない
+        $isFile = 1;
+    }
+    if ($isFile) {
+        # 整形せずに出力
         $output_node2 = createOutputNode(undef, $graph->{"options"});
     } else {
         # ターミナルへの出力
@@ -734,6 +752,23 @@ sub insertJsonToTsvNode {
     return insertNode($nodes, $index, $newNode);
 }
 
+sub insertNoHeaderNode {
+    my ($nodes, $index, $inputName, $fmt) = @_;
+    my $newNode = {
+        "command_name" => "no-header",
+        "options" => {},
+        "connections" => {},
+    };
+    my $node = $nodes->[$index];
+    my $inputNodeInfo = $node->{"connections"}->{$inputName};
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[0] = $newNode;
+    $inputNodeInfo->[0]->{"connections"}->{$inputNodeInfo->[1]}->[1] = "input";
+    $newNode->{"connections"}->{"input"} = [@$inputNodeInfo];
+    $newNode->{"connections"}->{"output"} = [$node, $inputName, [$fmt, "lf"]];
+    $node->{"connections"}->{$inputName} = [$newNode, "output", [$fmt, "lf"]];
+    return insertNode($nodes, $index, $newNode);
+}
+
 # 各ノード間の入出力フォーマットが一致しているかを検査する
 # 一致していなくて可能であれば変換処理のノードを挿入する
 sub walkPhase1 {
@@ -838,6 +873,15 @@ sub walkPhase1b {
                             if ($format->[0] eq "csv") {
                                 # CSV->TSV 変換ノードを挿入
                                 $nodes = insertCsvToTsvNode($nodes, $i, "input");
+                                $i++;
+                                $graph->{"nodes"} = $nodes;
+                            }
+                        }
+                        if (defined($node->{"internal"}->{"--o-no-header"})) {
+                            my $fmt = $node->{"connections"}->{"input"}->[2]->[0];
+                            if ($fmt eq "tsv" || $fmt eq "csv") {
+                                # ヘッダ削除のノードを挿入
+                                $nodes = insertNoHeaderNode($nodes, $i, "input", "tsv");
                                 $i++;
                                 $graph->{"nodes"} = $nodes;
                             }
