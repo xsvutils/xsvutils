@@ -318,7 +318,7 @@ sub parseQuery {
         if (!defined($input_filepath)) {
             if ($inputMode eq "must" || $inputMode eq "may") {
                 if (@nodes <= 1) {
-                    if (-f $a) {
+                    if (-f $a || -p $a) {
                         $input_filepath = $a;
                         next;
                     }
