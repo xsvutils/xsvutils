@@ -37,6 +37,7 @@ Available subcommands:
     その他のデータを加工するサブコマンド
 #        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                Sort by specified columns
+        uniq                            Filter adjacent matching records
 #        paste <OTHER_FILE>              Merge records of two inputs
         join <OTHER_FILE>               Join records of two inputs
 #        union <OTHER_FILE>              Join records of two inputs vertically

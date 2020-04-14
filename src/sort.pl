@@ -2,6 +2,8 @@ use strict;
 use warnings;
 use utf8;
 
+# uniq.pl とプログラムの構造がよく似ている
+
 my @sort_keys = ();
 
 while (@ARGV) {
@@ -22,7 +24,6 @@ my $in = *STDIN;
 
 my $head_unit_size = 4096;
 my $head_buf = "";
-my $exists_lf = '';
 
 while () {
     my $head_buf2;
@@ -32,7 +33,6 @@ while () {
     }
     $head_buf .= $head_buf2;
     if ($head_buf2 =~ /\n/) {
-        $exists_lf = 1;
         last;
     }
 }
@@ -69,22 +69,21 @@ my @sort_options = ();
 
 syswrite(STDOUT, $header . "\n");
 
-my $CHILD1_READER;
-my $PARENT_WRITER;
-pipe($CHILD1_READER, $PARENT_WRITER);
+my $READER1;
+my $WRITER1;
+pipe($READER1, $WRITER1);
 my $pid1 = fork;
-if (!defined $pid1) {
-    die $!;
-} elsif ($pid1) {
-    # parent process
-    close $PARENT_WRITER;
-    open(STDIN, '<&=', fileno($CHILD1_READER));
-    exec("sort", "-t", "\t", "-s", @sort_options);
-} else {
+die unless defined $pid1;
+
+if (!$pid1) {
     # child process
-    close($CHILD1_READER);
-    open(STDOUT, '>&=', fileno($PARENT_WRITER));
+    close($READER1);
+    open(STDOUT, '>&=', fileno($WRITER1));
     syswrite(STDOUT, $body);
     exec("cat");
 }
+
+close $WRITER1;
+open(STDIN, '<&=', fileno($READER1));
+exec("sort", "-t", "\t", "-s", @sort_options);
 

@@ -206,6 +206,12 @@ our %command_options = (
             ["perl", ["\$XSVUTILS_HOME/src/sort.pl"], @$args];
         },
     },
+    "uniq" => {
+        "code" => sub {
+            my ($node, $args) = @_;
+            ["perl", ["\$XSVUTILS_HOME/src/uniq.pl"], @$args];
+        },
+    },
     "join" => {
         "exists_help" => $true,
         "options" => {
