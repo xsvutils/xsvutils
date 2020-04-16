@@ -1,4 +1,13 @@
-なにかのインストールをしないと使えない機能の説明とインストール方法の案内
+xsvutilsのインストール
+
+    ソースコード一式を取得するのみ。実行ファイルは bin/xsvutils 。
+
+    $ git clone https://github.com/xsvutils/xsvutils.git
+    $ cd xsvutils
+    $ PATH=$(pwd)/bin:$PATH # add xsvutils to $PATH
+
+    一部の機能は別途ビルドをしないと動かない。以下はビルドが必要な機能とビルド方法の説明。
+
 
 xsvutilsの旧バージョン(-vo)
 
