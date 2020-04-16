@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v13 -> v14 (Unreleased)
+## v13 -> v14 (2020/04/16)
 
 出力オプション `--o-chart2` が追加された。
 

@@ -34,6 +34,9 @@ elif [ "$version" = -v12 ]; then
 elif [ "$version" = -v13 ]; then
     # version 0.13
     GIT_HASH=0.13
+elif [ "$version" = -v14 ]; then
+    # version 0.14
+    GIT_HASH=0.14
 elif [ -n "$recursive_flag" ]; then
     echo "Unknown version: $version" >&2
     exit 1
