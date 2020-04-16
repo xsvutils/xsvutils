@@ -15,7 +15,7 @@ Common options:
     --o-no-header    出力にはヘッダを付けない
 
     --help           Print help information.
-#    --version        Print version information.
+    --version        Print version information.
 
     xsvutils の直後にファイル名を与えるか、 -i オプションでファイル名を与えると、それが入力になる。
     それらがない場合は標準入力が入力になる。

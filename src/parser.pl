@@ -118,6 +118,7 @@ sub parseAndExecHelpQuery {
 
 # --explainオプションが指定されているかどうか
 my $is_explain = $false;
+my $global_option_version = $false;
 
 ################################################################################
 
@@ -199,6 +200,10 @@ sub parseQuery {
         if ($true) {
             if ($a eq "--explain") {
                 $is_explain = $true;
+                next;
+            }
+            if ($a eq "--version") {
+                $global_option_version = $true;
                 next;
             }
             if ($a eq "--help") {
@@ -1419,6 +1424,10 @@ if (defined($error)) {
 }
 if (!defined($graph)) {
     die;
+}
+
+if ($global_option_version) {
+    exec("bash", $ENV{"XSVUTILS_HOME"} . "/src/version.sh");
 }
 
 my $working_dir = $ENV{"XSVUTILS_HOME"} . "/var/working_dir/$$";
