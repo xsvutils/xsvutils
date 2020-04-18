@@ -866,7 +866,7 @@ sub walkPhase1b {
                             my $fmt = $node->{"connections"}->{"input"}->[2]->[0];
                             if ($fmt eq "tsv" || $fmt eq "csv") {
                                 # ヘッダ削除のノードを挿入
-                                $nodes = insertNoHeaderNode($nodes, $i, "input", "tsv");
+                                $nodes = insertNoHeaderNode($nodes, $i, "input", $fmt);
                                 $i++;
                                 $graph->{"nodes"} = $nodes;
                             }
