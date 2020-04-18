@@ -405,7 +405,7 @@ sub parseQuery {
         $input_node = $input_node2;
     }
     if (defined($output_filepath)) {
-        my $output_node2 = createOutputNode($output_filepath, $query_options);
+        my $output_node2 = createOutputNode($output_filepath, $query_options, "");
         if (@nodes) {
             $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
             $output_node->{"connections"}->{"output"} = [$output_node2, "input"];
@@ -519,7 +519,7 @@ sub connectStdin {
 ################################################################################
 
 sub createOutputNode {
-    my ($output_filepath, $options) = @_;
+    my ($output_filepath, $options, $isTerminal) = @_;
     my $output_node2 = {
         "command_name" => "write-file",
         "options" => {},
@@ -529,6 +529,9 @@ sub createOutputNode {
     if (defined($output_filepath)) {
         $output_node2->{"options"}->{"-o"} = $output_filepath;
     }
+    if ($isTerminal) {
+        $output_node2->{"options"}->{"--terminal"} = "";
+    }
     $output_node2->{"internal"}->{"format"} = "any";
     if (defined($options->{"--o-tsv"})) {
         $output_node2->{"internal"}->{"format"} = "tsv";
@@ -537,23 +540,6 @@ sub createOutputNode {
     }
     if (defined($options->{"--o-no-header"})) {
         $output_node2->{"internal"}->{"--o-no-header"} = "";
-    }
-    return $output_node2;
-}
-
-sub createOutputTerminalNode {
-    my ($output_filepath, $options) = @_;
-    my $output_node2 = {
-        "command_name" => "write-terminal",
-        "options" => {},
-        "connections" => {},
-        "internal" => {},
-    };
-    $output_node2->{"internal"}->{"format"} = "any";
-    if (defined($options->{"--o-tsv"})) {
-        $output_node2->{"internal"}->{"format"} = "tsv";
-    } elsif (defined($options->{"--o-csv"})) {
-        $output_node2->{"internal"}->{"format"} = "csv";
     }
     return $output_node2;
 }
@@ -573,21 +559,15 @@ sub connectStdout {
         return;
     }
     my $output_node2;
-    my $isFile = '';
+    my $isTerminal = 1;
     if (!$isOutputTty) {
         # ターミナル以外への標準出力は出力を整形しない
-        $isFile = 1;
+        $isTerminal = "";
     } elsif (defined($graph->{"options"}->{"--o-no-header"})) {
         # このオプションが指定されている場合は出力を整形しない
-        $isFile = 1;
+        $isTerminal = "";
     }
-    if ($isFile) {
-        # 整形せずに出力
-        $output_node2 = createOutputNode(undef, $graph->{"options"});
-    } else {
-        # ターミナルへの出力
-        $output_node2 = createOutputTerminalNode(undef, $graph->{"options"});
-    }
+    $output_node2 = createOutputNode(undef, $graph->{"options"}, $isTerminal);
     $output_node2->{"connections"}->{"input"} = [$output_node, "output"];
     $output_node->{"connections"}->{"output"} = [$output_node2, "input"];
     $graph->{"output"} = $output_node2;
@@ -838,8 +818,8 @@ sub walkPhase1b {
                 $node->{"connections"}->{$key}->[2] = $format;
 
                 if ($key eq "input") {
-                    if ($command_name eq "write-file" || $command_name eq "write-terminal") {
-                        # SPECIAL IMPL FOR write-file, write-terminal
+                    if ($command_name eq "write-file") {
+                        # SPECIAL IMPL FOR write-file
                         if ($node->{"internal"}->{"format"} eq "tsv") {
                             if ($format->[0] eq "tsv") {
                                 # nothing
@@ -1047,8 +1027,8 @@ sub walkPhase2 {
                 # sort の --cols には特別に配列を入れる
                 push(@{$node->{"options"}->{"--col"}}, "$flag:$col");
             }
-        } elsif ($command_name eq "write-terminal") {
-            # SPECIAL IMPL FOR write-terminal
+        } elsif ($command_name eq "write-file" && defined($node->{"options"}->{"--terminal"})) {
+            # SPECIAL IMPL FOR write-file
             my $format = $node->{"connections"}->{"input"}->[2];
             if ($format->[0] eq "tsv") {
                 # ターミナルへのテーブル形式の出力
@@ -1120,7 +1100,9 @@ sub walkPhase3 {
                 $nodes = removeNode($nodes, $i + 1);
                 $graph->{"nodes"} = $nodes;
                 $i--;
-            } elsif ($node2->{"command_name"} eq "write-terminal" && !defined($node2->{"options"}->{"--record-number-start"})) {
+            } elsif ($node2->{"command_name"} eq "write-file" &&
+                     defined($node2->{"options"}->{"--terminal"}) &&
+                     !defined($node2->{"options"}->{"--record-number-start"})) {
                 # SPECIAL IMPL FOR head, offset
                 $node2->{"options"}->{"--record-number-start"} = $node1->{"options"}->{"--start"} + 1;
             }
@@ -1321,13 +1303,11 @@ sub buildNodeCode {
 
         $code .= buildCommandParametersForBash($node) . "$stdinStr$stdoutStr &\n";
 
-        # internalの利用はいまのところ read-file, write-file, write-terminal のみ
+        # internalの利用はいまのところ read-file, write-file のみ
         if ($command_name eq "read-file") {
             $code .= "    # input:  " . $node->{"internal"}->{"input"} . "\n";
             $code .= "    # format: " . $node->{"internal"}->{"format-result"} . "\n";
         } elsif ($command_name eq "write-file") {
-            $code .= "    # format: " . $node->{"internal"}->{"format"} . "\n";
-        } elsif ($command_name eq "write-terminal") {
             $code .= "    # format: " . $node->{"internal"}->{"format"} . "\n";
         }
 

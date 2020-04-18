@@ -342,13 +342,7 @@ our %command_options = (
         "is_internal" => $true,
         "options" => {
             "-o" => "FILE",
-        },
-        "input" => "any",
-        "output" => "deny",
-    },
-    "write-terminal" => {
-        "is_internal" => $true,
-        "options" => {
+            "--terminal" => "",
             "--tsv" => "",
             "--json" => "",
             "--text" => "",
