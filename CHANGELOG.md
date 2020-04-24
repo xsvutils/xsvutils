@@ -4,6 +4,117 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
+## v14 -> v20 (Unreleased)
+
+### 設計変更
+
+大幅に設計が変わりました。シングルバイナリではなくなりました。
+その代わりmakeすることなく、ソースをgit cloneするだけで実行できるようになりました。
+一部の機能のみ使用前にバイナリのビルドが必要となります。
+詳しくは `xsvutils help install` を見てください。
+
+2019年9月ごろはメンテのしづらくなっていた main.pl に替わる新しいパーサを開発しようとし、
+その準備としてJVM削除などの更新をしていました。
+しかし、それも過剰に複雑になってしまい更新が止まってしまいましたので、
+当時の更新のうち意味のある修正のみでv14をリリースしました。
+そして再度設計を見直したのが今回のv20のリリースです。
+
+設計を大幅に変更するにあたって、いったん全機能を無効にした上で再構築しています。
+再構築後にまだ復活していないサブコマンドも多くあります。
+互換性を崩す仕様変更も多いです。
+
+サブコマンドのパラメータやオプションの仕様は
+互換性を崩してでもサブコマンド間でできるだけ統一するように変更し、
+パーサの実装をできるだけ単純化しました。
+
+サブコマンド間の内部でのデータ形式としてTSV以外も扱えるようになりました。
+v20では一部はJSONを扱っています。
+
+サブコマンド間での協調動作の実装もしやすくなりました。
+v20ではoffsetなどと最後のテーブル形式出力は協調します。
+
+-v14 のような旧バージョンを動作させるオプションは使えますが、事前にビルドが必要です。
+詳しくは `xsvutils help install` を見てください。
+
+
+### 仕様変更箇所
+
+設計変更の経緯のため機能的な変更点も非常に多い。
+わかっている変更点は以下の通り。
+他にも変更箇所のある可能性はある。
+
+以下のサブコマンドが追加された。
+- offset-random
+- filter-record
+- col
+- ins-concat
+- uniq
+- trim-values
+- rename-duplicated-column-name
+- modify-record
+- jq
+- meaningful-cols
+- sum
+- average
+- chart-bar
+
+以下のサブコマンドはたぶんオプションなどの仕様が変更された。他にもあるかもしれない。
+いずれも -vo オプションを使えば旧バージョンの仕様になる。
+- head
+- limit
+- offset
+- cols
+- sort
+- join
+- header
+- summary
+
+以下のサブコマンドが削除された。ただし再設計による無効化でありいずれ有効化する想定。
+いずれも -vo オプションを使えば旧バージョンの仕様で動作する。
+- grep
+- rmnoname
+- mergecols
+- insunixtime
+- insdate
+- inshour
+- inssecinterval
+- inscopy
+- inslinenum
+- insmap
+- insconst
+- uriparams
+- update
+- paste
+- union
+- diff
+- expandmultivalue
+- assemblematrix
+- countcols
+- facetcount
+- treetable
+- crosstable
+- ratio
+- groupsum
+- tee
+
+filter,where のカラム名に日本語名が使えるようになった。
+
+offsetなどを使ったときのテーブル形式出力の行番号表示が変わった。
+
+JSONフォーマットでの入力を扱えるようになった。
+
+LTSVフォーマットの入力のサポートと --ltsv が削除された。
+ただし再設計による無効化でありいずれ有効化する想定。
+
+--o-chart, --o-chart2 は廃止された。
+
+--o-table, --o-diffable はいったん廃止された。
+ただし再設計による無効化でありいずれ有効化する想定。
+
+--header はいったん廃止された。
+ただし再設計による無効化でありいずれ有効化する想定。
+
+
 ## v13 -> v14 (2020/04/16)
 
 出力オプション `--o-chart2` が追加された。
