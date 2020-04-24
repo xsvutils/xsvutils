@@ -66,9 +66,6 @@ Available subcommands:
     グラフ化するサブコマンド
         chart-bar
 
-    入出力のコマンド
-        to-esbulk                        
-
 #    その他のコマンド
 #        tee <OTHER_FILE>                Output to next subcommand and another file
 
