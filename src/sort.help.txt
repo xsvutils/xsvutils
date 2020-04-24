@@ -3,24 +3,33 @@ sort subcommand
     ソートする。
 
     Usage:
-        $ xsvutils sort [<COLUMNS>] [option...]
+        $ xsvutils sort [<COLUMN>] [option...]
 
     Parameter:
-        <COLUMNS>       (optional) Sort by <COLUMNS>
+        <COLUMN>         (optional) Sort by <COLUMN>
 
     Options:
-        --col <COLUMNS> Sort by <COLUMNS>
-        --help          Print help information about this subcommand.
+        --col  <COLUMN>  Sort by <COLUMN>
+        --cols <COLUMNS> Sort by <COLUMNS>
+        --number         Compare according to string numerical value
+        --reverse        Reverse the result of comparisons
+        --help           Print help information about this subcommand.
 
     <COLUMNS> にはカンマ区切りで複数のカラム名を書くことができる。
-    カラム名の後に `:n` と書くと数値としてのソートをする。
+
+    --number, --reverse はパラメータで指定したカラムまたは --col で指定したカラムに対して有効であり、
+    --cols で指定したカラムに対しては無効。
+
+    sortサブコマンドは連続して使うと、左から第1ソート、第2ソートの順に指定する意味になる。
 
     以下は、第1ソートとして hitnum カラムを数値の昇順、
     第2ソートとして date カラムをテキストの昇順にソートする例。
 
-        $ xsvutils data.tsv sort hitnum:n,date
-
-    <COLUMNS> を指定されていない場合は単純に左のカラムからソートキーとして使われる。
+        $ xsvutils data.tsv sort hitnum --number sort date
 
     指定したソートキーがすべて同じ値のレコードがあれば、もとのファイルに現れた順番を維持する(安定ソート)。
+
+    サブコマンド間はパイプのようにデータを受け渡す動作仕様になるが、
+    sortとcolサブコマンドは、同じ名前のサブコマンドを連続させることで、
+    パラメータを複数渡す動作仕様になる。
 

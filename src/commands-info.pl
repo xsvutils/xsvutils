@@ -187,10 +187,12 @@ our %command_options = (
 
     # その他のデータを加工するサブコマンド
     "sort" => {
+        "exists_help" => $true,
         "options" => {
             "--cols" => "COLUMNS",
             "--col" => "COLUMN",
             "--number" => "",
+            "--reverse" => "",
         },
         "parameters" => [
             "--col",

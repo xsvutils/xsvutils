@@ -29,3 +29,7 @@ col subcommand
 
     See also `xsvutils help cut`, `xsvutils help cols`.
 
+    サブコマンド間はパイプのようにデータを受け渡す動作仕様になるが、
+    sortとcolサブコマンドは、同じ名前のサブコマンドを連続させることで、
+    パラメータを複数渡す動作仕様になる。
+

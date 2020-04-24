@@ -1024,6 +1024,10 @@ sub walkPhase2 {
                     delete($node_options->{"--number"});
                     $flag .= "n";
                 }
+                if (defined($node_options->{"--reverse"})) {
+                    delete($node_options->{"--reverse"});
+                    $flag .= "r";
+                }
                 # sort の --cols には特別に配列を入れる
                 push(@{$node->{"options"}->{"--col"}}, "$flag:$col");
             }
