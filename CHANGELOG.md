@@ -4,7 +4,7 @@ To see version information, `xsvutils --version`.
 
 To see compatibility information, `xsvutils help compatibility`.
 
-## v14 -> v20 (Unreleased)
+## v14 -> v20 (2020/04/30)
 
 ### 設計変更
 
