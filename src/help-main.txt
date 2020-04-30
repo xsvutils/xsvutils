@@ -14,21 +14,21 @@ Commonly used subcommands:
         limit [<N>]                     Print first N records
         offset [<N>]                    Print all except first N records
         filter <CONDITION>              Print records which satisfy a condition
-        grep <COLUMN> <PATTERN>         Print records matching a pattern
+#        grep <COLUMN> <PATTERN>         Print records matching a pattern
 
     列の選択に関するサブコマンド
         cut <COLUMNS>                   Print specified columns
 
     その他のデータを加工するコマンド
-        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
+#        update <INDEX> <COLUMN> <VALUE> セルを指定して値を更新する
         sort [<COLUMNS>]                ソートする
 
     集計するコマンド
         wcl                             Print record count. レコード数を表示する
         header                          Print column names. カラムの一覧を表示する
         summary                         Print summary of data. データのサマリを表示する
-        countcols                       カラム数を集計する
-        facetcount                      カラムそれぞれのファセットカウントを集計する
+#        countcols                       カラム数を集計する
+#        facetcount                      カラムそれぞれのファセットカウントを集計する
 
     `xsvutils help list` ですべてのサブコマンドを確認できる。
 
@@ -47,13 +47,16 @@ DETAILS:
     See each document.
         $ xsvutils help <DOCUMENT>
 
-    <DOCUMENT> is either subcommand name or other document name.
+    <DOCUMENT> is either subcommand name or other topic name.
 
-    Subcommand names are following.
-        ####HELP_CMD_INDEX####
+    `xsvutils help list` list available subcommands.
 
     Other <DOCUMENT> are following.
-        ####HELP_GUIDE_INDEX####
+        format
+        install
+        list
+        options
+        usage
 
 License:
     This software is released under the MIT License, see LICENSE.txt.

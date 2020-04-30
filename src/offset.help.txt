@@ -1,0 +1,22 @@
+offset subcommand
+
+    Print all except first N records. 先頭のNレコードを除く残りを出力する。
+
+    Usage:
+        $ xsvutils offset [<N>] [option...]
+
+    Parameter:
+        <N>       (optional) Print all except first N records (default is 10)
+
+    Options:
+        -n <N>    Print all except first N records (default is 10)
+        --help    Print help information about this subcommand.
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME offset -n 5
+#        $ xsvutils FILENAME offset -n5
+        $ xsvutils FILENAME offset 5
+
+    旧バージョン(20より前)からのユーザ向けの説明
+        オプションとそのあとの数値を連結する書き方(`head -n10`のような書き方)は認められなくなった。

@@ -1,0 +1,31 @@
+
+最低限必要な環境
+
+- bash
+- cat
+- head
+- cmp
+- sed
+- readlink
+- dirname
+- basename
+- tput
+- shasum
+- cut
+- less
+- perl
+- sort
+
+入力がgzファイルの場合
+
+- gunzip
+
+
+入力がxzファイルの場合
+
+- xz
+
+入力がUTF-8以外の場合
+
+- iconv
+

@@ -1,8 +1,0 @@
-col1-num	col1-value	col1-count	col1-ratio	col2-num	col2-value	col2-count	col2-ratio
-1	aaa	6	 60.00%	1	value3	2	 33.33%
-1	aaa	6	 60.00%	2	value4	2	 33.33%
-1	aaa	6	 60.00%	3	value2	1	 16.67%
-1	aaa	6	 60.00%	4	value5	1	 16.67%
-2	bbb	5	 50.00%	1	value3	3	 60.00%
-2	bbb	5	 50.00%	2	value1	1	 20.00%
-2	bbb	5	 50.00%	3	value4	1	 20.00%

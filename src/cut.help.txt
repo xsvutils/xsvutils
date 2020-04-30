@@ -1,0 +1,67 @@
+cut subcommand
+
+    Print specified columns.
+
+    Usage:
+        $ xsvutils cut [<COLUMNS>] [option...]
+
+    Parameter:
+        <COLUMNS>         (optional) Print <COLUMNS> (same as --cols)
+
+    Options:
+        --cols <COLUMNS>   Print <COLUMNS>
+        --help             Print help information about this subcommand.
+
+
+    Either of COLUMNS parameter or --col option is required.
+
+    以下は同じ意味である。
+
+        $ xsvutils FILENAME cut name1,name2,name3
+        $ xsvutils FILENAME cut name1..name3
+        $ xsvutils FILENAME cols --cols name1,name2,name3
+        $ xsvutils FILENAME cols --cols name1..name3
+        $ xsvutils FILENAME col name1 col name2 col name3
+        $ xsvutils FILENAME col --col name1 --col name2 --col name3
+        $ xsvutils FILENAME col --cols name1,name2,name3
+
+    See also `xsvutils help cols`, `xsvutils help col`.
+
+    Examples:
+
+        Retrieve only 3 columns: foo, col1, col20
+
+            $ xsvutils data.tsv cut --col foo,col1,col20
+
+        retrieve 21 columns: foo, col1, col2, col3, ... col20
+
+            $ xsvutils data.tsv cut --col foo,col1..col20
+
+    cut, cols, col の違い
+        選択するカラムの指定方法
+            cut:
+                カラム名をコンマ区切りで並べ、パラメータで渡す。
+                name1..name3 のような柔軟な記述もできる。
+                3つのコマンドの中で最も短く指定できる。
+                コンマなどのが含まれるカラム名は扱えない。
+                例) cut colA,colB,colC
+            cols:
+                カラム名をコンマ区切りで並べ、 --cols というオプションで渡す。
+                name1..name3 のような柔軟な記述もできる。
+                --cols という記述が必要になってしまうので、cutのほうが便利。
+                例) cols --cols colA,colB,colC
+            col:
+                カラム名指定のコンマ等の記号を特別扱いしないので、記号の混ざったカラム名も扱える。
+                記述が最も長い。
+                例) col colA col colB col colC
+                例) col --col colA --col colB --col colC
+
+        指定方法の違いのほか、colsはcutやcolと違い、カラムの選択だけではなく、 --head など他の機能も付随している。
+
+    旧バージョン(20より前)からのユーザ向けの説明
+        --col, --columns というオプションはなくなった。
+
+    xsvutils開発者向けの説明
+        cut, cols, col の3つのサブコマンドの実態は3つとも cut.pl である。
+        parser.pl, commands-info.pl でオプションやパラメータの解釈を分けている。
+

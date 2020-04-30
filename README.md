@@ -54,11 +54,6 @@ Retrieve specified columns.
 
     $ xsvutils data.tsv head 10 cut id,name > data2.tsv
 
-ヘッダ行のない3カラムからなるファイルに対して、カラム名をオプションで指定してから、
-name, id の2カラムのみを表示する。2カラムは元ファイルから順番を入れ替える。
-
-    $ xsvutils data.tsv --header id,name,comment cut name,id
-
 レコード数を数える。ヘッダ行は含まない。
 
     $ xsvutils data.tsv wcl
@@ -67,13 +62,28 @@ name, id の2カラムのみを表示する。2カラムは元ファイルから
 
     $ xsvutils data.tsv header
 
+各カラムの概要を表示する。
+
+    $ xsvutils data.tsv summary
+
+jqがインストールされていれば、JSONも便利。
+
+    $ xsvutils data.json jq ".Users[]" cut UserName,UserId
+
+プレーンテキストを指定したら、 less を使ったページャになる。SJISの場合は自動でUTF-8に変換される。
+
+    $ xsvutils memo.txt
+
 
 ## Install
 
     $ git clone https://github.com/xsvutils/xsvutils.git
     $ cd xsvutils
-    $ make
-    $ cp xsvutils ~/bin/    # copy xsvutils to your $PATH
+    $ PATH=$(pwd)/bin:$PATH # add xsvutils to $PATH
+
+機能によっては別途ビルドが必要なものがある。詳細は以下を参照。
+
+    $ xsvutils --help install
 
 
 ## License

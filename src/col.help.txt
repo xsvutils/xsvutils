@@ -1,0 +1,35 @@
+col subcommand
+    Print specified columns.
+
+    Usage:
+        $ xsvutils col [--cols <COLUMNS>] [--col] <COLUMN>
+
+    Parameter:
+        <COLUMNS>         (optional) Print <COLUMNS>
+
+    Options:
+        --cols <COLUMNS>   Print <COLUMNS>
+        --help             Print help information about this subcommand.
+
+    --col は複数指定できる。
+
+    --col なしでのパラメータでのカラム名の指定は1つしかできないが、
+    colサブコマンド自体を複数並べることで、複数のカラムを選択することもできる。
+    --col を複数並べるよりもcolサブコマンド自体を複数並べたほうが記述は短い。
+
+    以下の3つは同じ動作になる。
+        $ xsvutils col a col b col c
+        $ xsvutils col --col a --col b --col c
+        $ xsvutils cut a,b,c
+
+    --cols での指定はcutサブコマンドと同様にコンマ区切りで指定するが、 name1..name3 のような範囲指定の機能はない。
+
+    --col での指定またはパラメータでの指定はコンマ等の記号を特別扱いせずに、そのまま解釈するので、
+    記号を含むカラム名を扱うことができる。
+
+    See also `xsvutils help cut`, `xsvutils help cols`.
+
+    サブコマンド間はパイプのようにデータを受け渡す動作仕様になるが、
+    sortとcolサブコマンドは、同じ名前のサブコマンドを連続させることで、
+    パラメータを複数渡す動作仕様になる。
+

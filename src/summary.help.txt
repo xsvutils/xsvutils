@@ -1,0 +1,10 @@
+summary subcommand
+    Print summary of data.
+    データのカラムごとのサマリを表示する。
+
+    Options:
+        --help    Print help information about this subcommand.
+
+    旧バージョン(20より前)からのユーザ向けの説明
+        サマリの出力形式がTSVからプレーンテキストに変わった。
+

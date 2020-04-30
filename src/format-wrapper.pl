@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use utf8;
 
-my $TOOL_DIR = $ENV{"TOOL_DIR"};
+my $XSVUTILS_HOME = $ENV{"XSVUTILS_HOME"};
 
 my $format = "";
 my $charencoding = "";
@@ -40,7 +40,7 @@ while (@ARGV) {
     }
 }
 
-die "format-wrapper.pl requires argument" unless defined $format_result_path;
+#die "format-wrapper.pl requires argument" unless defined $format_result_path;
 
 my $head_size = 100 * 4096;
 
@@ -86,9 +86,9 @@ while () {
 }
 
 if ($gzip_flag || $xz_flag) {
-    my $CHILD1_READER;
-    my $PARENT_WRITER;
-    pipe($CHILD1_READER, $PARENT_WRITER);
+    my $READER1;
+    my $WRITER1;
+    pipe($READER1, $WRITER1);
 
     my $pid1 = fork;
     if (!defined $pid1) {
@@ -96,18 +96,18 @@ if ($gzip_flag || $xz_flag) {
     } elsif ($pid1) {
         # parent process
         # 読み込み済みの入力を標準出力し、残りはcatする
-        close $CHILD1_READER;
-        open(STDOUT, '>&=', fileno($PARENT_WRITER));
+        close $READER1;
+        open(STDOUT, '>&=', fileno($WRITER1));
         syswrite(STDOUT, $head_buf);
         exec("cat");
     }
     # child1 process
-    close $PARENT_WRITER;
-    open(STDIN, '<&=', fileno($CHILD1_READER));
+    close $WRITER1;
+    open(STDIN, '<&=', fileno($READER1));
 
-    my $CHILD2_READER;
-    my $CHILD1_WRITER;
-    pipe($CHILD2_READER, $CHILD1_WRITER);
+    my $READER2;
+    my $WRITER2;
+    pipe($READER2, $WRITER2);
 
     my $pid2 = fork;
     if (!defined $pid2) {
@@ -115,8 +115,8 @@ if ($gzip_flag || $xz_flag) {
     } elsif ($pid2) {
         # parent(child1) process
         # gunzip or xz のプロセスをexecする
-        close $CHILD2_READER;
-        open(STDOUT, '>&=', fileno($CHILD1_WRITER));
+        close $READER2;
+        open(STDOUT, '>&=', fileno($WRITER2));
         if ($xz_flag) {
             exec("xz", "-c", "-d");
         } else {
@@ -124,8 +124,8 @@ if ($gzip_flag || $xz_flag) {
         }
     }
     # child2 process
-    close $CHILD1_WRITER;
-    open(STDIN, '<&=', fileno($CHILD2_READER));
+    close $WRITER2;
+    open(STDIN, '<&=', fileno($READER2));
 
     my @options = ();
     if ($format eq "tsv") {
@@ -135,24 +135,34 @@ if ($gzip_flag || $xz_flag) {
     } elsif ($format eq "ltsv") {
         push(@options, "--ltsv");
     }
-    push(@options, $format_result_path);
+    if (defined($format_result_path)) {
+        push(@options, $format_result_path);
+    }
     if (defined($output_path)) {
         push(@options, "-o");
         push(@options, $output_path);
     }
 
-    exec("perl", "$TOOL_DIR/format-wrapper.pl", @options);
+    exec("perl", "$XSVUTILS_HOME/src/format-wrapper.pl", @options);
 }
 
 sub guess_format {
     my ($head_buf) = @_;
-    if ($head_buf =~ /\t/) {
+    my $first_line;
+    if ($head_buf =~ /\A([^\n]*)\n/s) {
+        $first_line = $1;
+    } else {
+        $first_line = $head_buf;
+    }
+    if ($first_line =~ /\t/) {
         return "tsv";
-    } elsif ($head_buf =~ /,/) {
+    } elsif ($first_line =~ /\A\{/) {
+        return "json";
+    } elsif ($first_line =~ /,/) {
         return "csv";
     } else {
         # failed to guess format
-        return "tsv";
+        return "text";
     }
 }
 
@@ -197,8 +207,8 @@ sub guess_charencoding {
         if ($len >= 3) {
             if (substr($head_buf, 0, 3) eq "\xEF\xBB\xBF") {
                 # BOM in UTF-8
-                # require `tail -c+4`
                 $utf8bom = '1';
+                $head_buf = substr($head_buf, 3);
             }
         }
         return ($head_buf, "UTF-8", $utf8bom);
@@ -230,16 +240,24 @@ if ($newline eq '') {
 }
 
 my $mode;
-if (!$pipe_mode && defined($input_path) && -f $input_path) {
+if ($pipe_mode) {
+    $mode = "pipe";
+} elsif (defined($input_path) && -f $input_path) {
     $mode = "file";
 } else {
     $mode = "pipe";
 }
 
+if ($charencoding ne "UTF-8") {
+    $mode = "pipe";
+}
+
 # フォーマットの推定結果を出力
-open(my $format_result_fh, '>', $format_result_path) or die $!;
-print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline mode:$mode\n";
-close($format_result_fh);
+if (defined($format_result_path)) {
+    open(my $format_result_fh, '>', $format_result_path) or die $!;
+    print $format_result_fh "format:$format charencoding:$charencoding utf8bom:$utf8bom newline:$newline mode:$mode\n";
+    close($format_result_fh);
+}
 
 if ($mode eq "file") {
     exit(0);
@@ -248,6 +266,30 @@ if ($mode eq "file") {
 if (defined($output_path)) {
     open(my $output_fh, '>', $output_path) or die $!;
     open(STDOUT, '>&=', fileno($output_fh));
+}
+
+if ($charencoding ne "UTF-8") {
+    # cp932
+
+    my $READER1;
+    my $WRITER1;
+    pipe($READER1, $WRITER1);
+
+    my $pid1 = fork;
+    if (!defined $pid1) {
+        die $!;
+    } elsif (!$pid1) {
+        # child1 process
+        close $READER1;
+        open(STDOUT, '>&=', fileno($WRITER1));
+        syswrite(STDOUT, $head_buf);
+        exec("cat");
+    } else {
+        # parent process
+        close $WRITER1;
+        open(STDIN, '<&=', fileno($READER1));
+        exec("iconv", "-f", $charencoding, "-t", "UTF-8//TRANSLIT");
+    }
 }
 
 # 先読みした内容を出力
